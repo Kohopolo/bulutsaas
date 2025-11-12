@@ -50,15 +50,15 @@ class CleaningTask(TimeStampedModel, SoftDeleteModel):
         related_name='cleaning_tasks',
         verbose_name='Oda Numarası'
     )
-    reservation = models.ForeignKey(
-        'reception.Reservation',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='cleaning_tasks',
-        verbose_name='Rezervasyon',
-        help_text='İlgili rezervasyon (varsa)'
-    )
+    # reservation = models.ForeignKey(
+    #     'reception.Reservation',
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name='cleaning_tasks',
+    #     verbose_name='Rezervasyon',  # KALDIRILDI - Reception modülü yeniden inşa edilecek
+    #     help_text='İlgili rezervasyon (varsa)'
+    # )
     
     # Görev Bilgileri
     task_type = models.CharField(

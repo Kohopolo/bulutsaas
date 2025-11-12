@@ -53,7 +53,7 @@ class Agency(TimeStampedModel, SoftDeleteModel):
 class SalesRecord(TimeStampedModel, SoftDeleteModel):
     """Satış Kaydı Modeli"""
     hotel = models.ForeignKey('hotels.Hotel', on_delete=models.CASCADE, related_name='sales_records', verbose_name='Otel')
-    reservation = models.ForeignKey('reception.Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='sales_records', verbose_name='Rezervasyon')
+    # reservation = models.ForeignKey('reception.Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='sales_records', verbose_name='Rezervasyon')  # KALDIRILDI - Reception modülü yeniden inşa edilecek
     agency = models.ForeignKey(Agency, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales_records', verbose_name='Acente')
     
     sales_type = models.CharField('Satış Tipi', max_length=50, choices=[

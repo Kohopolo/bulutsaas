@@ -58,6 +58,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- VB Layout CSS (VB tarzı masaüstü uygulama görünümü) -->
+    <link rel="stylesheet" href="{% static 'css/vb-layout.css' %}">
+    
+    <!-- VB Override - Modern trendleri bastır -->
+    <link rel="stylesheet" href="{% static 'css/vb-override-modern.css' %}">
+    
     <style>
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -225,67 +232,16 @@
                 </div>
                 {% endif %}
                 
-                <!-- Resepsiyon Modülü -->
-                {% if has_reception_module %}
+                <!-- Resepsiyon Modülü - KALDIRILDI, YENİDEN İNŞA EDİLECEK -->
+                {# {% if has_reception_module %}
                 <div class="mb-2">
                     <a href="{% url 'reception:dashboard' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
                         <i class="fas fa-concierge-bell w-5"></i>
                         <span class="ml-3">Resepsiyon</span>
                     </a>
-                    <div class="pl-4">
-                        <a href="{% url 'reception:reservation_create' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-plus-circle w-4"></i>
-                            <span class="ml-3">Yeni Rezervasyon</span>
-                        </a>
-                        <a href="{% url 'reception:reservation_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-list w-4"></i>
-                            <span class="ml-3">Rezervasyon Listesi</span>
-                        </a>
-                        <a href="{% url 'reception:room_rack' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-th-large w-4"></i>
-                            <span class="ml-3">Oda Durum Panosu</span>
-                        </a>
-                        <a href="{% url 'reception:room_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-bed w-4"></i>
-                            <span class="ml-3">Oda Listesi</span>
-                        </a>
-                        <a href="{% url 'reception:guest_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-users w-4"></i>
-                            <span class="ml-3">Müşteri Listesi</span>
-                        </a>
-                        <a href="{% url 'reception:guest_search' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-search w-4"></i>
-                            <span class="ml-3">Müşteri Ara</span>
-                        </a>
-                        <a href="{% url 'reception:keycard_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-key w-4"></i>
-                            <span class="ml-3">Anahtar Kartları</span>
-                        </a>
-                        <a href="{% url 'reception:session_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-clock w-4"></i>
-                            <span class="ml-3">Resepsiyon Oturumları</span>
-                        </a>
-                        <div class="border-t border-gray-700 my-2"></div>
-                        <a href="{% url 'reception:report_daily' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-calendar-day w-4"></i>
-                            <span class="ml-3">Günlük Rapor</span>
-                        </a>
-                        <a href="{% url 'reception:report_occupancy' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-chart-line w-4"></i>
-                            <span class="ml-3">Doluluk Raporu</span>
-                        </a>
-                        <a href="{% url 'reception:report_revenue' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-money-bill-wave w-4"></i>
-                            <span class="ml-3">Gelir Raporu</span>
-                        </a>
-                        <div class="border-t border-gray-700 my-2"></div>
-                        <a href="{% url 'reception:settings' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
-                            <i class="fas fa-cog w-4"></i>
-                            <span class="ml-3">Ayarlar</span>
-                        </a>
-                    </div>
+                    ...
                 </div>
-                {% endif %}
+                {% endif %} #}
                 
                 <!-- Kat Hizmetleri Modülü -->
                 {% if has_housekeeping_module %}

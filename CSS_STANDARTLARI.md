@@ -1,11 +1,19 @@
 # 🎨 CSS Standartları - Tenant Panel
 
+**⚠️ DEPRECATED - Bu dosya eski Tailwind standartlarını içerir!**
+
+**YENİ STANDART:** `CSS_STANDARTLARI_VB.md` dosyasını kullanın!
+
 **Tarih:** 2025-01-XX  
-**Versiyon:** 1.0.0
+**Versiyon:** 1.0.0 (ESKİ - Tailwind kullanıyor)
 
 ---
 
 ## 📋 Genel Bakış
+
+**⚠️ UYARI:** Bu dosya **Tailwind CSS** standartlarını içerir ve **DEPRECATED** durumdadır.
+
+**Yeni projeler için:** `CSS_STANDARTLARI_VB.md` dosyasını kullanın (VB tarzı masaüstü uygulama görünümü).
 
 Bu dokümanda tenant panelindeki tüm modüller için uygulanması gereken CSS standartları tanımlanmıştır. Bu standartlar **Tur Yönetimi** modülünde kullanılan yapıya göre belirlenmiştir.
 

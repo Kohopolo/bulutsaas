@@ -20,15 +20,16 @@ class Command(BaseCommand):
                 'is_active': True,
                 'sort_order': 1,
             },
-            {
-                'name': 'Resepsiyon',
-                'code': 'reception',
-                'description': 'Resepsiyon personeli',
-                'icon': '🏨',
-                'dashboard_url': '/',
-                'is_active': True,
-                'sort_order': 2,
-            },
+            # Resepsiyon kullanıcı tipi - KALDIRILDI, YENİDEN İNŞA EDİLECEK
+            # {
+            #     'name': 'Resepsiyon',
+            #     'code': 'reception',
+            #     'description': 'Resepsiyon personeli',
+            #     'icon': '🏨',
+            #     'dashboard_url': '/',
+            #     'is_active': True,
+            #     'sort_order': 2,
+            # },
             {
                 'name': 'Satış',
                 'code': 'sales',

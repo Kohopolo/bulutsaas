@@ -40,15 +40,16 @@ class Command(BaseCommand):
                 'is_system': False,
                 'sort_order': 3,
             },
-            {
-                'name': 'Resepsiyonist',
-                'code': 'receptionist',
-                'description': 'Resepsiyon personeli',
-                'icon': '🏨',
-                'is_active': True,
-                'is_system': False,
-                'sort_order': 4,
-            },
+            # Resepsiyonist rolü - KALDIRILDI, YENİDEN İNŞA EDİLECEK
+            # {
+            #     'name': 'Resepsiyonist',
+            #     'code': 'receptionist',
+            #     'description': 'Resepsiyon personeli',
+            #     'icon': '🏨',
+            #     'is_active': True,
+            #     'is_system': False,
+            #     'sort_order': 4,
+            # },
             {
                 'name': 'Satış Temsilcisi',
                 'code': 'sales_rep',

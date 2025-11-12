@@ -98,7 +98,7 @@ def tenant_modules(request):
         'user_accessible_modules': user_accessible_modules,  # Kullanıcının yetkisi olan modüller
         'has_tour_module': 'tours' in enabled_module_codes and 'tours' in user_accessible_modules,
         'has_hotel_module': 'hotels' in enabled_module_codes and 'hotels' in user_accessible_modules,
-        'has_reception_module': 'reception' in enabled_module_codes and 'reception' in user_accessible_modules,
+        # 'has_reception_module': 'reception' in enabled_module_codes and 'reception' in user_accessible_modules,  # KALDIRILDI, YENİDEN İNŞA EDİLECEK
         'has_housekeeping_module': 'housekeeping' in enabled_module_codes and 'housekeeping' in user_accessible_modules,
         'has_technical_service_module': 'technical_service' in enabled_module_codes and 'technical_service' in user_accessible_modules,
         'has_quality_control_module': 'quality_control' in enabled_module_codes and 'quality_control' in user_accessible_modules,

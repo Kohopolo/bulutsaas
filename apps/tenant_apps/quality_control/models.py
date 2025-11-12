@@ -15,7 +15,7 @@ class RoomQualityInspection(TimeStampedModel, SoftDeleteModel):
     """Oda Kalite Kontrolü Modeli"""
     hotel = models.ForeignKey('hotels.Hotel', on_delete=models.CASCADE, related_name='quality_inspections', verbose_name='Otel')
     room_number = models.ForeignKey('hotels.RoomNumber', on_delete=models.CASCADE, related_name='quality_inspections', verbose_name='Oda Numarası')
-    reservation = models.ForeignKey('reception.Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='quality_inspections', verbose_name='Rezervasyon')
+    # reservation = models.ForeignKey('reception.Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='quality_inspections', verbose_name='Rezervasyon')  # KALDIRILDI - Reception modülü yeniden inşa edilecek
     
     inspection_type = models.CharField('Kontrol Tipi', max_length=50, choices=[
         ('pre_checkin', 'Check-In Öncesi'), ('post_checkout', 'Check-Out Sonrası'),
@@ -80,7 +80,7 @@ class QualityChecklistItem(TimeStampedModel, SoftDeleteModel):
 class CustomerComplaint(TimeStampedModel, SoftDeleteModel):
     """Müşteri Şikayeti Modeli"""
     hotel = models.ForeignKey('hotels.Hotel', on_delete=models.CASCADE, related_name='customer_complaints', verbose_name='Otel')
-    reservation = models.ForeignKey('reception.Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='complaints', verbose_name='Rezervasyon')
+    # reservation = models.ForeignKey('reception.Reservation', on_delete=models.SET_NULL, null=True, blank=True, related_name='complaints', verbose_name='Rezervasyon')  # KALDIRILDI - Reception modülü yeniden inşa edilecek
     customer = models.ForeignKey('tenant_core.Customer', on_delete=models.SET_NULL, null=True, blank=True, related_name='complaints', verbose_name='Müşteri')
     
     complaint_type = models.CharField('Şikayet Tipi', max_length=50, choices=[
