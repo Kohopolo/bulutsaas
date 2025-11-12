@@ -290,7 +290,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # Ensure log directory exists before Django configures file based handlers
 LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-LOG_FILE = LOG_DIR / "django.log"
+LOG_FILE = str(LOG_DIR / "django.log")  # String olarak sakla - Path nesnesi kaynaklı uyumsuzluğu giderir
 
 # Logging
 LOGGING = {
