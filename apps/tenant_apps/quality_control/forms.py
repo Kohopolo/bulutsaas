@@ -9,10 +9,9 @@ class RoomQualityInspectionForm(forms.ModelForm):
     """Oda Kalite Kontrolü Formu"""
     class Meta:
         model = RoomQualityInspection
-        fields = ['room_number', 'reservation', 'inspection_type', 'overall_score', 'cleanliness_score', 'maintenance_score', 'amenities_score', 'status', 'notes', 'action_required', 'action_taken']
+        fields = ['room_number', 'inspection_type', 'overall_score', 'cleanliness_score', 'maintenance_score', 'amenities_score', 'status', 'notes', 'action_required', 'action_taken']
         widgets = {
             'room_number': forms.Select(attrs={'class': 'form-control'}),
-            'reservation': forms.Select(attrs={'class': 'form-control'}),
             'inspection_type': forms.Select(attrs={'class': 'form-control'}),
             'overall_score': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
             'cleanliness_score': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
@@ -30,8 +29,9 @@ class RoomQualityInspectionForm(forms.ModelForm):
         if hotel:
             from apps.tenant_apps.hotels.models import RoomNumber
             self.fields['room_number'].queryset = RoomNumber.objects.filter(hotel=hotel, is_active=True, is_deleted=False).order_by('number')
-            from apps.tenant_apps.reception.models import Reservation
-            self.fields['reservation'].queryset = Reservation.objects.filter(hotel=hotel, is_deleted=False).order_by('-check_in_date')
+            # Reception modülü kaldırıldı - reservation field'ı kaldırıldı
+            # from apps.tenant_apps.reception.models import Reservation
+            # self.fields['reservation'].queryset = Reservation.objects.filter(hotel=hotel, is_deleted=False).order_by('-check_in_date')
 
 
 class QualityChecklistItemForm(forms.ModelForm):
@@ -52,9 +52,8 @@ class CustomerComplaintForm(forms.ModelForm):
     """Müşteri Şikayeti Formu"""
     class Meta:
         model = CustomerComplaint
-        fields = ['reservation', 'customer', 'complaint_type', 'priority', 'description']
+        fields = ['customer', 'complaint_type', 'priority', 'description']
         widgets = {
-            'reservation': forms.Select(attrs={'class': 'form-control'}),
             'customer': forms.Select(attrs={'class': 'form-control'}),
             'complaint_type': forms.Select(attrs={'class': 'form-control'}),
             'priority': forms.Select(attrs={'class': 'form-control'}),
@@ -65,8 +64,9 @@ class CustomerComplaintForm(forms.ModelForm):
         hotel = kwargs.pop('hotel', None)
         super().__init__(*args, **kwargs)
         if hotel:
-            from apps.tenant_apps.reception.models import Reservation
-            self.fields['reservation'].queryset = Reservation.objects.filter(hotel=hotel, is_deleted=False).order_by('-check_in_date')
+            # Reception modülü kaldırıldı - reservation field'ı kaldırıldı
+            # from apps.tenant_apps.reception.models import Reservation
+            # self.fields['reservation'].queryset = Reservation.objects.filter(hotel=hotel, is_deleted=False).order_by('-check_in_date')
             from apps.tenant_apps.core.models import Customer
             self.fields['customer'].queryset = Customer.objects.filter(hotel=hotel, is_active=True).order_by('first_name', 'last_name')
 

@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('hotels', '0004_hotelextraservice'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('reception', '0003_reservation_total_paid'),
+        # ('reception', '0003_reservation_total_paid'),  # KALDIRILDI - Reception modülü yeniden inşa edilecek
     ]
 
     operations = [
@@ -132,7 +132,7 @@ class Migration(migrations.Migration):
                 ('notes', models.TextField(blank=True, verbose_name='Notlar')),
                 ('agency', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sales_records', to='sales.agency', verbose_name='Acente')),
                 ('hotel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sales_records', to='hotels.hotel', verbose_name='Otel')),
-                ('reservation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sales_records', to='reception.reservation', verbose_name='Rezervasyon')),
+                # ('reservation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sales_records', to='reception.reservation', verbose_name='Rezervasyon')),  # KALDIRILDI
                 ('sales_person', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sales_records', to=settings.AUTH_USER_MODEL, verbose_name='Satış Personeli')),
             ],
             options={

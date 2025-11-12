@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         ('tenant_core', '0003_customer_customernote_customerloyaltyhistory_and_more'),
         ('hotels', '0004_hotelextraservice'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('reception', '0003_reservation_total_paid'),
+        # ('reception', '0003_reservation_total_paid'),  # KALDIRILDI - Reception modülü yeniden inşa edilecek
     ]
 
     operations = [
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('action_taken', models.TextField(blank=True, verbose_name='Alınan Aksiyon')),
                 ('hotel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='quality_inspections', to='hotels.hotel', verbose_name='Otel')),
                 ('inspected_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='room_quality_inspections', to=settings.AUTH_USER_MODEL, verbose_name='Kontrol Eden')),
-                ('reservation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='quality_inspections', to='reception.reservation', verbose_name='Rezervasyon')),
+                # ('reservation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='quality_inspections', to='reception.reservation', verbose_name='Rezervasyon')),  # KALDIRILDI
                 ('room_number', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='quality_inspections', to='hotels.roomnumber', verbose_name='Oda Numarası')),
             ],
             options={
@@ -152,7 +152,7 @@ class Migration(migrations.Migration):
                 ('customer', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='complaints', to='tenant_core.customer', verbose_name='Müşteri')),
                 ('hotel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='customer_complaints', to='hotels.hotel', verbose_name='Otel')),
                 ('reported_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='reported_complaints', to=settings.AUTH_USER_MODEL, verbose_name='Bildiren')),
-                ('reservation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='complaints', to='reception.reservation', verbose_name='Rezervasyon')),
+                # ('reservation', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='complaints', to='reception.reservation', verbose_name='Rezervasyon')),  # KALDIRILDI
                 ('resolved_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='resolved_complaints', to=settings.AUTH_USER_MODEL, verbose_name='Çözen')),
             ],
             options={

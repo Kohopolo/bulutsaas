@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('hotels', '0004_hotelextraservice'),
-        ('reception', '0003_reservation_total_paid'),
+        # ('reception', '0003_reservation_total_paid'),  # KALDIRILDI - Reception modülü yeniden inşa edilecek
     ]
 
     operations = [
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                 ('assigned_to', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='assigned_cleaning_tasks', to=settings.AUTH_USER_MODEL, verbose_name='Atanan Personel')),
                 ('hotel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cleaning_tasks', to='hotels.hotel', verbose_name='Otel')),
                 ('inspected_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='inspected_cleaning_tasks', to=settings.AUTH_USER_MODEL, verbose_name='Kontrol Eden')),
-                ('reservation', models.ForeignKey(blank=True, help_text='İlgili rezervasyon (varsa)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='cleaning_tasks', to='reception.reservation', verbose_name='Rezervasyon')),
+                # ('reservation', models.ForeignKey(blank=True, help_text='İlgili rezervasyon (varsa)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='cleaning_tasks', to='reception.reservation', verbose_name='Rezervasyon')),  # KALDIRILDI
                 ('room_number', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cleaning_tasks', to='hotels.roomnumber', verbose_name='Oda Numarası')),
             ],
             options={

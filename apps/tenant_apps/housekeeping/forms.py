@@ -17,13 +17,12 @@ class CleaningTaskForm(forms.ModelForm):
     class Meta:
         model = CleaningTask
         fields = [
-            'room_number', 'reservation', 'task_type', 'priority',
+            'room_number', 'task_type', 'priority',
             'assigned_to', 'scheduled_time', 'estimated_duration',
             'notes', 'special_instructions'
         ]
         widgets = {
             'room_number': forms.Select(attrs={'class': 'form-control'}),
-            'reservation': forms.Select(attrs={'class': 'form-control'}),
             'task_type': forms.Select(attrs={'class': 'form-control'}),
             'priority': forms.Select(attrs={'class': 'form-control'}),
             'assigned_to': forms.Select(attrs={'class': 'form-control'}),
@@ -57,11 +56,12 @@ class CleaningTaskForm(forms.ModelForm):
                 is_deleted=False
             ).order_by('number')
             
-            from apps.tenant_apps.reception.models import Reservation
-            self.fields['reservation'].queryset = Reservation.objects.filter(
-                hotel=hotel,
-                is_deleted=False
-            ).order_by('-check_in_date')
+            # Reception modülü kaldırıldı - reservation field'ı kaldırıldı
+            # from apps.tenant_apps.reception.models import Reservation
+            # self.fields['reservation'].queryset = Reservation.objects.filter(
+            #     hotel=hotel,
+            #     is_deleted=False
+            # ).order_by('-check_in_date')
 
 
 class CleaningTaskStatusForm(forms.ModelForm):

@@ -30,9 +30,8 @@ class SalesRecordForm(forms.ModelForm):
     """Satış Kaydı Formu"""
     class Meta:
         model = SalesRecord
-        fields = ['reservation', 'agency', 'sales_type', 'sales_date', 'sales_amount', 'currency', 'commission_amount', 'sales_person', 'notes']
+        fields = ['agency', 'sales_type', 'sales_date', 'sales_amount', 'currency', 'commission_amount', 'sales_person', 'notes']
         widgets = {
-            'reservation': forms.Select(attrs={'class': 'form-control'}),
             'agency': forms.Select(attrs={'class': 'form-control'}),
             'sales_type': forms.Select(attrs={'class': 'form-control'}),
             'sales_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
@@ -47,8 +46,9 @@ class SalesRecordForm(forms.ModelForm):
         hotel = kwargs.pop('hotel', None)
         super().__init__(*args, **kwargs)
         if hotel:
-            from apps.tenant_apps.reception.models import Reservation
-            self.fields['reservation'].queryset = Reservation.objects.filter(hotel=hotel, is_deleted=False).order_by('-check_in_date')
+            # Reception modülü kaldırıldı - reservation field'ı kaldırıldı
+            # from apps.tenant_apps.reception.models import Reservation
+            # self.fields['reservation'].queryset = Reservation.objects.filter(hotel=hotel, is_deleted=False).order_by('-check_in_date')
             self.fields['agency'].queryset = Agency.objects.filter(hotel=hotel, is_active=True, is_deleted=False).order_by('name')
 
 
