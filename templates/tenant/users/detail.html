@@ -1,0 +1,230 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{{ tenant_user.user.get_full_name }} - Kullanıcı Detayı{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-vb-navy-500">
+            <i class="fas fa-user mr-2 text-vb-primary"></i>{{ tenant_user.user.get_full_name|default:tenant_user.user.username }}
+        </h1>
+        <div class="flex gap-2">
+            <a href="{% url 'tenant:user_update' tenant_user.pk %}" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+                <i class="fas fa-edit mr-2"></i>Düzenle
+            </a>
+            <a href="{% url 'tenant:user_role_assign' tenant_user.pk %}" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                <i class="fas fa-user-tag mr-2"></i>Rol Ata
+            </a>
+            <a href="{% url 'tenant:user_permission_assign' tenant_user.pk %}" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                <i class="fas fa-key mr-2"></i>Yetki Ata
+            </a>
+            {% if has_hotel_module %}
+            <a href="{% url 'hotels:user_hotel_permission_assign' tenant_user.pk %}" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">
+                <i class="fas fa-hotel mr-2"></i>Otel Yetkisi Ata
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-6">
+                <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Kullanıcı Bilgileri</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Kullanıcı Adı</p>
+                        <p class="font-semibold">{{ tenant_user.user.username }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">E-posta</p>
+                        <p class="font-semibold">{{ tenant_user.user.email }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Ad Soyad</p>
+                        <p class="font-semibold">{{ tenant_user.user.get_full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Kullanıcı Tipi</p>
+                        <p class="font-semibold">
+                            {% if tenant_user.user_type %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                                {{ tenant_user.user_type.icon }} {{ tenant_user.user_type.name }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Telefon</p>
+                        <p class="font-semibold">{{ tenant_user.phone|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Departman</p>
+                        <p class="font-semibold">{{ tenant_user.department|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Pozisyon</p>
+                        <p class="font-semibold">{{ tenant_user.position|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Durum</p>
+                        <span class="px-2 py-1 rounded text-xs font-semibold {% if tenant_user.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {% if tenant_user.is_active %}Aktif{% else %}Pasif{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-6">
+                <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Atanan Roller</h2>
+                <table class="w-full border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Rol</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Atanma Tarihi</th>
+                            <th class="px-4 py-2 text-center text-sm font-semibold">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for user_role in user_roles %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2">
+                                <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">
+                                    {{ user_role.role.icon }} {{ user_role.role.name }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-sm text-gray-600">{{ user_role.assigned_at|date:"d.m.Y H:i" }}</td>
+                            <td class="px-4 py-2">
+                                <div class="flex justify-center">
+                                    <a href="{% url 'tenant:user_role_remove' tenant_user.pk user_role.role.pk %}" 
+                                       class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm"
+                                       onclick="return confirm('Bu rolü kaldırmak istediğinize emin misiniz?')">
+                                        <i class="fas fa-times mr-1"></i>Kaldır
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-4 py-4 text-center text-gray-500">Henüz rol atanmamış.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Direkt Atanan Yetkiler</h2>
+                <table class="w-full border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Modül</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Yetki</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Atanma Tarihi</th>
+                            <th class="px-4 py-2 text-center text-sm font-semibold">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for user_permission in user_permissions %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                                    {{ user_permission.permission.module.name }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
+                                    {{ user_permission.permission.name }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-sm text-gray-600">{{ user_permission.assigned_at|date:"d.m.Y H:i" }}</td>
+                            <td class="px-4 py-2">
+                                <div class="flex justify-center">
+                                    <a href="{% url 'tenant:user_permission_remove' tenant_user.pk user_permission.permission.pk %}" 
+                                       class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm"
+                                       onclick="return confirm('Bu yetkiyi kaldırmak istediğinize emin misiniz?')">
+                                        <i class="fas fa-times mr-1"></i>Kaldır
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-4 py-4 text-center text-gray-500">Henüz direkt yetki atanmamış.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if hotel_permissions %}
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mt-6">
+                <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Otel Yetkileri</h2>
+                <table class="w-full border-collapse">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Otel</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Yetki Seviyesi</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Atanma Tarihi</th>
+                            <th class="px-4 py-2 text-center text-sm font-semibold">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for hotel_perm in hotel_permissions %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                                    <i class="fas fa-hotel mr-1"></i>{{ hotel_perm.hotel.name }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2">
+                                <span class="px-2 py-1 
+                                    {% if hotel_perm.permission_level == 'admin' %}bg-red-100 text-red-700
+                                    {% elif hotel_perm.permission_level == 'manage' %}bg-yellow-100 text-yellow-700
+                                    {% else %}bg-green-100 text-green-700{% endif %} rounded text-xs font-semibold">
+                                    {{ hotel_perm.get_permission_level_display }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2 text-sm text-gray-600">{{ hotel_perm.assigned_at|date:"d.m.Y H:i" }}</td>
+                            <td class="px-4 py-2">
+                                <div class="flex justify-center">
+                                    <a href="{% url 'hotels:user_hotel_permission_remove' tenant_user.pk hotel_perm.hotel.pk %}" 
+                                       class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm"
+                                       onclick="return confirm('Bu otel yetkisini kaldırmak istediğinize emin misiniz?')">
+                                        <i class="fas fa-times mr-1"></i>Kaldır
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Özet Bilgiler</h2>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Toplam Rol</p>
+                        <p class="text-2xl font-bold">{{ user_roles.count }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Son Giriş</p>
+                        <p class="font-semibold">{{ tenant_user.last_login_at|date:"d.m.Y H:i"|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Kayıt Tarihi</p>
+                        <p class="font-semibold">{{ tenant_user.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,143 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Tur Haritası - {{ tour.name }}{% endblock %}
+{% block page_title %}{{ tour.name }} - Harita{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:detail' tour.pk %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Tur Detayına Dön
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <h2 class="text-2xl font-bold text-vb-navy mb-6">
+            <i class="fas fa-map mr-2 text-vb-primary"></i>
+            Tur Rotası Haritası
+        </h2>
+        
+        {% if routes %}
+        <div id="map" style="height: 600px; width: 100%; border-radius: 8px; overflow: hidden;" class="mb-6"></div>
+        
+        <div class="bg-gray-50 rounded-lg p-4">
+<h3 class="vb-section-title text-gray-900 mb-4">Rota Bilgileri</h3>
+            <div class="space-y-3">
+                {% for route in routes %}
+                <div class="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200">
+                    <div class="w-8 h-8 rounded-full bg-vb-primary text-white flex items-center justify-center font-bold">
+                        {{ route.order }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-900">{{ route.city.name }}</p>
+                        {% if route.stay_duration %}
+                        <p class="text-sm text-gray-600">{{ route.stay_duration }}</p>
+                        {% endif %}
+                    </div>
+                    {% if route.is_departure %}
+                    <span class="px-3 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Çıkış</span>
+                    {% endif %}
+                    {% if route.is_destination %}
+                    <span class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Varış</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <i class="fas fa-map-marked-alt text-6xl mb-4"></i>
+            <p class="text-lg">Henüz rota eklenmemiş.</p>
+            <a href="{% url 'tours:route_add' tour.pk %}" class="text-vb-primary hover:text-blue-600 mt-4 inline-block">
+                Rota eklemek için tıklayın
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extrajs %}
+{% if routes %}
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
+<script>
+let map;
+let directionsService;
+let directionsRenderer;
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 6,
+        center: {lat: 39.9334, lng: 32.8597}, // Türkiye merkez
+    });
+    
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map);
+    
+    // Rota koordinatları
+    const waypoints = [
+        {% for route in routes %}
+        {% if route.city.latitude and route.city.longitude %}
+        {
+            location: {lat: {{ route.city.latitude }}, lng: {{ route.city.longitude }}},
+            stopover: true
+        }{% if not forloop.last %},{% endif %}
+        {% endif %}
+        {% endfor %}
+    ];
+    
+    // İlk ve son noktalar
+    const origin = waypoints[0]?.location || {lat: 39.9334, lng: 32.8597};
+    const destination = waypoints[waypoints.length - 1]?.location || {lat: 39.9334, lng: 32.8597};
+    
+    // Yol tarifi isteği
+    directionsService.route({
+        origin: origin,
+        destination: destination,
+        waypoints: waypoints.slice(1, -1),
+        optimizeWaypoints: false,
+        travelMode: google.maps.TravelMode.DRIVING
+    }, function(response, status) {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(response);
+        } else {
+            console.error('Directions request failed: ' + status);
+        }
+    });
+    
+    // Şehir işaretleyicileri
+    {% for route in routes %}
+    {% if route.city.latitude and route.city.longitude %}
+    new google.maps.Marker({
+        position: {lat: {{ route.city.latitude }}, lng: {{ route.city.longitude }}},
+        map: map,
+        label: {
+            text: '{{ route.order }}',
+            color: 'white',
+            fontWeight: 'bold'
+        },
+        title: '{{ route.city.name }}'
+    });
+    {% endif %}
+    {% endfor %}
+}
+
+// API key yoksa uyarı göster
+if (typeof google === 'undefined') {
+    document.getElementById('map').innerHTML = `
+        <div class="flex items-center justify-center h-full bg-gray-100 rounded-lg">
+            <div class="text-center p-8">
+                <i class="fas fa-exclamation-triangle text-4xl text-yellow-600 mb-4"></i>
+                <p class="text-gray-700 mb-2">Google Maps API key yapılandırılmamış.</p>
+                <p class="text-sm text-gray-500">Harita görüntülemek için Google Maps API key ekleyin.</p>
+            </div>
+        </div>
+    `;
+}
+</script>
+{% endif %}
+{% endblock %}
+{% endblock %}
+

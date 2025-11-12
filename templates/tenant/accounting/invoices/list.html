@@ -1,0 +1,116 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Faturalar - Muhasebe{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-vb-navy-500">
+            <i class="fas fa-file-invoice mr-2 text-vb-primary"></i>Faturalar
+        </h1>
+        <a href="{% url 'accounting:invoice_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+            <i class="fas fa-plus mr-2"></i>Yeni Fatura
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fatura Tipi</label>
+                <select name="invoice_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Tümü</option>
+                    {% for value, label in invoice_types %}
+                    <option value="{{ value }}" {% if request.GET.invoice_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Durum</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Tümü</option>
+                    {% for value, label in statuses %}
+                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Başlangıç</label>
+                <input type="date" name="date_from" value="{{ request.GET.date_from }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Bitiş</label>
+                <input type="date" name="date_to" value="{{ request.GET.date_to }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="md:col-span-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Arama</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Fatura no, müşteri adı..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="md:col-span-4 flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-search mr-2"></i>Filtrele
+                </button>
+                <a href="{% url 'accounting:invoice_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    <i class="fas fa-redo mr-2"></i>Temizle
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <table class="w-full border-collapse">
+            <thead class="bg-vb-navy-500 text-white">
+                <tr>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Fatura No</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Müşteri</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Tip</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Toplam</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Ödenen</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Durum</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for invoice in invoices %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-mono text-sm">{{ invoice.invoice_number }}</td>
+                    <td class="px-4 py-3">{{ invoice.customer_name }}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                            {{ invoice.get_invoice_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold">{{ invoice.total_amount|floatformat:2 }} {{ invoice.currency }}</td>
+                    <td class="px-4 py-3 text-right">
+                        <span class="{% if invoice.paid_amount >= invoice.total_amount %}text-green-600{% else %}text-yellow-600{% endif %}">
+                            {{ invoice.paid_amount|floatformat:2 }} {{ invoice.currency }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs font-semibold
+                            {% if invoice.status == 'paid' %}bg-green-100 text-green-700
+                            {% elif invoice.status == 'sent' %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {{ invoice.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-center gap-2">
+                            <a href="{% url 'accounting:invoice_detail' invoice.pk %}" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+                                Detay
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">Henüz fatura bulunmamaktadır.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

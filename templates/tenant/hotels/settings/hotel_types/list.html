@@ -1,0 +1,81 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Otel Türü Yönetimi - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Otel Türü Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-hotel mr-2 text-vb-primary"></i>
+            Otel Türleri
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'hotels:settings_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ayarlara Dön
+            </a>
+            <a href="{% url 'hotels:hotel_type_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni Otel Türü Ekle
+            </a>
+        </div>
+    </div>
+    
+    <!-- Otel Türü Listesi -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if hotel_types %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Otel Türü</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kod</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İkon</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hotel_type in hotel_types %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 font-semibold text-gray-900">{{ hotel_type.name }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ hotel_type.code }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ hotel_type.icon|default:"-" }}</td>
+                        <td class="px-4 py-3">
+                            {% if hotel_type.is_active %}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Aktif</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'hotels:hotel_type_update' hotel_type.pk %}" class="text-yellow-600 hover:text-yellow-700" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'hotels:hotel_type_delete' hotel_type.pk %}" class="text-red-600 hover:text-red-700" title="Sil" onclick="return confirm('Bu otel türünü silmek istediğinize emin misiniz?');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-hotel text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-600 mb-4">Henüz otel türü eklenmemiş.</p>
+            <a href="{% url 'hotels:hotel_type_create' %}" class="inline-block px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                İlk Otel Türünü Ekle
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

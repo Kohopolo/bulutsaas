@@ -1,0 +1,104 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Doluluk Raporu - Resepsiyon{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-chart-line mr-2 text-vb-primary"></i>
+            Doluluk Raporu
+        </h2>
+        <div class="flex space-x-3">
+            <form method="get" class="flex items-center space-x-2">
+                <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-vb-primary">
+                <span class="text-gray-600">-</span>
+                <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-vb-primary">
+                <button type="submit" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrele
+                </button>
+            </form>
+            <button onclick="window.print()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                <i class="fas fa-print mr-2"></i>
+                Yazdır
+            </button>
+        </div>
+    </div>
+    
+    <!-- Özet İstatistikler -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Toplam Oda</p>
+            <p class="text-3xl font-bold text-vb-primary">{{ total_rooms }}</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Ortalama Doluluk Oranı</p>
+            <p class="text-3xl font-bold text-green-600">{{ avg_occupancy }}%</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Rapor Dönemi</p>
+            <p class="text-lg font-semibold text-gray-900">
+                {{ date_from|date:"d.m.Y" }} - {{ date_to|date:"d.m.Y" }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Doluluk Tablosu -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-vb-navy mb-4">
+            <i class="fas fa-table mr-2 text-vb-primary"></i>
+            Günlük Doluluk Detayları
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="px-4 py-2 text-left text-sm font-semibold">Tarih</th>
+                        <th class="px-4 py-2 text-center text-sm font-semibold">Dolu</th>
+                        <th class="px-4 py-2 text-center text-sm font-semibold">Müsait</th>
+                        <th class="px-4 py-2 text-center text-sm font-semibold">Check-in</th>
+                        <th class="px-4 py-2 text-center text-sm font-semibold">Check-out</th>
+                        <th class="px-4 py-2 text-center text-sm font-semibold">Doluluk Oranı</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in daily_occupancy %}
+                    <tr class="border-b border-gray-200">
+                        <td class="px-4 py-2 text-sm font-semibold">{{ day.date|date:"d.m.Y" }}</td>
+                        <td class="px-4 py-2 text-center text-sm text-red-600 font-semibold">{{ day.occupied }}</td>
+                        <td class="px-4 py-2 text-center text-sm text-green-600 font-semibold">{{ day.available }}</td>
+                        <td class="px-4 py-2 text-center text-sm">{{ day.checkins }}</td>
+                        <td class="px-4 py-2 text-center text-sm">{{ day.checkouts }}</td>
+                        <td class="px-4 py-2 text-center text-sm">
+                            <div class="flex items-center justify-center">
+                                <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                    <div class="bg-vb-primary h-2 rounded-full" style="width: {{ day.occupancy_rate }}%"></div>
+                                </div>
+                                <span class="font-semibold">{{ day.occupancy_rate }}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">Veri bulunmamaktadır.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bekleme Listesi - Tur Modülü{% endblock %}
+{% block page_title %}Bekleme Listesi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-clock mr-2 text-vb-primary"></i>
+            Bekleme Listesi
+        </h2>
+        <a href="{% url 'tours:list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Turlara Dön
+        </a>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Tur</label>
+                <select name="tour" id="tour" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    {% for tour in tours %}
+                    <option value="{{ tour.id }}" {% if request.GET.tour == tour.id|stringformat:"s" %}selected{% endif %}>
+                        {{ tour.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Durum</label>
+                <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Ara</label>
+                <input type="text" name="search" id="search" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary"
+                       placeholder="Müşteri adı, email, telefon..." 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="flex items-end space-x-2">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrele
+                </button>
+                <a href="{% url 'tours:waiting_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bekleme Listesi -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if waiting_lists %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tur</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tarih</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Müşteri</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İletişim</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kişi Sayısı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Öncelik</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in waiting_lists %}
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <a href="{% url 'tours:detail' item.tour.id %}" class="text-vb-primary hover:text-blue-600 font-medium">
+                                {{ item.tour.name }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {% if item.tour_date %}
+                                {{ item.tour_date.date|date:"d.m.Y" }}
+                            {% else %}
+                                <span class="text-gray-400">Tarih seçilmemiş</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                            {{ item.customer_name }} {{ item.customer_surname }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            <div class="mb-1">
+                                <i class="fas fa-envelope text-gray-400 mr-1"></i>
+                                {{ item.customer_email|default:"-" }}
+                            </div>
+                            <div>
+                                <i class="fas fa-phone text-gray-400 mr-1"></i>
+                                {{ item.customer_phone|default:"-" }}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            <div class="flex flex-wrap gap-1 mb-1">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                                    {{ item.adult_count }} Yetişkin
+                                </span>
+                                {% if item.child_count > 0 %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">
+                                    {{ item.child_count }} Çocuk
+                                </span>
+                                {% endif %}
+                            </div>
+                            <small class="text-gray-500">Toplam: {{ item.total_people }}</small>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if item.priority == 'high' %}
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Yüksek</span>
+                            {% elif item.priority == 'medium' %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">Orta</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">Düşük</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if item.status == 'waiting' %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">Beklemede</span>
+                            {% elif item.status == 'notified' %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">Bildirildi</span>
+                            {% elif item.status == 'converted' %}
+                            <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Rezervasyona Dönüştü</span>
+                            {% elif item.status == 'cancelled' %}
+                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">İptal Edildi</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">{{ item.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{% url 'tours:waiting_list_detail' item.id %}" 
+                                   class="text-vb-primary hover:text-blue-600" title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if item.status == 'waiting' %}
+                                <a href="{% url 'tours:waiting_list_notify' item.id %}" 
+                                   class="text-blue-600 hover:text-blue-700" title="Bildir">
+                                    <i class="fas fa-bell"></i>
+                                </a>
+                                <a href="{% url 'tours:waiting_list_convert' item.id %}" 
+                                   class="text-green-600 hover:text-green-700" title="Rezervasyona Dönüştür">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'tours:waiting_list_cancel' item.id %}" 
+                                   class="text-red-600 hover:text-red-700" title="İptal Et"
+                                   onclick="return confirm('Bu bekleme listesi kaydını iptal etmek istediğinizden emin misiniz?');">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Sayfalama -->
+        {% if waiting_lists.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                Sayfa {{ waiting_lists.number }} / {{ waiting_lists.paginator.num_pages }}
+            </div>
+            <div class="flex space-x-2">
+                {% if waiting_lists.has_previous %}
+                <a href="?page=1{% if request.GET.tour %}&tour={{ request.GET.tour }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                   class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ waiting_lists.previous_page_number }}{% if request.GET.tour %}&tour={{ request.GET.tour }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                   class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                {% endif %}
+                {% if waiting_lists.has_next %}
+                <a href="?page={{ waiting_lists.next_page_number }}{% if request.GET.tour %}&tour={{ request.GET.tour }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                   class="px-3 py-1 bg-vb-primary text-white rounded hover:bg-blue-600">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ waiting_lists.paginator.num_pages }}{% if request.GET.tour %}&tour={{ request.GET.tour }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+                   class="px-3 py-1 bg-vb-primary text-white rounded hover:bg-blue-600">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="px-4 py-8 text-center text-gray-500">
+            <i class="fas fa-inbox text-4xl mb-2"></i>
+            <p>Henüz bekleme listesi kaydı bulunmamaktadır.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

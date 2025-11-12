@@ -1,0 +1,105 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Anahtar Kartları - Resepsiyon{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-key mr-2 text-vb-primary"></i>
+            Anahtar Kartları
+        </h2>
+        <a href="{% url 'reception:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Ana Ekran
+        </a>
+    </div>
+    
+    <!-- Anahtar Kartı Listesi -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if keycards %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kart Numarası</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Müşteri</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Oda</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Geçerlilik</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for keycard in keycards %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 text-sm font-semibold text-vb-primary">{{ keycard.card_number }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {{ keycard.guest.get_full_name|default:keycard.guest.first_name }} {{ keycard.guest.last_name }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {% if keycard.room_number %}{{ keycard.room_number.number }}{% else %}-{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {{ keycard.valid_from|date:"d.m.Y H:i" }}<br>
+                            <span class="text-xs">→ {{ keycard.valid_until|date:"d.m.Y H:i" }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if keycard.is_active %}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Aktif</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">İptal</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'reception:keycard_detail' keycard.pk %}" class="text-vb-primary hover:text-blue-600" title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if keycard.is_active %}
+                                <a href="{% url 'reception:keycard_print' keycard.pk %}" class="text-green-600 hover:text-green-700" title="Yazdır">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                <a href="{% url 'reception:keycard_deactivate' keycard.pk %}" class="text-red-600 hover:text-red-700" title="İptal Et" onclick="return confirm('Anahtar kartını iptal etmek istediğinize emin misiniz?');">
+                                    <i class="fas fa-ban"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sayfalama -->
+        {% if keycards.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                Sayfa {{ keycards.number }} / {{ keycards.paginator.num_pages }}
+            </div>
+            <div class="flex space-x-2">
+                {% if keycards.has_previous %}
+                <a href="?page={{ keycards.previous_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+                {% if keycards.has_next %}
+                <a href="?page={{ keycards.next_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-key text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-600 mb-4">Henüz anahtar kartı bulunamadı.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

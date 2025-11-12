@@ -1,0 +1,140 @@
+{% load static %}
+{% load dict_filters %}
+<div id="{{ widget.attrs.id }}_container" class="json-widget campaign-rules-widget">
+    <div id="{{ widget.attrs.id }}_fields_container" class="campaign-fields-container space-y-4">
+        <!-- Dinamik alanlar buraya eklenecek -->
+    </div>
+    <input type="hidden" id="{{ widget.attrs.id }}_json" name="{{ widget.name }}" value="{{ widget.value|default:'{}' }}">
+</div>
+
+<script>
+(function() {
+    const container = document.getElementById('{{ widget.attrs.id }}_container');
+    if (!container) return;
+    
+    const hiddenInput = document.getElementById('{{ widget.attrs.id }}_json');
+    const fieldsContainer = document.getElementById('{{ widget.attrs.id }}_fields_container');
+    if (!hiddenInput || !fieldsContainer) return;
+    
+    let campaignFields;
+    try {
+        campaignFields = JSON.parse('{{ widget.campaign_fields|escapejs }}');
+    } catch(e) {
+        console.error('Campaign fields parse error:', e);
+        campaignFields = {};
+    }
+    
+    let rules = {};
+    try {
+        if ('{{ widget.rules }}') {
+            rules = JSON.parse('{{ widget.rules|escapejs }}');
+        }
+    } catch(e) {
+        console.error('Rules parse error:', e);
+        rules = {};
+    }
+    
+    function updateHiddenInput() {
+        if (!hiddenInput || !fieldsContainer) return;
+        
+        const campaignTypeSelect = document.getElementById('id_campaign_type');
+        if (!campaignTypeSelect) return;
+        
+        const campaignType = campaignTypeSelect.value || 'custom';
+        const fieldsConfig = campaignFields[campaignType] || campaignFields['custom'];
+        
+        const newRules = {};
+        fieldsConfig.forEach(fieldConfig => {
+            const input = fieldsContainer.querySelector(`input[name="{{ widget.name }}_${fieldConfig.key}"]`);
+            if (input && input.value.trim()) {
+                let value = input.value.trim();
+                if (fieldConfig.type === 'number') {
+                    try {
+                        value = value.includes('.') ? parseFloat(value) : parseInt(value);
+                        if (isNaN(value)) value = 0;
+                    } catch {
+                        value = 0;
+                    }
+                }
+                newRules[fieldConfig.key] = value;
+            }
+        });
+        
+        hiddenInput.value = JSON.stringify(newRules);
+    }
+    
+    function renderFields(campaignType) {
+        if (!fieldsContainer) return;
+        
+        const fieldsConfig = campaignFields[campaignType] || campaignFields['custom'];
+        
+        // Mevcut alanları temizle
+        fieldsContainer.innerHTML = '';
+        
+        // Yeni alanları oluştur
+        fieldsConfig.forEach(fieldConfig => {
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'border border-gray-200 rounded-lg p-4 bg-gray-50';
+            
+            const label = document.createElement('label');
+            label.className = 'block text-sm font-semibold text-gray-700 mb-2';
+            label.textContent = fieldConfig.label;
+            fieldDiv.appendChild(label);
+            
+            const input = document.createElement('input');
+            input.type = fieldConfig.type || 'text';
+            input.name = '{{ widget.name }}_' + fieldConfig.key;
+            input.className = 'form-control campaign-rule-input';
+            input.placeholder = fieldConfig.placeholder || '';
+            
+            if (fieldConfig.type === 'number') {
+                input.step = '0.01';
+                if (fieldConfig.min !== undefined) input.min = fieldConfig.min;
+                if (fieldConfig.max !== undefined) input.max = fieldConfig.max;
+            }
+            
+            // Mevcut değeri yükle
+            if (rules && rules[fieldConfig.key] !== undefined) {
+                input.value = rules[fieldConfig.key];
+            }
+            
+            input.addEventListener('input', updateHiddenInput);
+            input.addEventListener('blur', updateHiddenInput);
+            
+            fieldDiv.appendChild(input);
+            fieldsContainer.appendChild(fieldDiv);
+        });
+        
+        updateHiddenInput();
+    }
+    
+    // Kampanya tipi değiştiğinde alanları güncelle
+    const campaignTypeSelect = document.getElementById('id_campaign_type');
+    if (campaignTypeSelect) {
+        campaignTypeSelect.addEventListener('change', function() {
+            renderFields(this.value || 'custom');
+        });
+        
+        // İlk yüklemede alanları göster
+        renderFields(campaignTypeSelect.value || 'custom');
+    } else {
+        // Eğer kampanya tipi select'i henüz yüklenmemişse, biraz bekle
+        setTimeout(function() {
+            const select = document.getElementById('id_campaign_type');
+            if (select) {
+                select.addEventListener('change', function() {
+                    renderFields(this.value || 'custom');
+                });
+                renderFields(select.value || 'custom');
+            } else {
+                // Varsayılan olarak custom göster
+                renderFields('custom');
+            }
+        }, 100);
+    }
+    
+    // İlk yüklemede güncelle
+    updateHiddenInput();
+})();
+</script>
+

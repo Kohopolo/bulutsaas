@@ -1,0 +1,271 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Yeni Rezervasyon - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Yeni Rezervasyon{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:reservation_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Rezervasyon Listesine Dön
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <h2 class="text-2xl font-bold text-vb-navy mb-6">
+            <i class="fas fa-calendar-plus mr-2 text-vb-primary"></i>
+            Yeni Rezervasyon
+        </h2>
+        
+        <form method="post" id="reservationForm" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Tur Seçimi -->
+            <div class="border-b border-gray-200 pb-6">
+<h3 class="vb-section-title text-gray-900 mb-4">Tur Seçimi</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tur *</label>
+                        {{ form.tour }}
+                        {% if form.tour.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.tour.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tur Tarihi *</label>
+                        {{ form.tour_date }}
+                        {% if form.tour_date.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.tour_date.errors.0 }}</p>
+                        {% endif %}
+                        <div id="tour-date-info" class="mt-2 text-sm text-gray-600"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Müşteri Bilgileri -->
+            <div class="border-b border-gray-200 pb-6">
+<h3 class="vb-section-title text-gray-900 mb-4">Müşteri Bilgileri</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Ad *</label>
+                        {{ form.customer_name }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Soyad *</label>
+                        {{ form.customer_surname }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">E-posta *</label>
+                        {{ form.customer_email }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Telefon *</label>
+                        {{ form.customer_phone }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">TC Kimlik No</label>
+                        {{ form.customer_tc }}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Adres</label>
+                        {{ form.customer_address }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kişi Bilgileri -->
+            <div class="border-b border-gray-200 pb-6">
+<h3 class="vb-section-title text-gray-900 mb-4">Kişi Bilgileri</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Yetişkin Sayısı *</label>
+                        {{ form.adult_count }}
+                        <p class="text-xs text-gray-500 mt-1" id="adult-capacity-info"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Çocuk Sayısı *</label>
+                        {{ form.child_count }}
+                        <p class="text-xs text-gray-500 mt-1" id="child-capacity-info"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fiyat Bilgileri -->
+            <div class="border-b border-gray-200 pb-6">
+<h3 class="vb-section-title text-gray-900 mb-4">Fiyat Bilgileri</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Yetişkin Birim Fiyat</label>
+                        {{ form.adult_price }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Çocuk Birim Fiyat</label>
+                        {{ form.child_price }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">İndirim Tutarı</label>
+                        {{ form.discount_amount }}
+                    </div>
+                </div>
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-semibold text-gray-900">Tahmini Toplam:</span>
+                        <span class="text-2xl font-bold text-vb-primary" id="total-amount">0.00 TRY</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Diğer -->
+            <div>
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Satış Elemanı</label>
+                    {{ form.sales_person }}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Notlar</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+            
+            <!-- Butonlar -->
+            <div class="flex justify-end space-x-3 pt-4">
+                <a href="{% url 'tours:reservation_list' %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                    İptal
+                </a>
+                <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                    <i class="fas fa-save mr-2"></i>
+                    Rezervasyon Oluştur
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extrajs %}
+<script>
+// Tur seçildiğinde tarihleri yükle
+document.getElementById('id_tour').addEventListener('change', function() {
+    const tourId = this.value;
+    const dateSelect = document.getElementById('id_tour_date');
+    
+    if (tourId) {
+        // AJAX ile tarihleri getir
+        fetch(`{% url 'tours:ajax_get_tour_dates' %}?tour_id=${tourId}`)
+            .then(response => response.json())
+            .then(data => {
+                dateSelect.innerHTML = '<option value="">Tarih seçin...</option>';
+                if (data.success && data.dates) {
+                    data.dates.forEach(date => {
+                        const option = document.createElement('option');
+                        option.value = date.id;
+                        option.textContent = date.date;
+                        dateSelect.appendChild(option);
+                    });
+                }
+            });
+    } else {
+        dateSelect.innerHTML = '<option value="">Önce tur seçin</option>';
+    }
+});
+
+// Tarih seçildiğinde fiyatları ve kontenjanı güncelle
+document.getElementById('id_tour_date').addEventListener('change', function() {
+    const dateId = this.value;
+    const tourId = document.getElementById('id_tour').value;
+    
+    if (dateId && tourId) {
+        // Fiyatları getir
+        fetch(`{% url 'tours:ajax_get_tour_price' %}?tour_id=${tourId}&date_id=${dateId}&is_adult=true`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('id_adult_price').value = data.price;
+                }
+            });
+        
+        fetch(`{% url 'tours:ajax_get_tour_price' %}?tour_id=${tourId}&date_id=${dateId}&is_adult=false`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('id_child_price').value = data.price;
+                }
+            });
+        
+        // Kontenjanı getir
+        fetch(`{% url 'tours:ajax_get_available_capacity' %}?date_id=${dateId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const capacity = data.capacity;
+                    document.getElementById('adult-capacity-info').textContent = 
+                        `Müsait: ${capacity.adults} / Toplam: ${capacity.max_adults}`;
+                    document.getElementById('child-capacity-info').textContent = 
+                        `Müsait: ${capacity.children} / Toplam: ${capacity.max_children}`;
+                }
+            });
+        
+        updateTotal();
+    }
+});
+
+// Kişi sayıları değiştiğinde toplamı güncelle
+function updateTotal() {
+    const tourId = document.getElementById('id_tour').value;
+    const dateId = document.getElementById('id_tour_date').value;
+    const adultCount = parseInt(document.getElementById('id_adult_count').value) || 0;
+    const childCount = parseInt(document.getElementById('id_child_count').value) || 0;
+    const discount = parseFloat(document.getElementById('id_discount_amount').value) || 0;
+    
+    if (tourId && dateId) {
+        // AJAX ile toplam hesapla (grup fiyat, kampanya vb. dahil)
+        fetch(`{% url 'tours:ajax_calculate_reservation_total' %}?tour_id=${tourId}&date_id=${dateId}&adult_count=${adultCount}&child_count=${childCount}&discount=${discount}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('id_adult_price').value = data.adult_price;
+                    document.getElementById('id_child_price').value = data.child_price;
+                    document.getElementById('total-amount').textContent = data.total.toFixed(2) + ' ' + data.currency;
+                }
+            });
+    } else {
+        // Basit hesaplama
+        const adultPrice = parseFloat(document.getElementById('id_adult_price').value) || 0;
+        const childPrice = parseFloat(document.getElementById('id_child_price').value) || 0;
+        const total = (adultCount * adultPrice) + (childCount * childPrice) - discount;
+        document.getElementById('total-amount').textContent = total.toFixed(2) + ' TRY';
+    }
+}
+
+document.getElementById('id_adult_count').addEventListener('input', updateTotal);
+document.getElementById('id_child_count').addEventListener('input', updateTotal);
+document.getElementById('id_adult_price').addEventListener('input', updateTotal);
+document.getElementById('id_child_price').addEventListener('input', updateTotal);
+document.getElementById('id_discount_amount').addEventListener('input', updateTotal);
+</script>
+
+{% block extrastyle %}
+<style>
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #ffffff;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    input[readonly].form-control {
+        background-color: #f3f4f6;
+    }
+</style>
+{% endblock %}
+{% endblock %}
+{% endblock %}
+

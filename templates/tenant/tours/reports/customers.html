@@ -1,0 +1,128 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Müşteri Analizi - Tur Raporlama{% endblock %}
+{% block page_title %}Müşteri Analizi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:reports_dashboard' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Raporlama Dashboard'a Dön
+        </a>
+    </div>
+    
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Başlangıç Tarihi</label>
+                <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Bitiş Tarihi</label>
+                <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Özet İstatistikler -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Toplam Müşteri</p>
+            <p class="text-3xl font-bold text-vb-navy">{{ top_customers|length }}</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Yeni Müşteriler</p>
+            <p class="text-3xl font-bold text-green-600">{{ new_customers }}</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Toplam Harcama</p>
+            <p class="text-3xl font-bold text-purple-600">
+                {% if top_customers %}
+                    {% for customer in top_customers|slice:":1" %}
+                        {{ customer.total_amount|floatformat:2 }} TRY
+                    {% endfor %}
+                {% else %}
+                    0.00 TRY
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    <!-- En Çok Rezervasyon Yapan Müşteriler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6 shadow-sm">
+        <h3 class="text-lg font-bold text-vb-navy mb-4">
+            <i class="fas fa-star mr-2 text-yellow-500"></i>
+            En Çok Rezervasyon Yapan Müşteriler
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Sıra</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Müşteri</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">E-posta</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Telefon</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Rezervasyon</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Toplam Kişi</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Toplam Harcama</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in top_customers %}
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">{{ forloop.counter }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900">{{ customer.customer_name }} {{ customer.customer_surname }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ customer.customer_email }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ customer.customer_phone }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ customer.reservation_count }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ customer.total_people|default:0 }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-green-600">{{ customer.total_amount|floatformat:2 }} TRY</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>Müşteri verisi bulunamadı.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Müşteri Segmentasyonu -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <h3 class="text-lg font-bold text-vb-navy mb-4">
+            <i class="fas fa-chart-pie mr-2 text-vb-primary"></i>
+            Müşteri Segmentasyonu
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for segment in customer_segments|slice:":12" %}
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm text-gray-600 mb-1">{{ segment.customer_email }}</p>
+                <p class="text-lg font-semibold text-gray-900">{{ segment.reservation_count }} rezervasyon</p>
+                <p class="text-sm font-bold text-green-600">{{ segment.total_spent|floatformat:2 }} TRY</p>
+            </div>
+            {% empty %}
+            <div class="col-span-3 text-center text-gray-500 py-8">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>Segmentasyon verisi bulunamadı.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

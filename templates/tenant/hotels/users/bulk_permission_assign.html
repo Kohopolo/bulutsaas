@@ -1,0 +1,118 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Toplu Otel Yetkisi Ata - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Toplu Otel Yetkisi Ata{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h2 class="text-2xl font-bold text-vb-navy mb-6">
+                <i class="fas fa-users-cog mr-2 text-vb-primary"></i>
+                Toplu Otel Yetkisi Ata
+            </h2>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Birden fazla kullanıcıya birden fazla otel için aynı yetki seviyesini toplu olarak atayabilirsiniz.
+                </p>
+            </div>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Kullanıcılar *</label>
+                    <div class="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto">
+                        {% for user in users %}
+                        <label class="flex items-center py-2 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="user_ids" value="{{ user.id }}" class="mr-3 w-5 h-5 text-vb-primary border-gray-300 rounded focus:ring-vb-primary">
+                            <span class="text-sm text-gray-700">
+                                {{ user.user.get_full_name|default:user.user.username }}
+                                {% if user.user.email %}<span class="text-gray-500">({{ user.user.email }})</span>{% endif %}
+                            </span>
+                        </label>
+                        {% empty %}
+                        <p class="text-gray-500 text-sm">Kullanıcı bulunamadı.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Oteller *
+                        <button type="button" onclick="toggleAllHotels()" class="ml-2 text-xs text-vb-primary hover:underline">Tümünü Seç/Kaldır</button>
+                    </label>
+                    <div class="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto">
+                        {% for hotel in hotels %}
+                        <label class="flex items-center py-2 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="hotel_ids" value="{{ hotel.id }}" class="mr-3 w-5 h-5 text-vb-primary border-gray-300 rounded focus:ring-vb-primary">
+                            <span class="text-sm text-gray-700">
+                                <i class="fas fa-hotel mr-2 text-vb-primary"></i>
+                                {{ hotel.name }}
+                                {% if hotel.city %}<span class="text-gray-500">({{ hotel.city.name }})</span>{% endif %}
+                            </span>
+                        </label>
+                        {% empty %}
+                        <p class="text-gray-500 text-sm">Otel bulunamadı.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Yetki Seviyesi *</label>
+                    <select name="permission_level" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vb-primary focus:border-transparent">
+                        <option value="view">Görüntüleme</option>
+                        <option value="manage">Yönetim</option>
+                        <option value="admin">Yönetici</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <strong>Görüntüleme:</strong> Sadece görüntüleme yetkisi<br>
+                        <strong>Yönetim:</strong> Oluşturma, düzenleme yetkisi<br>
+                        <strong>Yönetici:</strong> Tüm yetkiler (silme dahil)
+                    </p>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Uyarı:</strong> Bu işlem seçilen tüm kullanıcılara seçilen tüm oteller için yetki atayacaktır. 
+                        Mevcut yetkiler güncellenecektir.
+                    </p>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <a href="{% url 'tenant:user_list' %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                        <i class="fas fa-save mr-2"></i>
+                        Yetkileri Ata
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAllUsers() {
+    const checkboxes = document.querySelectorAll('input[name="user_ids"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+    });
+}
+
+function toggleAllHotels() {
+    const checkboxes = document.querySelectorAll('input[name="hotel_ids"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+    });
+}
+</script>
+{% endblock %}
+

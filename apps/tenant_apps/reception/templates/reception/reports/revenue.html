@@ -1,0 +1,141 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Gelir Raporu - Resepsiyon{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-money-bill-wave mr-2 text-vb-primary"></i>
+            Gelir Raporu
+        </h2>
+        <div class="flex space-x-3">
+            <form method="get" class="flex items-center space-x-2">
+                <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-vb-primary">
+                <span class="text-gray-600">-</span>
+                <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-vb-primary">
+                <select name="period" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-vb-primary">
+                    <option value="daily" {% if period == 'daily' %}selected{% endif %}>Günlük</option>
+                    <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>Haftalık</option>
+                    <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Aylık</option>
+                </select>
+                <button type="submit" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrele
+                </button>
+            </form>
+            <button onclick="window.print()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                <i class="fas fa-print mr-2"></i>
+                Yazdır
+            </button>
+        </div>
+    </div>
+    
+    <!-- Özet İstatistikler -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Toplam Rezervasyon</p>
+            <p class="text-3xl font-bold text-vb-primary">{{ total_stats.total_reservations }}</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Toplam Gelir</p>
+            <p class="text-3xl font-bold text-green-600">{{ total_stats.total_revenue|floatformat:2 }} TRY</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Ödenen</p>
+            <p class="text-3xl font-bold text-blue-600">{{ total_stats.total_paid|floatformat:2 }} TRY</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <p class="text-sm text-gray-600 mb-1">Bakiye</p>
+            <p class="text-3xl font-bold {% if total_stats.total_balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                {{ total_stats.total_balance|floatformat:2 }} TRY
+            </p>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Dönem Bazında Gelir -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                <i class="fas fa-chart-bar mr-2 text-vb-primary"></i>
+                Dönem Bazında Gelir
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-4 py-2 text-left text-sm font-semibold">Dönem</th>
+                            <th class="px-4 py-2 text-center text-sm font-semibold">Rezervasyon</th>
+                            <th class="px-4 py-2 text-right text-sm font-semibold">Gelir</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in revenue_data %}
+                        <tr class="border-b border-gray-200">
+                            <td class="px-4 py-2 text-sm">
+                                {% if period == 'daily' %}
+                                    {{ item.period|date:"d.m.Y" }}
+                                {% elif period == 'weekly' %}
+                                    Hafta {{ item.period|date:"W/Y" }}
+                                {% else %}
+                                    {{ item.period|date:"F Y" }}
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2 text-center text-sm">{{ item.count }}</td>
+                            <td class="px-4 py-2 text-right text-sm font-semibold">{{ item.revenue|floatformat:2 }} TRY</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-4 py-8 text-center text-gray-500">Veri bulunmamaktadır.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Kaynak Bazında Gelir -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                <i class="fas fa-chart-pie mr-2 text-vb-primary"></i>
+                Kaynak Bazında Gelir
+            </h3>
+            <div class="space-y-3">
+                {% for item in revenue_by_source %}
+                <div class="border-b border-gray-200 pb-3">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-900">
+                            {{ item.source|title }}
+                        </span>
+                        <span class="text-sm font-semibold text-vb-primary">
+                            {{ item.revenue|floatformat:2 }} TRY
+                        </span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
+                            <div class="bg-vb-primary h-2 rounded-full" 
+                                 style="width: {% widthratio item.revenue total_stats.total_revenue 100 %}%"></div>
+                        </div>
+                        <span class="text-xs text-gray-600">{{ item.count }} rezervasyon</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-4">Veri bulunmamaktadır.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

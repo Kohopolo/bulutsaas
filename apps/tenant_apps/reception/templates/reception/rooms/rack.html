@@ -1,0 +1,122 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Oda Durum Panosu - Resepsiyon{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-th-large mr-2 text-vb-primary"></i>
+            Oda Durum Panosu
+        </h2>
+        <a href="{% url 'reception:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Ana Ekran
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <div id="roomRack" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <!-- Oda kartları buraya dinamik olarak yüklenecek -->
+            <p class="text-gray-600 text-center col-span-full">Oda durumları yükleniyor...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Oda durum panosu için AJAX çağrısı
+fetch('{% url "reception:api_room_rack" %}')
+    .then(response => response.json())
+    .then(data => {
+        const rack = document.getElementById('roomRack');
+        rack.innerHTML = '';
+        data.rooms.forEach(room => {
+            const card = document.createElement('div');
+            card.className = `p-4 rounded-lg border-2 cursor-pointer hover:shadow-lg transition-all ${
+                room.status === 'available' ? 'bg-green-50 border-green-300' :
+                room.status === 'occupied' ? 'bg-red-50 border-red-300' :
+                room.status === 'housekeeping' ? 'bg-yellow-50 border-yellow-300' :
+                room.status === 'out_of_order' ? 'bg-gray-50 border-gray-300' :
+                'bg-blue-50 border-blue-300'
+            }`;
+            card.innerHTML = `
+                <div class="text-center">
+                    <p class="font-bold text-lg">${room.number}</p>
+                    <p class="text-sm text-gray-600">${room.room_type}</p>
+                    <p class="text-xs mt-2">${room.status_display}</p>
+                </div>
+            `;
+            // Oda durumuna göre butonlar ekle
+            let actionButtons = '';
+            if (room.status === 'available') {
+                actionButtons = `
+                    <div class="mt-3">
+                        <a href="/reception/reservations/create/?room=${room.room_id}" 
+                           class="block w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold text-center">
+                            <i class="fas fa-plus-circle mr-1"></i>Rezervasyon Yap
+                        </a>
+                    </div>
+                `;
+            } else if (room.reservation_id) {
+                if (room.reservation_status === 'confirmed') {
+                    actionButtons = `
+                        <div class="mt-3 space-y-2">
+                            <a href="/reception/reservations/${room.reservation_id}/checkin/" 
+                               class="block w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold text-center">
+                                <i class="fas fa-sign-in-alt mr-1"></i>Check-in
+                            </a>
+                            <a href="/reception/reservations/${room.reservation_id}/" 
+                               class="block w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm text-center">
+                                <i class="fas fa-eye mr-1"></i>Detay
+                            </a>
+                        </div>
+                    `;
+                } else if (room.reservation_status === 'checked_in') {
+                    actionButtons = `
+                        <div class="mt-3 space-y-2">
+                            <a href="/reception/reservations/${room.reservation_id}/checkout/" 
+                               class="block w-full px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-semibold text-center">
+                                <i class="fas fa-sign-out-alt mr-1"></i>Check-out
+                            </a>
+                            <a href="/reception/reservations/${room.reservation_id}/" 
+                               class="block w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm text-center">
+                                <i class="fas fa-eye mr-1"></i>Detay
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    actionButtons = `
+                        <div class="mt-3">
+                            <a href="/reception/reservations/${room.reservation_id}/" 
+                               class="block w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm text-center">
+                                <i class="fas fa-eye mr-1"></i>Detay
+                            </a>
+                        </div>
+                    `;
+                }
+            } else {
+                actionButtons = `
+                    <div class="mt-3">
+                        <a href="/reception/rooms/${room.id}/" 
+                           class="block w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm text-center">
+                            <i class="fas fa-eye mr-1"></i>Detay
+                        </a>
+                    </div>
+                `;
+            }
+            
+            card.innerHTML = `
+                <div class="text-center">
+                    <p class="font-bold text-lg cursor-pointer" onclick="event.stopPropagation();">${room.number}</p>
+                    <p class="text-sm text-gray-600">${room.room_name}</p>
+                    <p class="text-xs mt-2">${room.status_display}</p>
+                    ${actionButtons}
+                </div>
+            `;
+            rack.appendChild(card);
+        });
+    });
+</script>
+{% endblock %}
+

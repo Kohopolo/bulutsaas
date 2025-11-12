@@ -1,0 +1,102 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if agency_price %}Acente Fiyatı Düzenle{% else %}Acente Fiyatı Ekle{% endif %} - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}{% if agency_price %}Acente Fiyatı Düzenle{% else %}Acente Fiyatı Ekle{% endif %}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h2 class="text-2xl font-bold text-vb-navy mb-6">
+                <i class="fas fa-handshake mr-2 text-vb-primary"></i>
+                {% if agency_price %}Acente Fiyatı Düzenle{% else %}Acente Fiyatı Ekle{% endif %}
+            </h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="border-b border-gray-200 pb-6">
+<h3 class="vb-section-title text-gray-900 mb-4">Acente Bilgileri</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Acente ID *</label>
+                            {{ form.agency_id }}
+                            {% if form.agency_id.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ form.agency_id.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Acente Adı *</label>
+                            {{ form.agency_name }}
+                            {% if form.agency_name.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ form.agency_name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-b border-gray-200 pb-6">
+<h3 class="vb-section-title text-gray-900 mb-4">Fiyat Bilgileri</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Kişi Başı Fiyat</label>
+                            {{ form.price_per_person }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Sabit Oda Fiyatı</label>
+                            {{ form.fixed_room_price }}
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Komisyon Oranı (%)</label>
+                        {{ form.commission_rate }}
+                        {% if form.commission_rate.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.commission_rate.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="border-b border-gray-200 pb-6">
+                    <div>
+                        <label class="flex items-center">
+                            {{ form.is_active }}
+                            <span class="ml-2 text-sm text-gray-700">Aktif</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <a href="{% url 'hotels:room_price_detail' room_price.room.pk %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                        <i class="fas fa-save mr-2"></i>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #ffffff;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+</style>
+{% endblock %}
+

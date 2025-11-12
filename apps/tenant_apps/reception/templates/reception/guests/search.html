@@ -1,0 +1,72 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Müşteri Arama - Resepsiyon{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-search mr-2 text-vb-primary"></i>
+            Müşteri Arama
+        </h2>
+        <a href="{% url 'reception:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Ana Ekran
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
+        <form method="get" class="flex gap-4">
+            <input type="text" name="q" value="{{ query }}" placeholder="İsim, telefon, email, TC kimlik..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+            <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-search mr-2"></i>
+                Ara
+            </button>
+        </form>
+    </div>
+    
+    {% if query %}
+    <div class="space-y-6">
+        {% if customers %}
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-vb-navy mb-4">Müşteriler (Customers Modülü)</h3>
+            <div class="space-y-2">
+                {% for customer in customers %}
+                <div class="p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                    <a href="{% url 'reception:guest_detail' customer.pk %}" class="block">
+                        <p class="font-semibold">{{ customer.get_full_name }}</p>
+                        <p class="text-sm text-gray-600">{{ customer.phone }} | {{ customer.email }}</p>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if reservations %}
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-vb-navy mb-4">Rezervasyonlar</h3>
+            <div class="space-y-2">
+                {% for reservation in reservations %}
+                <div class="p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                    <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="block">
+                        <p class="font-semibold">{{ reservation.reservation_code }}</p>
+                        <p class="text-sm text-gray-600">{{ reservation.customer_first_name }} {{ reservation.customer_last_name }}</p>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if not customers and not reservations %}
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm text-center">
+            <i class="fas fa-search text-4xl text-gray-300 mb-2"></i>
+            <p class="text-gray-600">Sonuç bulunamadı.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

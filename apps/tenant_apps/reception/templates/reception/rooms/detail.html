@@ -1,0 +1,74 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Oda Detayı - {{ room_number.number }}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-bed mr-2 text-vb-primary"></i>
+            Oda Detayı: {{ room_number.number }}
+        </h2>
+        <a href="{% url 'reception:room_rack' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Oda Durum Panosu
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Oda Bilgileri -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">Oda Bilgileri</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Oda Numarası</p>
+                        <p class="font-semibold text-gray-900">{{ room_number.number }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Oda Tipi</p>
+                        <p class="font-semibold text-gray-900">{{ room_number.room.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Durum</p>
+                        <p class="font-semibold text-gray-900">{{ room_number.get_status_display }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Aktif Rezervasyon -->
+            {% if active_reservation %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">Aktif Rezervasyon</h3>
+                <div class="space-y-2">
+                    <p><strong>Müşteri:</strong> {{ active_reservation.customer_first_name }} {{ active_reservation.customer_last_name }}</p>
+                    <p><strong>Tarihler:</strong> {{ active_reservation.check_in_date|date:"d.m.Y" }} - {{ active_reservation.check_out_date|date:"d.m.Y" }}</p>
+                    <a href="{% url 'reception:reservation_detail' active_reservation.pk %}" class="text-vb-primary hover:text-blue-600">
+                        Rezervasyon Detayı →
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h3 class="text-lg font-semibold text-vb-navy mb-4">Hızlı İşlemler</h3>
+            <div class="space-y-2">
+                {% if active_reservation and active_reservation.status == 'confirmed' %}
+                <a href="{% url 'reception:reservation_checkin' active_reservation.pk %}" class="block w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Check-in
+                </a>
+                {% endif %}
+                {% if active_reservation and active_reservation.status == 'checked_in' %}
+                <a href="{% url 'reception:reservation_checkout' active_reservation.pk %}" class="block w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-center">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Check-out
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

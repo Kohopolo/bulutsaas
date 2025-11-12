@@ -1,0 +1,51 @@
+<!-- Toolbar (VB MenuStrip & ToolStrip) -->
+<div class="toolbar">
+    {% block toolbar_buttons %}
+    <button class="toolbar-button-icon" onclick="window.location.href='{% url 'admin:index' %}'" title="Geri">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Desk">
+        <i class="fas fa-desktop"></i>
+    </button>
+    <button class="toolbar-button" title="Destek">
+        <i class="fas fa-headset"></i> Destek
+    </button>
+    <button class="toolbar-button" title="Raporlar">
+        <i class="fas fa-chart-line"></i> Raporlar
+    </button>
+    <button class="toolbar-button-icon" title="Online">
+        <i class="fas fa-globe"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Oda Planı">
+        <i class="fas fa-bed"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Rezervasyon">
+        <i class="fas fa-calendar-check"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Konaklayan">
+        <i class="fas fa-people-roof"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Rack">
+        <i class="fas fa-th"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Ön Kasa">
+        <i class="fas fa-cash-register"></i>
+    </button>
+    <button class="toolbar-button-icon" title="POS">
+        <i class="fas fa-credit-card"></i>
+    </button>
+    <div style="flex: 1;"></div>
+    <button class="toolbar-button-icon" title="Bildirimler">
+        <i class="far fa-bell"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Kilit">
+        <i class="fas fa-lock"></i>
+    </button>
+    <button class="toolbar-button-icon" title="Çıkış">
+        <i class="fas fa-sign-out-alt"></i>
+    </button>
+    {% endblock %}
+</div>
+
+
+

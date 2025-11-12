@@ -1,0 +1,56 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Nakit Akışı Detayı{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-vb-navy-500">
+                <i class="fas fa-chart-line mr-2 text-vb-primary"></i>Nakit Akışı Detayı
+            </h1>
+            <form method="post" action="{% url 'finance:cash_flow_recalculate' flow.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                    <i class="fas fa-calculator mr-2"></i>Yeniden Hesapla
+                </button>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h3 class="text-sm text-gray-600 mb-2">Açılış Bakiyesi</h3>
+                <p class="text-2xl font-bold">{{ flow.opening_balance|floatformat:2 }} {{ flow.account.currency }}</p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h3 class="text-sm text-gray-600 mb-2">Net Akış</h3>
+                <p class="text-2xl font-bold {% if flow.net_flow >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {{ flow.net_flow|floatformat:2 }} {{ flow.account.currency }}
+                </p>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h3 class="text-sm text-gray-600 mb-2">Kapanış Bakiyesi</h3>
+                <p class="text-2xl font-bold">{{ flow.closing_balance|floatformat:2 }} {{ flow.account.currency }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Gelir-Gider Özeti</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Toplam Gelir</p>
+                    <p class="text-xl font-bold text-green-600">+{{ flow.total_income|floatformat:2 }} {{ flow.account.currency }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ flow.income_count }} işlem</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Toplam Gider</p>
+                    <p class="text-xl font-bold text-red-600">-{{ flow.total_expense|floatformat:2 }} {{ flow.account.currency }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ flow.expense_count }} işlem</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,169 @@
+/**
+ * VB Desktop Application - Tailwind Utilities
+ * ElektraWeb Theme with Tailwind CSS
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   VB Desktop Component Classes (Tailwind)
+   ============================================ */
+
+@layer components {
+  /* VB Button (Flat Style) */
+  .vb-btn {
+    @apply px-4 py-2 border rounded-vb font-vb text-sm;
+    @apply bg-gray-100 border-gray-300 text-gray-700;
+    @apply hover:bg-gray-200 transition-colors duration-200;
+    @apply shadow-none;
+  }
+  
+  .vb-btn-primary {
+    @apply bg-vb-primary border-vb-primary text-white;
+    @apply hover:bg-blue-600;
+  }
+  
+  .vb-btn-success {
+    @apply bg-vb-success border-vb-success text-white;
+    @apply hover:bg-green-700;
+  }
+  
+  .vb-btn-danger {
+    @apply bg-vb-danger border-vb-danger text-white;
+    @apply hover:bg-red-600;
+  }
+  
+  /* VB Input (TextBox Style) */
+  .vb-input {
+    @apply px-3 py-2 border border-gray-300 rounded-vb;
+    @apply bg-white text-gray-900 font-vb text-sm;
+    @apply focus:outline-none focus:border-vb-primary focus:ring-2 focus:ring-vb-primary/20;
+  }
+  
+  /* VB Table (DataGridView) */
+  .vb-table {
+    @apply w-full border border-gray-300 rounded-vb bg-white;
+  }
+  
+  .vb-table thead {
+    @apply bg-gray-50 border-b-2 border-gray-300;
+  }
+  
+  .vb-table th {
+    @apply px-3 py-2.5 text-left font-semibold text-gray-700 border-r border-gray-300;
+    @apply text-sm;
+  }
+  
+  .vb-table tbody tr {
+    @apply border-b border-gray-300;
+  }
+  
+  .vb-table tbody tr:nth-child(even) {
+    @apply bg-white;
+  }
+  
+  .vb-table tbody tr:nth-child(odd) {
+    @apply bg-gray-50;
+  }
+  
+  .vb-table tbody tr:hover {
+    @apply bg-gray-100;
+  }
+  
+  .vb-table td {
+    @apply px-3 py-2 border-r border-gray-300 text-sm;
+  }
+  
+  /* VB Card (GroupBox) */
+  .vb-card {
+    @apply bg-white border border-gray-300 rounded-vb p-4;
+    @apply shadow-vb-sm;
+  }
+  
+  .vb-card-header {
+    @apply font-semibold text-sm text-vb-navy-500 mb-3 pb-2 border-b border-gray-300;
+  }
+  
+  /* VB Sidebar */
+  .vb-sidebar {
+    @apply bg-vb-navy-500 text-gray-300;
+  }
+  
+  .vb-sidebar-header {
+    @apply bg-vb-navy-600 border-b border-vb-navy-700;
+  }
+  
+  .vb-sidebar-link {
+    @apply text-gray-300 hover:bg-vb-navy-400 hover:text-white;
+    @apply transition-colors duration-200;
+  }
+  
+  .vb-sidebar-link-active {
+    @apply bg-vb-navy-700 border-l-4 border-vb-primary text-white;
+  }
+  
+  /* VB Status Badges */
+  .vb-badge {
+    @apply inline-block px-2.5 py-1 rounded-vb text-xs font-semibold;
+  }
+  
+  .vb-badge-success {
+    @apply bg-vb-success text-white;
+  }
+  
+  .vb-badge-danger {
+    @apply bg-vb-danger text-white;
+  }
+  
+  .vb-badge-warning {
+    @apply bg-vb-warning text-white;
+  }
+  
+  .vb-badge-clean {
+    @apply bg-vb-clean text-white;
+  }
+  
+  .vb-badge-dirty {
+    @apply bg-vb-dirty text-white;
+  }
+}
+
+/* ============================================
+   Unfold Override with Tailwind (Minimal)
+   ============================================ */
+
+/* Sidebar rengi - Navy */
+aside[class*="bg-primary"] {
+  background-color: rgb(45 62 80) !important;
+}
+
+aside header {
+  background-color: rgb(30 41 53) !important;
+  border-bottom: 1px solid rgb(21 30 41) !important;
+}
+
+/* Border radius override - VB style (3px) */
+button,
+input,
+select,
+textarea,
+.rounded-lg,
+.rounded-xl {
+  border-radius: 3px !important;
+}
+
+/* Remove gradients */
+[class*="bg-gradient"],
+[class*="from-"],
+[class*="to-"] {
+  background-image: none !important;
+}
+
+/* Minimal shadows */
+[class*="shadow-"] {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+

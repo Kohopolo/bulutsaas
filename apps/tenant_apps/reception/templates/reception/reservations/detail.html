@@ -1,0 +1,515 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Rezervasyon Detayı - {{ reservation.reservation_code }}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık ve Aksiyonlar -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-calendar-check mr-2 text-vb-primary"></i>
+            Rezervasyon Detayı: {{ reservation.reservation_code }}
+        </h2>
+        <div class="flex space-x-3 flex-wrap">
+            <a href="{% url 'reception:reservation_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Geri Dön
+            </a>
+            {% if reservation.status == 'confirmed' %}
+            <a href="{% url 'reception:reservation_checkin' reservation.pk %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Check-in
+            </a>
+            {% endif %}
+            {% if reservation.status == 'checked_in' %}
+            <a href="{% url 'reception:reservation_checkout' reservation.pk %}" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm">
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                Check-out
+            </a>
+            {% endif %}
+            {% if reservation.status == 'confirmed' %}
+            <form method="post" action="{% url 'reception:reservation_noshow' reservation.pk %}" class="inline" onsubmit="return confirm('Bu rezervasyonu No-Show olarak işaretlemek istediğinizden emin misiniz?');">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
+                    <i class="fas fa-times-circle mr-2"></i>
+                    No-Show
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'reception:reservation_update' reservation.pk %}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm">
+                <i class="fas fa-edit mr-2"></i>
+                Düzenle
+            </a>
+            <!-- Yazdırma Butonları -->
+            <div class="relative group">
+                <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                    <i class="fas fa-print mr-2"></i>
+                    Yazdır
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden group-hover:block z-10">
+                    <a href="{% url 'reception:reservation_invoice_print' reservation.pk %}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg">
+                        <i class="fas fa-file-invoice mr-2"></i>
+                        Fatura
+                    </a>
+                    <a href="{% url 'reception:reservation_receipt_print' reservation.pk %}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-receipt mr-2"></i>
+                        Makbuz
+                    </a>
+                    <a href="{% url 'reception:reservation_folio_print' reservation.pk %}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-lg">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        Hesap Özeti
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rezervasyon Bilgileri -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Sol Panel - Temel Bilgiler -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Müşteri Bilgileri -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-user mr-2 text-vb-primary"></i>
+                    Müşteri Bilgileri
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Ad Soyad</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.customer_first_name }} {{ reservation.customer_last_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Telefon</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.customer_phone }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">E-posta</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.customer_email|default:"-" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">TC Kimlik / Pasaport</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.customer_tc_no|default:"-" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Oda ve Tarih Bilgileri -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-bed mr-2 text-vb-primary"></i>
+                    Oda ve Tarih Bilgileri
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Oda Tipi</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.room.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Oda Numarası</p>
+                        <div class="flex items-center space-x-2">
+                            <p class="font-semibold text-gray-900">{{ reservation.room_number.number|default:"Atanmadı" }}</p>
+                            {% if not reservation.room_number and reservation.status == 'confirmed' %}
+                            <a href="{% url 'reception:reservation_assign_room' reservation.pk %}" class="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-plus mr-1"></i>Oda Ata
+                            </a>
+                            {% elif reservation.room_number %}
+                            <a href="{% url 'reception:reservation_room_change' reservation.pk %}" class="text-xs px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors">
+                                <i class="fas fa-exchange-alt mr-1"></i>Oda Değiştir
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Giriş Tarihi</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.check_in_date|date:"d.m.Y" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Çıkış Tarihi</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.check_out_date|date:"d.m.Y" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Gece Sayısı</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.nights }} gece</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Kişi Sayısı</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.adult_count }} yetişkin{% if reservation.child_count > 0 %}, {{ reservation.child_count }} çocuk{% endif %}</p>
+                    </div>
+                    {% if reservation.board_type %}
+                    <div>
+                        <p class="text-sm text-gray-600">Pansiyon Tipi</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.board_type.name }}</p>
+                    </div>
+                    {% endif %}
+                    {% if reservation.child_count > 0 and reservation.child_ages %}
+                    <div class="col-span-2">
+                        <p class="text-sm text-gray-600">Çocuk Yaşları</p>
+                        <p class="font-semibold text-gray-900">
+                            {% for age in reservation.child_ages %}{{ age }}{% if not forloop.last %}, {% endif %}{% endfor %} yaş
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Kaynak ve Özel Bilgiler -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-info-circle mr-2 text-vb-primary"></i>
+                    Kaynak ve Özel Bilgiler
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Rezervasyon Kaynağı</p>
+                        <p class="font-semibold text-gray-900">
+                            {% if reservation.source == 'reception' %}Resepsiyon
+                            {% elif reservation.source == 'sales' %}Satış
+                            {% elif reservation.source == 'call_center' %}Call Center
+                            {% elif reservation.source == 'agency' %}Acente
+                            {% elif reservation.source == 'web' %}Web
+                            {% elif reservation.source == 'channel' %}Kanal
+                            {% else %}{{ reservation.source|default:"-" }}{% endif %}
+                        </p>
+                    </div>
+                    {% if reservation.created_by %}
+                    <div>
+                        <p class="text-sm text-gray-600">Rezervasyonu Yapan</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.created_by.get_full_name|default:reservation.created_by.username }}</p>
+                    </div>
+                    {% endif %}
+                    {% if reservation.agency %}
+                    <div>
+                        <p class="text-sm text-gray-600">Acente</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.agency }}</p>
+                    </div>
+                    {% endif %}
+                    {% if reservation.channel_name %}
+                    <div>
+                        <p class="text-sm text-gray-600">Kanal</p>
+                        <p class="font-semibold text-gray-900">{{ reservation.channel_name }}</p>
+                    </div>
+                    {% endif %}
+                    {% if reservation.is_web_booking %}
+                    <div>
+                        <p class="text-sm text-gray-600">Web Rezervasyonu</p>
+                        <p class="font-semibold text-green-600">Evet</p>
+                        {% if reservation.web_booking_reference %}
+                        <p class="text-xs text-gray-500 mt-1">Referans: {{ reservation.web_booking_reference }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if reservation.is_complimentary %}
+                    <div>
+                        <p class="text-sm text-gray-600">Comp Rezervasyon</p>
+                        <p class="font-semibold text-purple-600">Evet</p>
+                        {% if reservation.complimentary_reason %}
+                        <p class="text-xs text-gray-500 mt-1">{{ reservation.complimentary_reason }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Fiyat Detayları -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-money-bill-wave mr-2 text-vb-primary"></i>
+                    Fiyat Detayları
+                </h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Temel Fiyat</span>
+                        <span class="font-semibold">{{ reservation.base_price }} {{ reservation.currency }}</span>
+                    </div>
+                    {% if reservation.extra_services_total > 0 %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Ekstra Hizmetler</span>
+                        <span class="font-semibold">{{ reservation.extra_services_total }} {{ reservation.currency }}</span>
+                    </div>
+                    {% endif %}
+                    {% if reservation.discount_amount > 0 %}
+                    <div class="flex justify-between text-red-600">
+                        <span>İndirim</span>
+                        <span class="font-semibold">-{{ reservation.discount_amount }} {{ reservation.currency }}</span>
+                    </div>
+                    {% endif %}
+                    {% if reservation.reception_discount_rate > 0 %}
+                    <div class="flex justify-between text-red-600">
+                        <span>Ön Büro İndirimi (%{{ reservation.reception_discount_rate }})</span>
+                        <span class="font-semibold">-{{ reservation.reception_discount_rate }}% {{ reservation.currency }}</span>
+                    </div>
+                    {% endif %}
+                    {% if reservation.reception_discount_amount > 0 %}
+                    <div class="flex justify-between text-red-600">
+                        <span>Ön Büro İndirimi (Tutar)</span>
+                        <span class="font-semibold">-{{ reservation.reception_discount_amount }} {{ reservation.currency }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between pt-2 border-t-2 border-gray-200">
+                        <span class="text-lg font-bold text-gray-900">Toplam Tutar</span>
+                        <span class="text-2xl font-bold text-vb-primary">{{ reservation.total_amount }} {{ reservation.currency }}</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t border-gray-200">
+                        <span class="text-gray-600">Ödenen</span>
+                        <span class="font-semibold text-green-600">{{ total_paid }} {{ reservation.currency }}</span>
+                    </div>
+                    {% if total_refunded > 0 %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">İade Edilen</span>
+                        <span class="font-semibold text-red-600">-{{ total_refunded }} {{ reservation.currency }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Bakiye</span>
+                        <span class="font-semibold {% if balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">{{ balance }} {{ reservation.currency }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Özel İstekler ve Notlar -->
+            {% if reservation.special_requests or reservation.notes or reservation.internal_notes %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-sticky-note mr-2 text-vb-primary"></i>
+                    Özel İstekler ve Notlar
+                </h3>
+                <div class="space-y-4">
+                    {% if reservation.special_requests %}
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Özel İstekler</p>
+                        <p class="text-sm text-gray-600">{{ reservation.special_requests }}</p>
+                    </div>
+                    {% endif %}
+                    {% if reservation.notes %}
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Notlar</p>
+                        <p class="text-sm text-gray-600">{{ reservation.notes }}</p>
+                    </div>
+                    {% endif %}
+                    {% if reservation.internal_notes %}
+                    <div>
+                        <p class="text-sm font-semibold text-gray-700 mb-1">İç Notlar</p>
+                        <p class="text-sm text-gray-500 italic">{{ reservation.internal_notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Dijital Anahtar Kartları -->
+            {% if keycards %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-key mr-2 text-vb-primary"></i>
+                    Dijital Anahtar Kartları
+                </h3>
+                <div class="space-y-3">
+                    {% for keycard in keycards %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-semibold text-gray-900">Kart No: {{ keycard.card_number }}</p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Geçerlilik: {{ keycard.valid_from|date:"d.m.Y H:i" }} - {{ keycard.valid_until|date:"d.m.Y H:i" }}
+                                </p>
+                                <p class="text-xs text-gray-500">Erişim: {{ keycard.get_access_level_display }}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'reception:keycard_print' keycard.pk %}" target="_blank" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                    <i class="fas fa-print mr-1"></i>Yazdır
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Oda Değişiklikleri -->
+            {% if room_changes %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-exchange-alt mr-2 text-vb-primary"></i>
+                    Oda Değişiklikleri
+                </h3>
+                <div class="space-y-3">
+                    {% for change in room_changes %}
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="font-semibold text-gray-900">{{ change.from_room.name }} → {{ change.to_room.name }}</p>
+                            <span class="text-xs text-gray-500">{{ change.changed_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        {% if change.reason %}
+                        <p class="text-xs text-gray-600">{{ change.reason }}</p>
+                        {% endif %}
+                        {% if change.changed_by %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-user mr-1"></i>{{ change.changed_by.get_full_name|default:change.changed_by.username }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Rezervasyon Güncellemeleri (Audit Log) -->
+            {% if updates %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-history mr-2 text-vb-primary"></i>
+                    Rezervasyon Güncellemeleri
+                </h3>
+                <div class="space-y-3 max-h-96 overflow-y-auto">
+                    {% for update in updates %}
+                    <div class="border-l-4 {% if update.update_type == 'created' %}border-green-500{% elif update.update_type == 'updated' %}border-blue-500{% elif update.update_type == 'cancelled' %}border-red-500{% else %}border-gray-500{% endif %} pl-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="font-semibold text-gray-900">{{ update.get_update_type_display }}</p>
+                            <span class="text-xs text-gray-500">{{ update.created_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        {% if update.field_name %}
+                        <p class="text-xs text-gray-600">
+                            {{ update.field_name }}: 
+                            {% if update.old_value %}{{ update.old_value }}{% else %}-{% endif %} 
+                            → 
+                            {% if update.new_value %}{{ update.new_value }}{% else %}-{% endif %}
+                        </p>
+                        {% endif %}
+                        {% if update.notes %}
+                        <p class="text-xs text-gray-500 mt-1">{{ update.notes }}</p>
+                        {% endif %}
+                        {% if update.updated_by %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-user mr-1"></i>{{ update.updated_by.get_full_name|default:update.updated_by.username }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sağ Panel - Durum ve İşlemler -->
+        <div class="space-y-6">
+            <!-- Durum -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">Durum</h3>
+                {% if reservation.status == 'pending' %}
+                <span class="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg font-semibold">Beklemede</span>
+                {% elif reservation.status == 'confirmed' %}
+                <span class="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg font-semibold">Onaylandı</span>
+                {% elif reservation.status == 'checked_in' %}
+                <span class="px-3 py-2 bg-green-100 text-green-800 rounded-lg font-semibold">Check-in</span>
+                {% elif reservation.status == 'checked_out' %}
+                <span class="px-3 py-2 bg-gray-100 text-gray-800 rounded-lg font-semibold">Check-out</span>
+                {% elif reservation.status == 'cancelled' %}
+                <span class="px-3 py-2 bg-red-100 text-red-800 rounded-lg font-semibold">İptal</span>
+                {% elif reservation.status == 'no_show' %}
+                <span class="px-3 py-2 bg-red-100 text-red-800 rounded-lg font-semibold">No-Show</span>
+                {% endif %}
+            </div>
+            
+            <!-- Check-in/Check-out Bilgileri -->
+            {% if reservation.check_in_record or reservation.check_out_record %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-clock mr-2 text-vb-primary"></i>
+                    Check-in/Check-out Bilgileri
+                </h3>
+                <div class="space-y-4">
+                    {% if reservation.check_in_record %}
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-gray-900">Check-in</h4>
+                            <span class="text-xs text-gray-500">{{ reservation.check_in_record.check_in_datetime|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        {% if reservation.check_in_record.is_early_checkin %}
+                        <p class="text-sm text-yellow-600">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Erken Check-in
+                        </p>
+                        {% if reservation.check_in_record.early_checkin_reason %}
+                        <p class="text-xs text-gray-600 mt-1">{{ reservation.check_in_record.early_checkin_reason }}</p>
+                        {% endif %}
+                        {% endif %}
+                        {% if reservation.check_in_record.checked_in_by %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-user mr-1"></i>
+                            {{ reservation.check_in_record.checked_in_by.get_full_name|default:reservation.check_in_record.checked_in_by.username }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if reservation.check_out_record %}
+                    <div class="border-l-4 border-orange-500 pl-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold text-gray-900">Check-out</h4>
+                            <span class="text-xs text-gray-500">{{ reservation.check_out_record.check_out_datetime|date:"d.m.Y H:i" }}</span>
+                        </div>
+                        {% if reservation.check_out_record.is_early_checkout %}
+                        <p class="text-sm text-yellow-600">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Erken Check-out
+                            {% if reservation.check_out_record.early_checkout_fee %}
+                            - Ücret: {{ reservation.check_out_record.early_checkout_fee }} {{ reservation.currency }}
+                            {% endif %}
+                        </p>
+                        {% if reservation.check_out_record.early_checkout_reason %}
+                        <p class="text-xs text-gray-600 mt-1">{{ reservation.check_out_record.early_checkout_reason }}</p>
+                        {% endif %}
+                        {% endif %}
+                        {% if reservation.check_out_record.is_late_checkout %}
+                        <p class="text-sm text-orange-600">
+                            <i class="fas fa-clock mr-1"></i>
+                            Geç Check-out
+                            {% if reservation.check_out_record.late_checkout_fee %}
+                            - Ücret: {{ reservation.check_out_record.late_checkout_fee }} {{ reservation.currency }}
+                            {% endif %}
+                        </p>
+                        {% if reservation.check_out_record.late_checkout_reason %}
+                        <p class="text-xs text-gray-600 mt-1">{{ reservation.check_out_record.late_checkout_reason }}</p>
+                        {% endif %}
+                        {% endif %}
+                        {% if reservation.check_out_record.total_paid %}
+                        <p class="text-sm text-gray-700 mt-2">
+                            <strong>Ödenen:</strong> {{ reservation.check_out_record.total_paid }} {{ reservation.currency }}
+                        </p>
+                        {% endif %}
+                        {% if reservation.check_out_record.balance %}
+                        <p class="text-sm {% if reservation.check_out_record.balance > 0 %}text-red-600{% else %}text-green-600{% endif %} mt-1">
+                            <strong>Bakiye:</strong> {{ reservation.check_out_record.balance }} {{ reservation.currency }}
+                        </p>
+                        {% endif %}
+                        {% if reservation.check_out_record.checked_out_by %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-user mr-1"></i>
+                            {{ reservation.check_out_record.checked_out_by.get_full_name|default:reservation.check_out_record.checked_out_by.username }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Fiyatlandırma -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">Fiyatlandırma</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Toplam Tutar</span>
+                        <span class="font-semibold text-lg text-vb-primary">{{ reservation.total_amount }} {{ reservation.currency }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

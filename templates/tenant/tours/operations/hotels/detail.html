@@ -1,0 +1,143 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Otel Detay - {{ hotel.name }}{% endblock %}
+{% block page_title %}Otel Detay{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:hotel_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Otel Listesine Dön
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Otel Bilgileri -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-vb-navy">
+                        <i class="fas fa-hotel mr-2 text-vb-primary"></i>
+                        {{ hotel.name }}
+                    </h2>
+                    <div class="flex space-x-2">
+                        <a href="{% url 'tours:hotel_update' hotel.pk %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-edit mr-2"></i>
+                            Düzenle
+                        </a>
+                        <form method="post" action="{% url 'tours:hotel_delete' hotel.pk %}" class="inline" onsubmit="return confirm('Bu oteli silmek istediğinizden emin misiniz?');">
+                            {% csrf_token %}
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-trash mr-2"></i>
+                                Sil
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Genel Bilgiler</h3>
+                        <div class="space-y-2">
+                            <div>
+                                <span class="text-gray-600">Şehir:</span>
+                                <span class="ml-2 font-medium">{{ hotel.city.name|default:"-" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Yıldız:</span>
+                                <span class="ml-2">
+                                    {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= hotel.star_rating %}
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-gray-300"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Kişi Başı Günlük Ücret:</span>
+                                <span class="ml-2 font-medium">{{ hotel.daily_rate_per_person|floatformat:2 }} TL</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Durum:</span>
+                                <span class="ml-2 px-2 py-1 rounded text-xs font-semibold {% if hotel.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if hotel.is_active %}Aktif{% else %}Pasif{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">İletişim Bilgileri</h3>
+                        <div class="space-y-2">
+                            <div>
+                                <span class="text-gray-600">Telefon:</span>
+                                <span class="ml-2 font-medium">{{ hotel.phone|default:"-" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">E-posta:</span>
+                                <span class="ml-2 font-medium">{{ hotel.email|default:"-" }}</span>
+                            </div>
+                            {% if hotel.address %}
+                            <div>
+                                <span class="text-gray-600">Adres:</span>
+                                <p class="ml-2 font-medium text-sm">{{ hotel.address }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if hotel.room_types %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Oda Tipleri</h3>
+                        <div class="space-y-2">
+                            {% for room in hotel.room_types %}
+                            <div class="px-2 py-1 bg-gray-100 rounded text-sm">
+                                {{ room.type }} ({{ room.capacity }} kişi)
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if hotel.notes %}
+                    <div class="md:col-span-2">
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Notlar</h3>
+                        <p class="text-gray-700">{{ hotel.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rezervasyonlar -->
+        <div>
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-vb-navy mb-4">
+                    <i class="fas fa-calendar-check mr-2 text-vb-primary"></i>
+                    Son Rezervasyonlar
+                </h3>
+                {% if reservations %}
+                <div class="space-y-3">
+                    {% for reservation in reservations %}
+                    <div class="border-b border-gray-200 pb-3 last:border-0">
+                        <a href="{% url 'tours:reservation_detail' reservation.reservation.pk %}" class="text-vb-primary hover:text-blue-600 font-medium">
+                            {{ reservation.reservation.reservation_code }}
+                        </a>
+                        <p class="text-sm text-gray-600">{{ reservation.reservation.tour.name }}</p>
+                        <p class="text-xs text-gray-500">{{ reservation.reservation.tour_date.date|date:"d.m.Y" }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">Henüz rezervasyon yok.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

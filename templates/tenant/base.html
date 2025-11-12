@@ -1,0 +1,959 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kiracı Üye Paneli{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vb-navy': {
+                            500: '#2d3e50',
+                            600: '#1e2935',
+                        },
+                        'vb-primary': '#3498db',
+                        // Bulut Acente özel tonlar (referans görsel uyumu)
+                        'bulut': {
+                            'sidebar': '#1e2935',
+                            'sidebar-fg': '#e5e7eb',
+                            'sidebar-hover': '#2b3a47',
+                            'sidebar-active': '#3498db',
+                            'toolbar': '#ffffff',
+                            'grid-header': '#f8f9fa',
+                            'grid-border': '#dee2e6',
+                            'row-hover': '#e9ecef',
+                            'badge-dark': '#0f172a',
+                            'badge-dark-fg': '#ffffff',
+                            // Chip renkleri
+                            'chip-green': '#27ae60',
+                            'chip-blue': '#3498db',
+                            'chip-yellow': '#f1c40f',
+                            'chip-gray': '#95a5a6',
+                        },
+                    },
+                    borderRadius: {
+                        'vb': '3px',
+                    },
+                    boxShadow: {
+                        'vb-sm': '0 1px 2px rgba(0, 0, 0, 0.08)',
+                        'vb': '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        'vb-md': '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+                        'vb': ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+    
+    {% block extrastyle %}{% endblock %}
+    
+    <!-- Customer Autofill JS -->
+    <script src="{% static 'js/customer_autofill.js' %}"></script>
+</head>
+<body class="h-full bg-gray-50 font-inter">
+    <!-- VB Desktop Application Layout -->
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+        
+        <!-- Sidebar - Bulut Acente -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-bulut-sidebar text-bulut-sidebar-fg flex flex-col flex-shrink-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+            <!-- Sidebar Header -->
+            <div class="h-14 bg-bulut-sidebar border-b border-gray-700 flex items-center px-4">
+                <i class="fas fa-building text-xl mr-3 text-white"></i>
+                <span class="font-semibold text-white text-lg">Bulut Acente</span>
+            </div>
+            
+            <!-- Sidebar Menu -->
+            <nav class="flex-1 overflow-y-auto p-2">
+                <!-- Ana Menü -->
+                <div class="mb-2">
+                    <button onclick="toggleModule('main-menu')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-home w-5"></i>
+                            <span class="ml-3">Ana Menü</span>
+                        </div>
+                        <i id="main-menu-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="main-menu" class="hidden">
+                        <a href="{% url 'tenant:dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-home w-4"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="{% url 'tenant_subscriptions:dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-box w-4"></i>
+                            <span class="ml-3">Paket Yönetimi</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Kullanıcı ve Yetki Yönetimi -->
+                <div class="mb-2">
+                    <button onclick="toggleModule('user-permission-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-users w-5"></i>
+                            <span class="ml-3">Kullanıcı & Yetki</span>
+                        </div>
+                        <i id="user-permission-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="user-permission-module" class="hidden">
+                        <a href="{% url 'tenant:user_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-users w-4"></i>
+                            <span class="ml-3">Kullanıcı Yönetimi</span>
+                        </a>
+                        <a href="{% url 'tenant:user_type_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-user-tag w-4"></i>
+                            <span class="ml-3">Kullanıcı Tipleri</span>
+                        </a>
+                        <a href="{% url 'tenant:role_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-shield-alt w-4"></i>
+                            <span class="ml-3">Rol Yönetimi</span>
+                        </a>
+                        <a href="{% url 'tenant:permission_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-key w-4"></i>
+                            <span class="ml-3">Yetki Yönetimi</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Merkezi Müşteri Yönetimi (CRM) -->
+                {% if has_customers_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('customers-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-users w-5"></i>
+                            <span class="ml-3">Müşteri Yönetimi</span>
+                        </div>
+                        <i id="customers-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="customers-module" class="hidden">
+                        <a href="{% url 'tenant:customer_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-users w-4"></i>
+                            <span class="ml-3">Müşteriler</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Modüller buraya eklenecek -->
+                {% if enabled_modules %}
+                <div class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase tracking-wider">
+                    Modüller
+                </div>
+                
+                <!-- Otel Modülü - Otel Yönetimi -->
+                {% if has_hotel_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('hotel-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-hotel w-5"></i>
+                            <span class="ml-3">Otel Yönetimi</span>
+                        </div>
+                        <i id="hotel-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="hotel-module" class="hidden">
+                    {% if can_switch_hotel and accessible_hotels %}
+                    <div class="px-3 py-2 pl-8 mb-2">
+                        <div class="text-xs text-gray-500 mb-1">Aktif Otel</div>
+                        <div class="flex flex-wrap gap-1">
+                            {% for hotel in accessible_hotels %}
+                            <a href="{% url 'hotels:switch_hotel' hotel.id %}" 
+                               class="px-2 py-1 text-xs rounded transition-colors
+                                      {% if active_hotel.id == hotel.id %}
+                                      bg-vb-primary text-white
+                                      {% else %}
+                                      bg-gray-600 text-gray-200 hover:bg-gray-500
+                                      {% endif %}">
+                                {{ hotel.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% if accessible_hotels|length > 1 %}
+                        <a href="{% url 'hotels:select_hotel' %}" class="mt-1 text-xs text-vb-primary hover:underline block">
+                            <i class="fas fa-exchange-alt mr-1"></i>Tüm Oteller
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                        <a href="{% url 'hotels:hotel_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-hotel w-4"></i>
+                        <span class="ml-3">Otel Bilgileri</span>
+                    </a>
+                        <a href="{% url 'hotels:room_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-bed w-4"></i>
+                        <span class="ml-3">Oda Yönetimi</span>
+                    </a>
+                        <a href="{% url 'hotels:room_number_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-door-open w-4"></i>
+                        <span class="ml-3">Oda Numaraları</span>
+                    </a>
+                        <a href="{% url 'hotels:extra_service_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-concierge-bell w-4"></i>
+                        <span class="ml-3">Ekstra Hizmetler</span>
+                    </a>
+                        <a href="{% url 'hotels:settings_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-cog w-4"></i>
+                        <span class="ml-3">Otel Ayarları</span>
+                    </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Resepsiyon Modülü -->
+                {% if has_reception_module %}
+                <div class="mb-2">
+                    <a href="{% url 'reception:dashboard' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-concierge-bell w-5"></i>
+                        <span class="ml-3">Resepsiyon</span>
+                    </a>
+                    <div class="pl-4">
+                        <a href="{% url 'reception:reservation_create' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-plus-circle w-4"></i>
+                            <span class="ml-3">Yeni Rezervasyon</span>
+                        </a>
+                        <a href="{% url 'reception:reservation_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-list w-4"></i>
+                            <span class="ml-3">Rezervasyon Listesi</span>
+                        </a>
+                        <a href="{% url 'reception:room_rack' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-th-large w-4"></i>
+                            <span class="ml-3">Oda Durum Panosu</span>
+                        </a>
+                        <a href="{% url 'reception:room_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-bed w-4"></i>
+                            <span class="ml-3">Oda Listesi</span>
+                        </a>
+                        <a href="{% url 'reception:guest_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-users w-4"></i>
+                            <span class="ml-3">Müşteri Listesi</span>
+                        </a>
+                        <a href="{% url 'reception:guest_search' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-search w-4"></i>
+                            <span class="ml-3">Müşteri Ara</span>
+                        </a>
+                        <a href="{% url 'reception:keycard_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-key w-4"></i>
+                            <span class="ml-3">Anahtar Kartları</span>
+                        </a>
+                        <a href="{% url 'reception:session_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-clock w-4"></i>
+                            <span class="ml-3">Resepsiyon Oturumları</span>
+                        </a>
+                        <div class="border-t border-gray-700 my-2"></div>
+                        <a href="{% url 'reception:report_daily' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-calendar-day w-4"></i>
+                            <span class="ml-3">Günlük Rapor</span>
+                        </a>
+                        <a href="{% url 'reception:report_occupancy' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-chart-line w-4"></i>
+                            <span class="ml-3">Doluluk Raporu</span>
+                        </a>
+                        <a href="{% url 'reception:report_revenue' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-money-bill-wave w-4"></i>
+                            <span class="ml-3">Gelir Raporu</span>
+                        </a>
+                        <div class="border-t border-gray-700 my-2"></div>
+                        <a href="{% url 'reception:settings' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Kat Hizmetleri Modülü -->
+                {% if has_housekeeping_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('housekeeping-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-broom w-5"></i>
+                            <span class="ml-3">Kat Hizmetleri</span>
+                        </div>
+                        <i id="housekeeping-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="housekeeping-module" class="hidden">
+                        <a href="{% url 'housekeeping:dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-home w-4"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="{% url 'housekeeping:task_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-tasks w-4"></i>
+                            <span class="ml-3">Görevler</span>
+                        </a>
+                        <a href="{% url 'housekeeping:missing_item_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-box w-4"></i>
+                            <span class="ml-3">Eksik Malzemeler</span>
+                        </a>
+                        <a href="{% url 'housekeeping:laundry_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-tshirt w-4"></i>
+                            <span class="ml-3">Çamaşır Yönetimi</span>
+                        </a>
+                        <a href="{% url 'housekeeping:maintenance_request_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-tools w-4"></i>
+                            <span class="ml-3">Bakım Talepleri</span>
+                        </a>
+                        <a href="{% url 'housekeeping:settings' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Teknik Servis Modülü -->
+                {% if has_technical_service_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('technical-service-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-tools w-5"></i>
+                            <span class="ml-3">Teknik Servis</span>
+                        </div>
+                        <i id="technical-service-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="technical-service-module" class="hidden">
+                        <a href="{% url 'technical_service:dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-home w-4"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="{% url 'technical_service:request_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-wrench w-4"></i>
+                            <span class="ml-3">Bakım Talepleri</span>
+                        </a>
+                        <a href="{% url 'technical_service:equipment_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ekipmanlar</span>
+                        </a>
+                        <a href="{% url 'technical_service:settings' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Kalite Kontrol Modülü -->
+                {% if has_quality_control_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('quality-control-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-clipboard-check w-5"></i>
+                            <span class="ml-3">Kalite Kontrol</span>
+                        </div>
+                        <i id="quality-control-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="quality-control-module" class="hidden">
+                        <a href="{% url 'quality_control:dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-home w-4"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="{% url 'quality_control:inspection_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-search w-4"></i>
+                            <span class="ml-3">Kontroller</span>
+                        </a>
+                        <a href="{% url 'quality_control:complaint_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-exclamation-triangle w-4"></i>
+                            <span class="ml-3">Şikayetler</span>
+                        </a>
+                        <a href="{% url 'quality_control:settings' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Satış Yönetimi Modülü -->
+                {% if has_sales_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('sales-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-line w-5"></i>
+                            <span class="ml-3">Satış Yönetimi</span>
+                        </div>
+                        <i id="sales-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="sales-module" class="hidden">
+                        <a href="{% url 'sales:dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-home w-4"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="{% url 'sales:agency_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-handshake w-4"></i>
+                            <span class="ml-3">Acenteler</span>
+                        </a>
+                        <a href="{% url 'sales:sales_record_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-receipt w-4"></i>
+                            <span class="ml-3">Satış Kayıtları</span>
+                        </a>
+                        <a href="{% url 'sales:sales_target_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-bullseye w-4"></i>
+                            <span class="ml-3">Satış Hedefleri</span>
+                        </a>
+                        <a href="{% url 'sales:settings' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Personel Yönetimi Modülü -->
+                {% if has_staff_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('staff-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-users w-5"></i>
+                            <span class="ml-3">Personel Yönetimi</span>
+                        </div>
+                        <i id="staff-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="staff-module" class="hidden">
+                        <a href="{% url 'staff:dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-home w-4"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                        <a href="{% url 'staff:staff_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-users w-4"></i>
+                            <span class="ml-3">Personel</span>
+                        </a>
+                        <a href="{% url 'staff:shift_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-calendar-alt w-4"></i>
+                            <span class="ml-3">Vardiyalar</span>
+                        </a>
+                        <a href="{% url 'staff:leave_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-calendar-times w-4"></i>
+                            <span class="ml-3">İzinler</span>
+                        </a>
+                        <a href="{% url 'staff:salary_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-money-bill-wave w-4"></i>
+                            <span class="ml-3">Maaşlar</span>
+                        </a>
+                        <a href="{% url 'staff:settings' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Tur Modülü - Alt Menü -->
+                {% if has_tour_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('tour-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-route w-5"></i>
+                            <span class="ml-3">Tur Modülü</span>
+                        </div>
+                        <i id="tour-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="tour-module" class="hidden">
+                    <a href="{% url 'tours:list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-list w-4"></i>
+                        <span class="ml-3">Tur Yönetimi</span>
+                    </a>
+                    <a href="{% url 'tours:reservation_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-calendar-check w-4"></i>
+                        <span class="ml-3">Tur Rezervasyonları</span>
+                    </a>
+                    <a href="{% url 'tours:waiting_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-clock w-4"></i>
+                        <span class="ml-3">Bekleme Listesi</span>
+                    </a>
+                    <a href="{% url 'tours:reports_dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-chart-bar w-4"></i>
+                        <span class="ml-3">Tur Raporlama</span>
+                    </a>
+                    <a href="{% url 'tours:agency_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-handshake w-4"></i>
+                        <span class="ml-3">Acente Yönetimi</span>
+                    </a>
+                    <a href="{% url 'tours:campaign_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-tags w-4"></i>
+                        <span class="ml-3">Kampanya Yönetimi</span>
+                    </a>
+                    <a href="{% url 'tours:operation_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-cogs w-4"></i>
+                        <span class="ml-3">Operasyonel Yönetim</span>
+                    </a>
+                    <a href="{% url 'tours:notification_template_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                        <i class="fas fa-bell w-4"></i>
+                        <span class="ml-3">Bildirim Şablonları</span>
+                    </a>
+                    
+                    <!-- Tur Ayarları Alt Menüsü -->
+                    <button onclick="toggleModule('tour-settings')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </div>
+                        <i id="tour-settings-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="tour-settings" class="hidden pl-8">
+                        <a href="{% url 'tours:region_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                            <i class="fas fa-map-marker-alt w-3"></i>
+                            <span class="ml-2">Bölgeler</span>
+                        </a>
+                        <a href="{% url 'tours:location_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                            <i class="fas fa-globe w-3"></i>
+                            <span class="ml-2">Lokasyonlar</span>
+                        </a>
+                        <a href="{% url 'tours:city_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                            <i class="fas fa-city w-3"></i>
+                            <span class="ml-2">Şehirler</span>
+                        </a>
+                        <a href="{% url 'tours:type_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                            <i class="fas fa-tags w-3"></i>
+                            <span class="ml-2">Tur Türleri</span>
+                        </a>
+                        <a href="{% url 'tours:voucher_template_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                            <i class="fas fa-file-invoice w-3"></i>
+                            <span class="ml-2">Voucher Şablonları</span>
+                        </a>
+                    </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Finance (Kasa) Modülü -->
+                {% if has_finance_module %}
+                    <div class="mb-2">
+                        <button onclick="toggleModule('finance-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-cash-register w-5"></i>
+                                <span class="ml-3">Kasa Yönetimi</span>
+                            </div>
+                            <i id="finance-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
+                        <div id="finance-module" class="hidden">
+                            <!-- İşlemler -->
+                            <button onclick="toggleModule('finance-operations')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                                <div class="flex items-center">
+                                    <i class="fas fa-exchange-alt w-4"></i>
+                                    <span class="ml-3">İşlemler</span>
+                                </div>
+                                <i id="finance-operations-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+                            <div id="finance-operations" class="hidden pl-8">
+                                <a href="{% url 'finance:account_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-wallet w-3"></i>
+                                    <span class="ml-2">Kasa Hesapları</span>
+                                </a>
+                                <a href="{% url 'finance:transaction_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-exchange-alt w-3"></i>
+                                    <span class="ml-2">Kasa İşlemleri</span>
+                                </a>
+                                <a href="{% url 'finance:cash_flow_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-chart-line w-3"></i>
+                                    <span class="ml-2">Nakit Akışı</span>
+                                </a>
+                            </div>
+                            
+                            <!-- Raporlar -->
+                            <button onclick="toggleModule('finance-reports')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                                <div class="flex items-center">
+                                    <i class="fas fa-chart-bar w-4"></i>
+                                    <span class="ml-3">Raporlar</span>
+                                </div>
+                                <i id="finance-reports-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+                            <div id="finance-reports" class="hidden pl-8">
+                                <a href="{% url 'finance:report_balance_sheet' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-file-alt w-3"></i>
+                                    <span class="ml-2">Bilanço Raporu</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Accounting (Muhasebe) Modülü -->
+                {% if has_accounting_module %}
+                    <div class="mb-2">
+                        <button onclick="toggleModule('accounting-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-book w-5"></i>
+                                <span class="ml-3">Muhasebe Yönetimi</span>
+                            </div>
+                            <i id="accounting-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
+                        <div id="accounting-module" class="hidden">
+                            <!-- Kayıtlar -->
+                            <button onclick="toggleModule('accounting-records')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                                <div class="flex items-center">
+                                    <i class="fas fa-book-open w-4"></i>
+                                    <span class="ml-3">Kayıtlar</span>
+                                </div>
+                                <i id="accounting-records-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+                            <div id="accounting-records" class="hidden pl-8">
+                                <a href="{% url 'accounting:account_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-list-alt w-3"></i>
+                                    <span class="ml-2">Hesap Planı</span>
+                                </a>
+                                <a href="{% url 'accounting:journal_entry_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-book-open w-3"></i>
+                                    <span class="ml-2">Yevmiye Kayıtları</span>
+                                </a>
+                            </div>
+                            
+                            <!-- Belgeler -->
+                            <button onclick="toggleModule('accounting-documents')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-invoice w-4"></i>
+                                    <span class="ml-3">Belgeler</span>
+                                </div>
+                                <i id="accounting-documents-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+                            <div id="accounting-documents" class="hidden pl-8">
+                                <a href="{% url 'accounting:invoice_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-file-invoice w-3"></i>
+                                    <span class="ml-2">Faturalar</span>
+                                </a>
+                                <a href="{% url 'accounting:payment_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-money-check-alt w-3"></i>
+                                    <span class="ml-2">Ödemeler</span>
+                                </a>
+                            </div>
+                            
+                            <!-- Raporlar -->
+                            <button onclick="toggleModule('accounting-reports')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                                <div class="flex items-center">
+                                    <i class="fas fa-chart-bar w-4"></i>
+                                    <span class="ml-3">Raporlar</span>
+                                </div>
+                                <i id="accounting-reports-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+                            <div id="accounting-reports" class="hidden pl-8">
+                                <a href="{% url 'accounting:report_trial_balance' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-balance-scale w-3"></i>
+                                    <span class="ml-2">Mizan Raporu</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Refunds (İade) Modülü -->
+                {% if has_refunds_module %}
+                    <div class="mb-2">
+                        <button onclick="toggleModule('refunds-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-undo w-5"></i>
+                                <span class="ml-3">İade Yönetimi</span>
+                            </div>
+                            <i id="refunds-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
+                        <div id="refunds-module" class="hidden">
+                            <!-- Yönetim -->
+                            <button onclick="toggleModule('refunds-management')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                                <div class="flex items-center">
+                                    <i class="fas fa-cog w-4"></i>
+                                    <span class="ml-3">Yönetim</span>
+                                </div>
+                                <i id="refunds-management-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+                            <div id="refunds-management" class="hidden pl-8">
+                                <a href="{% url 'refunds:policy_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-file-contract w-3"></i>
+                                    <span class="ml-2">İade Politikaları</span>
+                                </a>
+                                <a href="{% url 'refunds:request_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-clipboard-list w-3"></i>
+                                    <span class="ml-2">İade Talepleri</span>
+                                </a>
+                                <a href="{% url 'refunds:transaction_list' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-exchange-alt w-3"></i>
+                                    <span class="ml-2">İade İşlemleri</span>
+                                </a>
+                            </div>
+                            
+                            <!-- Raporlar -->
+                            <button onclick="toggleModule('refunds-reports')" class="w-full flex items-center justify-between px-3 py-2 pl-8 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                                <div class="flex items-center">
+                                    <i class="fas fa-chart-bar w-4"></i>
+                                    <span class="ml-3">Raporlar</span>
+                                </div>
+                                <i id="refunds-reports-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                            </button>
+                            <div id="refunds-reports" class="hidden pl-8">
+                                <a href="{% url 'refunds:report_summary' %}" class="flex items-center px-3 py-1.5 pl-10 text-gray-400 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-xs">
+                                    <i class="fas fa-file-alt w-3"></i>
+                                    <span class="ml-2">Özet Rapor</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Diğer modüller buraya eklenecek -->
+                {% if not has_tour_module and not has_finance_module and not has_accounting_module and not has_refunds_module %}
+                <p class="text-xs text-gray-500 px-3 py-2">Paketinizde aktif modül bulunmamaktadır.</p>
+                {% endif %}
+                {% endif %}
+            </nav>
+            
+            <!-- Sidebar Footer -->
+            <div class="p-3 border-t border-vb-navy-700">
+                <a href="{% url 'tenant:logout' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-red-600 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span class="ml-3">Çıkış Yap</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Header -->
+            <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+                <div class="flex items-center space-x-4">
+                    <!-- Mobile Hamburger Menu Button -->
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-vb-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <h1 class="text-lg font-semibold text-vb-navy-500">{% block page_title %}Dashboard{% endblock %}</h1>
+                    {% if active_hotel %}
+                    <div class="flex items-center px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+                        <i class="fas fa-hotel text-blue-600 mr-2"></i>
+                        <span class="text-sm font-semibold text-blue-700">{{ active_hotel.name }}</span>
+                        <button onclick="openHotelModal()" class="ml-2 text-blue-600 hover:text-blue-800" title="Otel Değiştir">
+                            <i class="fas fa-exchange-alt text-xs"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-user-circle mr-2"></i>
+                        {{ user.get_full_name|default:user.username }}
+                    </span>
+                </div>
+            </header>
+            
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto bg-gray-50">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="mx-6 mt-4 p-4 bg-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-50 border border-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-200 text-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-700 rounded-lg">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+            
+            <!-- Footer -->
+            <footer class="h-10 bg-vb-navy-500 text-gray-300 flex items-center justify-between px-6 text-xs">
+                <span>Bulut Acente 2025-2026 v1.9</span>
+                <span id="datetime"></span>
+            </footer>
+        </div>
+    </div>
+    
+    <script>
+        // Canlı tarih/saat gösterimi
+        function updateDateTime() {
+            const now = new Date();
+            const date = now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const time = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const datetimeElement = document.getElementById('datetime');
+            if (datetimeElement) {
+                datetimeElement.textContent = `${date} ${time}`;
+            }
+        }
+        // Sayfa yüklendiğinde ve her saniye güncelle
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    </script>
+    
+    <!-- Otel Seçim Modal -->
+    {% if active_hotel %}
+    <div id="hotelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-vb-navy">
+                    <i class="fas fa-hotel mr-2 text-vb-primary"></i>
+                    Otel Değiştir
+                </h3>
+                <button onclick="closeHotelModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div id="hotelModalContent" class="space-y-3">
+                    <!-- Oteller buraya yüklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        function openHotelModal() {
+            document.getElementById('hotelModal').classList.remove('hidden');
+            loadHotels();
+        }
+        
+        function closeHotelModal() {
+            document.getElementById('hotelModal').classList.add('hidden');
+        }
+        
+        function loadHotels() {
+            fetch('{% url "hotels:api_accessible_hotels" %}')
+                .then(response => response.json())
+                .then(data => {
+                    const content = document.getElementById('hotelModalContent');
+                    if (data.hotels && data.hotels.length > 0) {
+                        content.innerHTML = data.hotels.map(hotel => `
+                            <button onclick="selectHotel(${hotel.id})" 
+                                    class="w-full text-left p-4 border-2 rounded-lg hover:border-vb-primary transition-colors
+                                           ${hotel.is_active ? 'border-vb-primary bg-blue-50' : 'border-gray-200'}">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">${hotel.name}</h4>
+                                        ${hotel.city ? `<p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${hotel.city}</p>` : ''}
+                                    </div>
+                                    ${hotel.is_active ? '<i class="fas fa-check-circle text-vb-primary text-xl"></i>' : ''}
+                                </div>
+                            </button>
+                        `).join('');
+                    } else {
+                        content.innerHTML = '<p class="text-center text-gray-600 py-8">Erişebileceğiniz otel bulunmamaktadır.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('hotelModalContent').innerHTML = '<p class="text-center text-red-600 py-8">Otel listesi yüklenirken hata oluştu.</p>';
+                });
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function selectHotel(hotelId) {
+            const csrftoken = getCookie('csrftoken');
+            fetch('{% url "hotels:switch_hotel" 0 %}'.replace('0', hotelId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Otel değiştirilemedi.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Otel değiştirilirken hata oluştu.');
+            });
+        }
+        
+        // Modal dışına tıklanınca kapat
+        document.getElementById('hotelModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeHotelModal();
+            }
+        });
+    </script>
+
+    <!-- Sidebar Mobile & Accordion Script -->
+    <script>
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-sidebar-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Module Accordion Toggle
+        function toggleModule(moduleId) {
+            const module = document.getElementById(moduleId);
+            const icon = document.getElementById(moduleId + '-icon');
+            
+            if (module && icon) {
+                const isHidden = module.classList.contains('hidden');
+                
+                if (isHidden) {
+                    module.classList.remove('hidden');
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                } else {
+                    module.classList.add('hidden');
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            }
+        }
+
+        // Close sidebar when clicking on a link (mobile)
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('#sidebar a');
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 1024) { // lg breakpoint
+                        toggleSidebar();
+                    }
+                });
+            });
+
+            // Close sidebar on window resize (if resized to desktop)
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('mobile-sidebar-overlay');
+                    sidebar.classList.remove('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+    {% block extrajs %}{% endblock %}
+</body>
+</html>
+

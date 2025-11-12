@@ -1,0 +1,128 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Araç Detay - {{ vehicle.plate_number }}{% endblock %}
+{% block page_title %}Araç Detay{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:vehicle_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Araç Listesine Dön
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Araç Bilgileri -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-vb-navy">
+                        <i class="fas fa-bus mr-2 text-vb-primary"></i>
+                        {{ vehicle.brand }} {{ vehicle.model }} - {{ vehicle.plate_number }}
+                    </h2>
+                    <div class="flex space-x-2">
+                        <a href="{% url 'tours:vehicle_update' vehicle.pk %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-edit mr-2"></i>
+                            Düzenle
+                        </a>
+                        <form method="post" action="{% url 'tours:vehicle_delete' vehicle.pk %}" class="inline" onsubmit="return confirm('Bu aracı silmek istediğinizden emin misiniz?');">
+                            {% csrf_token %}
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-trash mr-2"></i>
+                                Sil
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Araç Bilgileri</h3>
+                        <div class="space-y-2">
+                            <div>
+                                <span class="text-gray-600">Plaka:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.plate_number }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Marka/Model:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.brand }} {{ vehicle.model }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Yıl:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.year }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Kapasite:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.capacity }} kişi</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Araç Tipi:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.get_vehicle_type_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Şoför Bilgileri</h3>
+                        <div class="space-y-2">
+                            <div>
+                                <span class="text-gray-600">Şoför Adı:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.driver_name|default:"-" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Şoför Telefonu:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.driver_phone|default:"-" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Günlük Ücret:</span>
+                                <span class="ml-2 font-medium">{{ vehicle.daily_rate|floatformat:2 }} TL</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Durum:</span>
+                                <span class="ml-2 px-2 py-1 rounded text-xs font-semibold {% if vehicle.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if vehicle.is_active %}Aktif{% else %}Pasif{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if vehicle.notes %}
+                    <div class="md:col-span-2">
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2">Notlar</h3>
+                        <p class="text-gray-700">{{ vehicle.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rezervasyonlar -->
+        <div>
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-vb-navy mb-4">
+                    <i class="fas fa-calendar-check mr-2 text-vb-primary"></i>
+                    Son Rezervasyonlar
+                </h3>
+                {% if reservations %}
+                <div class="space-y-3">
+                    {% for reservation in reservations %}
+                    <div class="border-b border-gray-200 pb-3 last:border-0">
+                        <a href="{% url 'tours:reservation_detail' reservation.reservation.pk %}" class="text-vb-primary hover:text-blue-600 font-medium">
+                            {{ reservation.reservation.reservation_code }}
+                        </a>
+                        <p class="text-sm text-gray-600">{{ reservation.reservation.tour.name }}</p>
+                        <p class="text-xs text-gray-500">{{ reservation.reservation.tour_date.date|date:"d.m.Y" }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">Henüz rezervasyon yok.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

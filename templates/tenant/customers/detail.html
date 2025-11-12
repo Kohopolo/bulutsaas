@@ -1,0 +1,166 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Müşteri Detayı - Bulut Acente{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4 flex justify-between items-center">
+        <a href="{% url 'tenant:customer_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>Müşteri Listesine Dön
+        </a>
+        <div class="flex gap-2">
+            <a href="{% url 'tenant:customer_update' customer.pk %}" class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200">
+                <i class="fas fa-edit mr-2"></i>Düzenle
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Müşteri Bilgileri -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-xl font-bold text-vb-navy-500 mb-4">
+                    <i class="fas fa-user mr-2 text-vb-primary"></i>
+                    Müşteri Bilgileri
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Müşteri Kodu</label>
+                        <p class="text-gray-900 font-medium">{{ customer.customer_code }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">VIP Seviyesi</label>
+                        <p class="text-gray-900">
+                            {% if customer.is_vip %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ customer.get_vip_level_display }}
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                Normal
+                            </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Ad Soyad</label>
+                        <p class="text-gray-900 font-medium">{{ customer.get_full_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">E-posta</label>
+                        <p class="text-gray-900">{{ customer.email }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Telefon</label>
+                        <p class="text-gray-900">{{ customer.phone }}</p>
+                    </div>
+                    {% if customer.tc_no %}
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">TC Kimlik No</label>
+                        <p class="text-gray-900">{{ customer.tc_no }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Toplam Rezervasyon</label>
+                        <p class="text-gray-900 font-semibold text-lg">{{ customer.total_reservations }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Toplam Harcama</label>
+                        <p class="text-gray-900 font-semibold text-lg text-green-600">{{ customer.total_spent|floatformat:2 }} ₺</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Sadakat Puanı</label>
+                        <p class="text-gray-900 font-semibold text-lg">{{ customer.loyalty_points }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Durum</label>
+                        <p class="text-gray-900">
+                            {% if customer.is_active %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Aktif</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Pasif</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tur Rezervasyonları -->
+            {% if tour_reservations %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-xl font-bold text-vb-navy-500 mb-4">
+                    <i class="fas fa-route mr-2 text-vb-primary"></i>
+                    Tur Rezervasyonları
+                </h3>
+                <div class="space-y-3">
+                    {% for reservation in tour_reservations %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ reservation.tour.name }}</p>
+                                <p class="text-sm text-gray-500">{{ reservation.reservation_code }}</p>
+                                <p class="text-sm text-gray-500">{{ reservation.created_at|date:"d.m.Y H:i" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-900">{{ reservation.total_amount|floatformat:2 }} ₺</p>
+                                <span class="px-2 py-1 text-xs rounded-full 
+                                    {% if reservation.status == 'confirmed' %}bg-green-100 text-green-800
+                                    {% elif reservation.status == 'completed' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ reservation.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Yan Panel -->
+        <div class="space-y-6">
+            <!-- Sadakat Geçmişi -->
+            {% if loyalty_history %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-vb-navy-500 mb-4">
+                    <i class="fas fa-star mr-2 text-vb-primary"></i>
+                    Sadakat Geçmişi
+                </h3>
+                <div class="space-y-2">
+                    {% for history in loyalty_history %}
+                    <div class="border-l-4 border-vb-primary pl-3 py-2">
+                        <p class="text-sm font-semibold {% if history.points > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if history.points > 0 %}+{% endif %}{{ history.points }} puan
+                        </p>
+                        <p class="text-xs text-gray-600">{{ history.reason }}</p>
+                        <p class="text-xs text-gray-500">{{ history.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Notlar -->
+            {% if notes %}
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-vb-navy-500 mb-4">
+                    <i class="fas fa-sticky-note mr-2 text-vb-primary"></i>
+                    Notlar
+                </h3>
+                <div class="space-y-3">
+                    {% for note in notes %}
+                    <div class="border border-gray-200 rounded-lg p-3">
+                        <p class="text-sm text-gray-900">{{ note.note }}</p>
+                        <p class="text-xs text-gray-500 mt-2">{{ note.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

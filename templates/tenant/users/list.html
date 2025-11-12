@@ -1,0 +1,211 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+{% load dict_filters %}
+
+{% block title %}Kullanıcı Yönetimi - Bulut Acente{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık ve Butonlar -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-vb-navy-500">
+            <i class="fas fa-users mr-2 text-vb-primary"></i>Kullanıcı Yönetimi
+        </h1>
+        <div class="flex space-x-3">
+            {% if has_hotel_module %}
+            <a href="{% url 'hotels:bulk_hotel_permission_assign' %}" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                <i class="fas fa-users-cog mr-2"></i>Toplu Otel Yetkisi Ata
+            </a>
+            {% endif %}
+            <a href="{% url 'tenant:user_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>Yeni Kullanıcı Ekle
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Tipi</label>
+                <select name="user_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vb-primary focus:border-transparent">
+                    <option value="">Tümü</option>
+                    {% for ut in user_types %}
+                    <option value="{{ ut.pk }}" {% if selected_user_type == ut.pk|stringformat:"s" %}selected{% endif %}>{{ ut.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Durum</label>
+                <select name="is_active" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vb-primary focus:border-transparent">
+                    <option value="">Tümü</option>
+                    <option value="1" {% if selected_is_active == '1' %}selected{% endif %}>Aktif</option>
+                    <option value="0" {% if selected_is_active == '0' %}selected{% endif %}>Pasif</option>
+                </select>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Arama</label>
+                <input type="text" name="search" value="{{ search }}" placeholder="Kullanıcı adı, e-posta, telefon, departman..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vb-primary focus:border-transparent">
+            </div>
+            <div class="md:col-span-4 flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-search mr-2"></i>Filtrele
+                </button>
+                <a href="{% url 'tenant:user_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    <i class="fas fa-redo mr-2"></i>Temizle
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tablo -->
+    <div class="datagrid">
+        <div class="vb-datagrid-container">
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı</th>
+                        <th>Kullanıcı Tipi</th>
+                        <th>Departman</th>
+                        <th>Pozisyon</th>
+                        <th>Telefon</th>
+                        {% if has_hotel_module %}
+                        <th>Otel Yetkileri</th>
+                        {% endif %}
+                        <th>Durum</th>
+                        <th style="text-align: center;">İşlemler</th>
+                    </tr>
+                    <tr class="filter-row">
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="0"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="1"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="2"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="3"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="4"></th>
+                        {% if has_hotel_module %}
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="5"></th>
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="6"></th>
+                        <th></th>
+                        {% else %}
+                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="5"></th>
+                        <th></th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tenant_user in users %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600; color: #333;">{{ tenant_user.user.get_full_name|default:tenant_user.user.username }}</div>
+                            <div style="font-size: 12px; color: #666;">{{ tenant_user.user.email }}</div>
+                        </td>
+                        <td>
+                            {% if tenant_user.user_type %}
+                            <span style="display: inline-block; padding: 3px 8px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 11px; font-weight: 600;">
+                                {{ tenant_user.user_type.icon }} {{ tenant_user.user_type.name }}
+                            </span>
+                            {% else %}
+                            <span style="color: #999;">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ tenant_user.department|default:"-" }}</td>
+                        <td>{{ tenant_user.position|default:"-" }}</td>
+                        <td>{{ tenant_user.phone|default:"-" }}</td>
+                        {% if has_hotel_module %}
+                        <td>
+                            {% with user_hotels=user_hotel_permissions|get_item:tenant_user.id %}
+                                {% if user_hotels %}
+                                    {% for hotel_name in user_hotels %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 11px; margin-right: 4px;">
+                                        <i class="fas fa-hotel" style="margin-right: 4px;"></i>{{ hotel_name }}
+                                    </span>
+                                    {% endfor %}
+                                {% else %}
+                                <span style="color: #999; font-size: 12px;">Yetki yok</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        {% endif %}
+                        <td>
+                            {% if tenant_user.is_active %}
+                            <span style="display: inline-block; padding: 3px 8px; background: #d1fae5; color: #065f46; border-radius: 3px; font-size: 11px; font-weight: 600;">Aktif</span>
+                            {% else %}
+                            <span style="display: inline-block; padding: 3px 8px; background: #f3f4f6; color: #374151; border-radius: 3px; font-size: 11px; font-weight: 600;">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'tenant:user_detail' tenant_user.pk %}" style="display: inline-block; padding: 4px 10px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 12px; margin-right: 4px; text-decoration: none;">
+                                <i class="fas fa-eye" style="margin-right: 4px;"></i>Detay
+                            </a>
+                            <a href="{% url 'tenant:user_update' tenant_user.pk %}" style="display: inline-block; padding: 4px 10px; background: #fef3c7; color: #92400e; border-radius: 3px; font-size: 12px; text-decoration: none;">
+                                <i class="fas fa-edit" style="margin-right: 4px;"></i>Düzenle
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if has_hotel_module %}8{% else %}7{% endif %}" style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-inbox" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                            Henüz kullanıcı bulunmamaktadır.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterInputs = document.querySelectorAll('#users-table .filter-input');
+        const table = document.querySelector('#users-table');
+        
+        filterInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                const filterValue = this.value.toLowerCase();
+                const columnIndex = Array.from(this.closest('tr').children).indexOf(this.closest('th'));
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const cell = row.children[columnIndex];
+                    if (cell) {
+                        const cellText = cell.textContent.toLowerCase();
+                        if (cellText.includes(filterValue)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    });
+    </script>
+
+    <!-- Sayfalama -->
+    {% if users.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <div class="flex space-x-2">
+            {% if users.has_previous %}
+            <a href="?page={{ users.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_user_type %}&user_type={{ selected_user_type }}{% endif %}" 
+               class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            <span class="px-4 py-2 bg-vb-primary text-white rounded-lg">
+                Sayfa {{ users.number }} / {{ users.paginator.num_pages }}
+            </span>
+            
+            {% if users.has_next %}
+            <a href="?page={{ users.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_user_type %}&user_type={{ selected_user_type }}{% endif %}" 
+               class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

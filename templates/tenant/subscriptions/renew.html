@@ -1,0 +1,108 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Paket Yenileme - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Paket Yenileme{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Geri Dön Butonu -->
+    <div class="mb-4">
+        <a href="{% url 'tenant_subscriptions:dashboard' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Paket Yönetimine Dön
+        </a>
+    </div>
+    
+    <!-- Mevcut Abonelik Bilgileri -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy mb-4">
+            <i class="fas fa-sync-alt mr-2 text-vb-primary"></i>
+            Aboneliği Yenile
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+<h3 class="vb-section-title text-gray-900 mb-3">Mevcut Abonelik</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Paket:</span>
+                        <span class="font-semibold">{{ package.name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Durum:</span>
+                        <span class="px-3 py-1 rounded-lg text-sm font-semibold {% if subscription.status == 'active' %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                            {{ subscription.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Bitiş Tarihi:</span>
+                        <span class="font-semibold {% if subscription.days_remaining <= 7 %}text-red-600{% elif subscription.days_remaining <= 30 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                            {{ subscription.end_date|date:"d.m.Y" }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Kalan Gün:</span>
+                        <span class="font-semibold text-lg {% if subscription.days_remaining <= 7 %}text-red-600{% elif subscription.days_remaining <= 30 %}text-yellow-600{% else %}text-green-600{% endif %}">
+                            {{ subscription.days_remaining }} gün
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+<h3 class="vb-section-title text-gray-900 mb-3">Yenileme Seçenekleri</h3>
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="radio" name="period" value="monthly" checked class="mr-3 text-vb-primary">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">Aylık Yenileme</div>
+                                <div class="text-sm text-gray-600">
+                                    {{ package.price_monthly }} {{ package.currency }} / ay
+                                </div>
+                            </div>
+                        </label>
+                        
+                        {% if package.price_yearly %}
+                        <label class="flex items-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="radio" name="period" value="yearly" class="mr-3 text-vb-primary">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">Yıllık Yenileme</div>
+                                <div class="text-sm text-gray-600">
+                                    {{ package.price_yearly }} {{ package.currency }} / yıl
+                                    {% if package.get_yearly_discount_percentage %}
+                                    <span class="text-green-600 font-semibold ml-2">
+                                        (%{{ package.get_yearly_discount_percentage }} indirim)
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </label>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Aboneliğiniz seçtiğiniz dönem için otomatik olarak yenilenecektir.
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                            <i class="fas fa-check mr-2"></i>
+                            Yenilemeyi Onayla
+                        </button>
+                        <a href="{% url 'tenant_subscriptions:dashboard' %}" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                            İptal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

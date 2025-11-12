@@ -1,0 +1,341 @@
+{% extends 'vb_theme/layouts/base.html' %}
+{% load static %}
+
+{% block title %}Room Rack - Oda Durumu{% endblock %}
+{% block page_title %}Room Rack{% endblock %}
+{% block page_description %}Tüm odaların anlık durumunu görüntüle{% endblock %}
+
+{% block toolbar_left %}
+<button class="vb-button vb-button-success" data-action="mark-clean">
+    <i class="fas fa-check"></i> Temiz İşaretle
+</button>
+<button class="vb-button vb-button-warning" data-action="mark-dirty">
+    <i class="fas fa-broom"></i> Kirli İşaretle
+</button>
+<button class="vb-button vb-button-primary" data-action="assign-room">
+    <i class="fas fa-user-plus"></i> Oda Ata
+</button>
+<button class="vb-button vb-button-danger" data-action="block-room">
+    <i class="fas fa-ban"></i> Oda Bloke
+</button>
+{% endblock %}
+
+{% block toolbar_right %}
+<div class="toolbar-section">
+    <label style="font-size: 12px; margin-right: 8px;">Görünüm:</label>
+    <button class="vb-button vb-button-primary" id="grid-view" data-view="grid">
+        <i class="fas fa-th"></i>
+    </button>
+    <button class="vb-button" id="list-view" data-view="list">
+        <i class="fas fa-list"></i>
+    </button>
+</div>
+<button class="vb-button" data-action="refresh">
+    <i class="fas fa-sync"></i> Yenile
+</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filters Bar -->
+<div class="filters-bar">
+    <div class="filter-group">
+        <label>Tarih</label>
+        <input type="date" class="vb-input" name="date" value="{% now 'Y-m-d' %}">
+    </div>
+    
+    <div class="filter-group">
+        <label>Oda Durumu</label>
+        <select class="vb-select" name="room_status" id="filter-room-status">
+            <option value="">Tümü</option>
+            <option value="vacant">Boş</option>
+            <option value="occupied">Dolu</option>
+            <option value="reserved">Rezerve</option>
+            <option value="blocked">Blokeli</option>
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label>Temizlik Durumu</label>
+        <select class="vb-select" name="cleaning_status" id="filter-cleaning-status">
+            <option value="">Tümü</option>
+            <option value="clean">Temiz</option>
+            <option value="dirty">Kirli</option>
+            <option value="inspected">Kontrol Edildi</option>
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label>Oda Tipi</label>
+        <select class="vb-select" name="room_type" id="filter-room-type">
+            <option value="">Tümü</option>
+            <option value="std">STD</option>
+            <option value="dlx">DLX</option>
+            <option value="suite">SUITE</option>
+            <option value="family">FAMILY</option>
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label>Kat</label>
+        <select class="vb-select" name="floor" id="filter-floor">
+            <option value="">Tüm Katlar</option>
+            <option value="1">1. Kat</option>
+            <option value="2">2. Kat</option>
+            <option value="3">3. Kat</option>
+            <option value="4">4. Kat</option>
+            <option value="5">5. Kat</option>
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label>Oda No Ara</label>
+        <input type="text" class="vb-input" name="room_search" id="filter-room-search" placeholder="1101...">
+    </div>
+    
+    <div class="filter-group" style="align-self: flex-end;">
+        <button class="vb-button vb-button-primary" data-action="apply-filters">
+            <i class="fas fa-filter"></i> Filtrele
+        </button>
+    </div>
+    
+    <div class="filter-group" style="align-self: flex-end;">
+        <button class="vb-button" data-action="clear-filters" id="clear-filters-btn">
+            <i class="fas fa-times"></i> Temizle
+        </button>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 20px;">
+    <div class="stat-card">
+        <div class="stat-icon primary" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-bed"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Toplam Oda</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.total|default:120 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon success" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-door-open"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Boş</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.vacant|default:42 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon warning" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-door-closed"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Dolu</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.occupied|default:78 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon primary" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Temiz</div>
+            <div class="stat-value" style="font-size: 24px; color: var(--status-clean);">{{ stats.clean|default:90 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon danger" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-broom"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Kirli</div>
+            <div class="stat-value" style="font-size: 24px; color: var(--status-dirty);">{{ stats.dirty|default:30 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon danger" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Doluluk</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.occupancy|default:65 }}%</div>
+        </div>
+    </div>
+</div>
+
+<!-- Room Rack Cards -->
+{% include 'vb_theme/components/room-rack.html' with rooms=rooms show_filters=False %}
+
+{% endblock %}
+
+{% block inline_js %}
+// Room Rack specific JavaScript
+console.log('Room Rack loaded');
+
+// View mode toggle
+const gridViewBtn = document.getElementById('grid-view');
+const listViewBtn = document.getElementById('list-view');
+const roomRackContainer = document.querySelector('.room-rack-container');
+
+if (gridViewBtn && listViewBtn && roomRackContainer) {
+    gridViewBtn.addEventListener('click', function() {
+        roomRackContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
+        this.classList.add('vb-button-primary');
+        listViewBtn.classList.remove('vb-button-primary');
+        localStorage.setItem('roomRackView', 'grid');
+    });
+
+    listViewBtn.addEventListener('click', function() {
+        roomRackContainer.style.gridTemplateColumns = '1fr';
+        this.classList.add('vb-button-primary');
+        gridViewBtn.classList.remove('vb-button-primary');
+        localStorage.setItem('roomRackView', 'list');
+    });
+
+    // Restore view preference
+    const savedView = localStorage.getItem('roomRackView');
+    if (savedView === 'list') {
+        listViewBtn.click();
+    }
+}
+
+// Filter functionality
+const filterRoomStatus = document.getElementById('filter-room-status');
+const filterCleaningStatus = document.getElementById('filter-cleaning-status');
+const filterRoomType = document.getElementById('filter-room-type');
+const filterFloor = document.getElementById('filter-floor');
+const filterRoomSearch = document.getElementById('filter-room-search');
+const clearFiltersBtn = document.getElementById('clear-filters-btn');
+const roomCards = document.querySelectorAll('.room-card');
+
+function applyFilters() {
+    const roomStatus = filterRoomStatus ? filterRoomStatus.value : '';
+    const cleaningStatus = filterCleaningStatus ? filterCleaningStatus.value : '';
+    const roomType = filterRoomType ? filterRoomType.value : '';
+    const floor = filterFloor ? filterFloor.value : '';
+    const searchTerm = filterRoomSearch ? filterRoomSearch.value.toLowerCase() : '';
+
+    let visibleCount = 0;
+
+    roomCards.forEach(function(card) {
+        const cardRoomNumber = card.dataset.roomNumber || '';
+        const cardRoomStatus = card.dataset.roomStatus || '';
+        const cardRoomType = card.dataset.roomType || '';
+        const cardFloor = cardRoomNumber.charAt(0);
+        const cleaningSpan = card.querySelector('.room-status');
+        const cardCleaningStatus = cleaningSpan ? cleaningSpan.classList.toString() : '';
+
+        let show = true;
+
+        // Room status filter
+        if (roomStatus && !cardRoomStatus.includes(roomStatus)) {
+            show = false;
+        }
+
+        // Cleaning status filter
+        if (cleaningStatus && !cardCleaningStatus.includes(cleaningStatus)) {
+            show = false;
+        }
+
+        // Room type filter
+        if (roomType && !cardRoomType.toLowerCase().includes(roomType.toLowerCase())) {
+            show = false;
+        }
+
+        // Floor filter
+        if (floor && cardFloor !== floor) {
+            show = false;
+        }
+
+        // Search filter
+        if (searchTerm && !cardRoomNumber.toLowerCase().includes(searchTerm)) {
+            show = false;
+        }
+
+        card.style.display = show ? 'block' : 'none';
+        if (show) visibleCount++;
+    });
+
+    // Show message if no rooms match
+    const container = document.querySelector('.room-rack-container');
+    let noResultsMsg = container.querySelector('.no-results-message');
+    
+    if (visibleCount === 0) {
+        if (!noResultsMsg) {
+            noResultsMsg = document.createElement('div');
+            noResultsMsg.className = 'no-results-message vb-groupbox';
+            noResultsMsg.style.gridColumn = '1 / -1';
+            noResultsMsg.style.textAlign = 'center';
+            noResultsMsg.style.padding = '60px';
+            noResultsMsg.innerHTML = '<i class="fas fa-search" style="font-size: 64px; opacity: 0.2; color: #6c757d;"></i><p style="margin-top: 16px; color: #6c757d;">Filtre kriterlerine uygun oda bulunamadı</p>';
+            container.appendChild(noResultsMsg);
+        }
+    } else {
+        if (noResultsMsg) {
+            noResultsMsg.remove();
+        }
+    }
+}
+
+// Attach filter events
+if (filterRoomStatus) filterRoomStatus.addEventListener('change', applyFilters);
+if (filterCleaningStatus) filterCleaningStatus.addEventListener('change', applyFilters);
+if (filterRoomType) filterRoomType.addEventListener('change', applyFilters);
+if (filterFloor) filterFloor.addEventListener('change', applyFilters);
+if (filterRoomSearch) filterRoomSearch.addEventListener('input', applyFilters);
+
+// Clear filters
+if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', function() {
+        if (filterRoomStatus) filterRoomStatus.value = '';
+        if (filterCleaningStatus) filterCleaningStatus.value = '';
+        if (filterRoomType) filterRoomType.value = '';
+        if (filterFloor) filterFloor.value = '';
+        if (filterRoomSearch) filterRoomSearch.value = '';
+        
+        roomCards.forEach(function(card) {
+            card.style.display = 'block';
+        });
+        
+        const noResultsMsg = document.querySelector('.no-results-message');
+        if (noResultsMsg) {
+            noResultsMsg.remove();
+        }
+    });
+}
+
+// Room card actions
+document.querySelectorAll('[data-action="view"]').forEach(function(button) {
+    button.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const roomId = this.dataset.roomId;
+        console.log('View room:', roomId);
+        VBComponents.notify('Oda detayları açılıyor...', 'info');
+    });
+});
+
+document.querySelectorAll('[data-action="checkin"]').forEach(function(button) {
+    button.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const roomId = this.dataset.roomId;
+        VBComponents.confirm('Bu odaya check-in yapmak istiyor musunuz?', function() {
+            console.log('Check-in to room:', roomId);
+            VBComponents.notify('Check-in işlemi başlatıldı', 'success');
+        });
+    });
+});
+
+// Auto-refresh every 2 minutes
+setInterval(function() {
+    console.log('Auto-refreshing room rack...');
+    // Add your AJAX refresh logic here
+}, 120000); // 2 minutes
+{% endblock %}
+
+

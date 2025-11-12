@@ -1,0 +1,136 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bildirim Şablonu Detayı - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Bildirim Şablonu Detayı{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:notification_template_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>Şablon Listesine Dön
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Şablon Bilgileri -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
+                <div class="flex items-start justify-between mb-4">
+                    <h3 class="text-xl font-bold text-vb-navy">
+                        <i class="fas fa-bell mr-2 text-vb-primary"></i>
+                        {{ template.name }}
+                    </h3>
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full {% if template.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if template.is_active %}Aktif{% else %}Pasif{% endif %}
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Bildirim Tipi</label>
+                        <p class="text-gray-900 font-medium">{{ template.get_notification_type_display }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Tetikleyici Olay</label>
+                        <p class="text-gray-900 font-medium">{{ template.get_trigger_event_display }}</p>
+                    </div>
+                </div>
+                
+                {% if template.subject %}
+                <div class="mb-4">
+                    <label class="text-sm font-semibold text-gray-600">Konu</label>
+                    <p class="text-gray-900">{{ template.subject }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="mb-4">
+                    <label class="text-sm font-semibold text-gray-600">İçerik</label>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <p class="text-gray-900 whitespace-pre-wrap">{{ template.content }}</p>
+                    </div>
+                </div>
+                
+                {% if template.variables %}
+                <div>
+                    <label class="text-sm font-semibold text-gray-600">Değişkenler</label>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <pre class="text-sm text-gray-900">{{ template.variables|safe }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Son Bildirimler -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-xl font-bold text-vb-navy mb-4">
+                    <i class="fas fa-paper-plane mr-2 text-vb-primary"></i>
+                    Son Bildirimler
+                </h3>
+                <div class="space-y-3">
+                    {% for notification in notifications %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ notification.recipient_name }}</p>
+                                <p class="text-sm text-gray-500">{{ notification.recipient_email|default:notification.recipient_phone }}</p>
+                                <p class="text-sm text-gray-500">{{ notification.sent_at|date:"d.m.Y H:i" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-2 py-1 text-xs rounded-full 
+                                    {% if notification.status == 'sent' %}bg-green-100 text-green-800
+                                    {% elif notification.status == 'failed' %}bg-red-100 text-red-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ notification.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">Bildirim bulunamadı.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- İstatistikler -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-vb-navy mb-4">
+                    <i class="fas fa-chart-bar mr-2 text-vb-primary"></i>
+                    İstatistikler
+                </h3>
+                <div class="space-y-4">
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <p class="text-sm text-gray-600">Toplam Gönderim</p>
+                        <p class="text-2xl font-bold text-vb-primary">{{ stats.total_sent|default:0 }}</p>
+                    </div>
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <p class="text-sm text-gray-600">Başarılı</p>
+                        <p class="text-2xl font-bold text-green-600">{{ stats.successful|default:0 }}</p>
+                    </div>
+                    <div class="border-l-4 border-red-500 pl-4">
+                        <p class="text-sm text-gray-600">Başarısız</p>
+                        <p class="text-2xl font-bold text-red-600">{{ stats.failed|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <div class="flex space-x-2">
+                    <a href="{% url 'tours:notification_template_update' template.pk %}" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center font-semibold">
+                        <i class="fas fa-edit mr-2"></i>Düzenle
+                    </a>
+                    <form method="post" action="{% url 'tours:notification_template_delete' template.pk %}" class="flex-1" onsubmit="return confirm('Bu şablonu silmek istediğinizden emin misiniz?');">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">
+                            <i class="fas fa-trash mr-2"></i>Sil
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,435 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }} | {% if subtitle %}{{ subtitle }} | {% endif %}SaaS 2026 Admin{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'vb-navy': {
+                            50: '#f8f9fa',
+                            100: '#f1f3f5',
+                            200: '#e2e6eb',
+                            300: '#cbd5e0',
+                            400: '#94a3b8',
+                            500: '#2d3e50',  // Primary
+                            600: '#1e2935',  // Dark
+                            700: '#151e29',  // Darker
+                            800: '#0f1419',
+                            900: '#0a0f14',
+                        },
+                        'vb-primary': '#3498db',
+                        'vb-success': '#27ae60',
+                        'vb-danger': '#e74c3c',
+                        'vb-warning': '#f39c12',
+                    },
+                    borderRadius: {
+                        'vb': '3px',
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* VB Desktop Custom Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* VB Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f7fa;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+        
+        /* Form Inputs - VB Style */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="date"],
+        input[type="time"],
+        input[type="url"],
+        input[type="search"],
+        select,
+        textarea {
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        /* Checkbox & Radio */
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+        }
+        
+        /* Labels */
+        label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #495057;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        /* Links */
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        
+        /* Admin specific */
+        .readonly {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 6px 10px;
+            border-radius: 3px;
+        }
+        
+        .errorlist {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 4px;
+            list-style: none;
+            padding: 0;
+        }
+        
+        .errorlist li {
+            padding: 4px 0;
+        }
+        
+        .help {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        /* File Upload Styling */
+        input[type="file"] {
+            padding: 6px 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            background: white;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        input[type="file"]:hover {
+            border-color: #3498db;
+        }
+        
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .file-upload {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-upload-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        
+        .file-upload-label:hover {
+            background: #2980b9;
+        }
+        
+        /* Date/Time Pickers */
+        input[type="date"],
+        input[type="time"],
+        input[type="datetime-local"] {
+            padding: 6px 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        
+        /* Select2/Dropdown Styling */
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            padding-right: 30px;
+            appearance: none;
+        }
+        
+        /* Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        /* Better Focus States */
+        *:focus-visible {
+            outline: 2px solid #3498db;
+            outline-offset: 2px;
+        }
+        
+        /* Table Row Selection */
+        .selected-row {
+            background-color: #d1ecf1 !important;
+        }
+        
+        /* Button Hover Effects */
+        button:hover, .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        button:active, .btn:active {
+            transform: translateY(0);
+        }
+    </style>
+    
+    {% block extrastyle %}{% endblock %}
+    {% block extrahead %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50 overflow-hidden">
+    <!-- VB Desktop Application Layout -->
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar - Navy -->
+        <aside class="w-64 bg-vb-navy-500 text-gray-300 flex flex-col flex-shrink-0">
+            <!-- Sidebar Header -->
+            <div class="h-14 bg-vb-navy-600 border-b border-vb-navy-700 flex items-center px-4">
+                <i class="fas fa-hotel text-xl mr-3"></i>
+                <span class="font-semibold text-white text-lg">SaaS 2026</span>
+            </div>
+            
+            <!-- Sidebar Search -->
+            <div class="p-3 border-b border-vb-navy-700">
+                <input type="text" 
+                       placeholder="Menüde Ara..." 
+                       class="w-full px-3 py-2 bg-vb-navy-700 border border-vb-navy-700 rounded-vb text-sm text-gray-300 placeholder-gray-400 focus:outline-none focus:border-vb-primary">
+            </div>
+            
+            <!-- Sidebar Menu -->
+            <nav class="flex-1 overflow-y-auto p-2">
+                {% block sidebar %}
+                <!-- Dashboard -->
+                <div class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase tracking-wider">
+                    📊 Dashboard
+                </div>
+                <a href="{% url 'admin:index' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors {% if request.resolver_match.url_name == 'index' %}bg-vb-navy-700 border-l-4 border-vb-primary text-white{% endif %}">
+                    <i class="fas fa-home w-5"></i>
+                    <span class="ml-3">Ana Sayfa</span>
+                </a>
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Kullanıcı Yönetimi -->
+                <div class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase tracking-wider">
+                    👥 Kullanıcı Yönetimi
+                </div>
+                <a href="{% url 'admin:auth_user_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Kullanıcılar</span>
+                </a>
+                <a href="{% url 'admin:auth_group_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-user-shield w-5"></i>
+                    <span class="ml-3">Gruplar</span>
+                </a>
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Tenant Yönetimi -->
+                <div class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase tracking-wider">
+                    🏢 Tenant Yönetimi
+                </div>
+                <a href="{% url 'admin:tenants_tenant_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-building w-5"></i>
+                    <span class="ml-3">Üyeler (Tenants)</span>
+                </a>
+                <a href="{% url 'admin:tenants_domain_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-globe w-5"></i>
+                    <span class="ml-3">Domainler</span>
+                </a>
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Paket Sistemi -->
+                <div class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase tracking-wider">
+                    📦 Paket Sistemi
+                </div>
+                <a href="{% url 'admin:packages_package_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-box w-5"></i>
+                    <span class="ml-3">Paketler</span>
+                </a>
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Modül Yönetimi -->
+                <div class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase tracking-wider">
+                    🧩 Modül Yönetimi
+                </div>
+                <a href="{% url 'admin:modules_module_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-puzzle-piece w-5"></i>
+                    <span class="ml-3">Modüller</span>
+                </a>
+                
+                <div class="h-px bg-vb-navy-700 my-2"></div>
+                
+                <!-- Abonelik & Ödeme -->
+                <div class="text-xs font-semibold text-gray-400 px-3 py-2 uppercase tracking-wider">
+                    💳 Abonelik & Ödeme
+                </div>
+                <a href="{% url 'admin:subscriptions_subscription_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-credit-card w-5"></i>
+                    <span class="ml-3">Abonelikler</span>
+                </a>
+                <a href="{% url 'admin:subscriptions_payment_changelist' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                    <i class="fas fa-money-bill-wave w-5"></i>
+                    <span class="ml-3">Ödemeler</span>
+                </a>
+                {% endblock %}
+            </nav>
+            
+            <!-- Sidebar Footer -->
+            <div class="p-3 border-t border-vb-navy-700">
+                <div class="flex items-center text-xs text-gray-400">
+                    <i class="fas fa-user-circle mr-2"></i>
+                    <span>{{ user.username }}</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            
+            <!-- Top Bar -->
+            <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-vb-navy-500">
+                        {% block content_title %}{% if title %}{{ title }}{% endif %}{% endblock %}
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" target="_blank" class="text-gray-600 hover:text-vb-primary">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span class="ml-2 text-sm">Siteyi Görüntüle</span>
+                    </a>
+                    <a href="{% url 'admin:logout' %}" class="px-4 py-2 bg-vb-danger text-white rounded-vb hover:bg-red-600 transition-colors text-sm">
+                        <i class="fas fa-sign-out-alt mr-2"></i>
+                        Çıkış
+                    </a>
+                </div>
+            </header>
+            
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+                {% block messages %}
+                    {% if messages %}
+                        <div class="mb-4 space-y-2">
+                            {% for message in messages %}
+                            <div class="px-4 py-3 rounded-vb {% if message.tags == 'success' %}bg-vb-success text-white{% elif message.tags == 'error' %}bg-vb-danger text-white{% elif message.tags == 'warning' %}bg-vb-warning text-white{% else %}bg-vb-primary text-white{% endif %}">
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endblock %}
+                
+                {% block content %}
+                {{ content }}
+                {% endblock %}
+            </main>
+            
+            <!-- Status Bar -->
+            <footer class="h-9 bg-vb-navy-500 border-t border-vb-navy-700 flex items-center justify-between px-6 text-xs text-gray-300 flex-shrink-0">
+                <div class="flex items-center space-x-4">
+                    <span><i class="fas fa-building mr-2"></i>Bulut Acente 2025-2026 v1.9</span>
+                    <span><i class="fas fa-user mr-2"></i>{{ user.get_full_name|default:user.username }}</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span><i class="fas fa-calendar mr-2"></i><span id="admin-date"></span></span>
+                    <span><i class="fas fa-clock mr-2"></i><span id="admin-time"></span></span>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <script>
+        // Canlı tarih/saat gösterimi
+        function updateAdminDateTime() {
+            const now = new Date();
+            const date = now.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const time = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            const dateElement = document.getElementById('admin-date');
+            const timeElement = document.getElementById('admin-time');
+            
+            if (dateElement) dateElement.textContent = date;
+            if (timeElement) timeElement.textContent = time;
+        }
+        
+        // Sayfa yüklendiğinde ve her saniye güncelle
+        updateAdminDateTime();
+        setInterval(updateAdminDateTime, 1000);
+    </script>
+    
+    {% block extrajs %}{% endblock %}
+</body>
+</html>
+
+

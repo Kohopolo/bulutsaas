@@ -1,0 +1,37 @@
+{% load i18n static %}
+{% if cl.search_fields %}
+<div class="flex items-center space-x-2">
+    <form method="get" class="flex items-center space-x-2">
+        <label for="searchbar" class="sr-only">{% translate 'Search' %}</label>
+        <div class="relative">
+            <input type="text" 
+                   size="40" 
+                   name="{{ search_var }}" 
+                   value="{{ cl.query }}" 
+                   id="searchbar"
+                   placeholder="{% translate 'Search' %}..."
+                   class="px-3 py-2 border border-gray-300 rounded-vb focus:outline-none focus:border-vb-primary focus:ring-2 focus:ring-vb-primary/20"
+                   {% if cl.search_help_text %} aria-describedby="searchbar_helptext"{% endif %}>
+            <button type="submit" class="ml-2 px-4 py-2 bg-vb-primary text-white rounded-vb hover:bg-blue-600 text-sm">
+                <i class="fas fa-search mr-2"></i>
+                {% translate 'Search' %}
+            </button>
+        </div>
+        {% if show_result_count %}
+        <span class="text-sm text-gray-500">
+            {% blocktranslate count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktranslate %}
+            {% if cl.show_full_result_count %}
+            ({% blocktranslate with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktranslate %})
+            {% endif %}
+        </span>
+        {% endif %}
+        {% for pair in cl.params.items %}
+            {% if pair.0 != search_var %}<input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}">{% endif %}
+        {% endfor %}
+        {% if cl.is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1">{% endif %}
+    </form>
+</div>
+{% if cl.search_help_text %}
+<div class="mt-2 text-xs text-gray-500" id="searchbar_helptext">{{ cl.search_help_text }}</div>
+{% endif %}
+{% endif %}

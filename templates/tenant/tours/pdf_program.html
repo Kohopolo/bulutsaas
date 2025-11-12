@@ -1,0 +1,128 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}PDF Program - {{ tour.name }}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="bg-white rounded-lg border border-gray-200 p-8 shadow-sm max-w-4xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-vb-navy mb-2">{{ tour.name }}</h1>
+            <p class="text-gray-600">{{ tour.code }}</p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-6 mb-8">
+            <div>
+<h3 class="vb-section-title text-gray-900 mb-3">Tur Bilgileri</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Bölge:</span>
+                        <span class="font-semibold">{{ tour.region.name|default:"-" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Lokasyon:</span>
+                        <span class="font-semibold">{{ tour.location.name|default:"-" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Süre:</span>
+                        <span class="font-semibold">{{ tour.get_duration_display }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Ulaşım:</span>
+                        <span class="font-semibold">{{ tour.get_transport_type_display }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+<h3 class="vb-section-title text-gray-900 mb-3">Fiyat Bilgileri</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Yetişkin:</span>
+                        <span class="font-semibold">{{ tour.adult_price }} {{ tour.currency }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Çocuk:</span>
+                        <span class="font-semibold">{{ tour.child_price }} {{ tour.currency }}</span>
+                    </div>
+                    {% if tour.group_price %}
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Grup (10+):</span>
+                        <span class="font-semibold">{{ tour.group_price }} {{ tour.currency }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if tour.description %}
+        <div class="mb-8">
+<h3 class="vb-section-title text-gray-900 mb-3">Tur Açıklaması</h3>
+            <p class="text-gray-700">{{ tour.description|linebreaks }}</p>
+        </div>
+        {% endif %}
+        
+        {% if tour.programs.exists %}
+        <div class="mb-8">
+<h3 class="vb-section-title text-gray-900 mb-4">Gün Gün Program</h3>
+            <div class="space-y-4">
+                {% for program in tour.programs.all|dictsort:"day_number" %}
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h4 class="font-semibold text-gray-900 mb-2">{{ program.day_number }}. Gün{% if program.title %}: {{ program.title }}{% endif %}</h4>
+                    <p class="text-gray-700 mb-2">{{ program.description|linebreaks }}</p>
+                    {% if program.activities %}
+                    <p class="text-sm text-gray-600"><strong>Aktiviteler:</strong> {{ program.activities }}</p>
+                    {% endif %}
+                    {% if program.meals %}
+                    <p class="text-sm text-gray-600"><strong>Yemekler:</strong> {{ program.meals }}</p>
+                    {% endif %}
+                    {% if program.accommodation %}
+                    <p class="text-sm text-gray-600"><strong>Konaklama:</strong> {{ program.accommodation }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if tour.price_includes %}
+        <div class="mb-8">
+<h3 class="vb-section-title text-gray-900 mb-3">Fiyata Dahil</h3>
+            <ul class="list-disc list-inside space-y-1 text-gray-700">
+                {% for item in tour.price_includes.splitlines %}
+                {% if item.strip %}
+                <li>{{ item.strip }}</li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if tour.price_excludes %}
+        <div class="mb-8">
+<h3 class="vb-section-title text-gray-900 mb-3">Fiyata Dahil Olmayanlar</h3>
+            <ul class="list-disc list-inside space-y-1 text-gray-700">
+                {% for item in tour.price_excludes.splitlines %}
+                {% if item.strip %}
+                <li>{{ item.strip }}</li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        {% if tour.notes %}
+        <div class="mb-8">
+<h3 class="vb-section-title text-gray-900 mb-3">Önemli Notlar</h3>
+            <p class="text-gray-700">{{ tour.notes|linebreaks }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="text-center text-sm text-gray-500 pt-6 border-t border-gray-200">
+            <p>Bu program otomatik olarak oluşturulmuştur.</p>
+            <p>PDF indirmek için <a href="{% url 'tours:pdf_program' tour.pk %}" class="text-vb-primary hover:text-blue-600">tıklayın</a>.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

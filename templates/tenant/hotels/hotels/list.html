@@ -1,0 +1,218 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Otel Bilgileri - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Otel Bilgileri{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık ve Aksiyonlar -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-hotel mr-2 text-vb-primary"></i>
+            Oteller
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'hotels:settings_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-cog mr-2"></i>
+                Ayarlar
+            </a>
+            {% if can_add_hotel %}
+            <a href="{% url 'hotels:hotel_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni Otel Ekle
+            </a>
+            {% else %}
+            <span class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed text-sm">
+                <i class="fas fa-lock mr-2"></i>
+                Limit Dolu ({{ current_hotels }}/{{ max_hotels }})
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Paket Limiti Bilgisi -->
+    {% if max_hotels > 0 %}
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-semibold text-blue-900">Paket Limiti</p>
+                <p class="text-xs text-blue-700 mt-1">Mevcut: {{ current_hotels }} / Maksimum: {{ max_hotels }}</p>
+            </div>
+            <div class="w-64 bg-gray-200 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full" style="width: {% widthratio current_hotels max_hotels 100 %}%"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Bölge</label>
+                <select name="region" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    {% for region in regions %}
+                    <option value="{{ region.id }}" {% if request.GET.region == region.id|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Şehir</label>
+                <select name="city" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    {% for city in cities %}
+                    <option value="{{ city.id }}" {% if request.GET.city == city.id|stringformat:"s" %}selected{% endif %}>{{ city.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Otel Türü</label>
+                <select name="hotel_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    {% for hotel_type in hotel_types %}
+                    <option value="{{ hotel_type.id }}" {% if request.GET.hotel_type == hotel_type.id|stringformat:"s" %}selected{% endif %}>{{ hotel_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Durum</label>
+                <select name="is_active" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    <option value="1" {% if request.GET.is_active == "1" %}selected{% endif %}>Aktif</option>
+                    <option value="0" {% if request.GET.is_active == "0" %}selected{% endif %}>Pasif</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Otel Listesi -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if hotels %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Otel Adı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Bölge/Şehir</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tür</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Yıldız</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Oda Sayısı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hotel in hotels %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center">
+                                {% if hotel.main_image %}
+                                <img src="{{ hotel.main_image.url }}" alt="{{ hotel.name }}" class="w-12 h-12 rounded-lg object-cover mr-3">
+                                {% else %}
+                                <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center mr-3">
+                                    <i class="fas fa-hotel text-gray-400"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <a href="{% url 'hotels:hotel_detail' hotel.pk %}" class="font-semibold text-gray-900 hover:text-vb-primary">
+                                        {{ hotel.name }}
+                                    </a>
+                                    {% if hotel.is_default %}
+                                    <span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">Varsayılan</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {% if hotel.region %}{{ hotel.region.name }}{% endif %}{% if hotel.city %}, {{ hotel.city.name }}{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {{ hotel.hotel_type.name|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if hotel.star_rating %}
+                            <div class="flex text-yellow-400">
+                                {% for i in "12345"|make_list %}
+                                <i class="fas fa-star text-xs {% if forloop.counter <= hotel.star_rating %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {{ hotel.total_rooms }}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if hotel.is_active %}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Aktif</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'hotels:hotel_usage_report_detail' hotel.pk %}" class="text-green-600 hover:text-green-700" title="Kullanım Raporu">
+                                    <i class="fas fa-chart-bar"></i>
+                                </a>
+                                <a href="{% url 'hotels:hotel_detail' hotel.pk %}" class="text-vb-primary hover:text-blue-600" title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'hotels:hotel_update' hotel.pk %}" class="text-yellow-600 hover:text-yellow-700" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'hotels:hotel_delete' hotel.pk %}" class="text-red-600 hover:text-red-700" title="Sil" onclick="return confirm('Bu oteli silmek istediğinize emin misiniz?');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sayfalama -->
+        {% if hotels.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                Sayfa {{ hotels.number }} / {{ hotels.paginator.num_pages }}
+            </div>
+            <div class="flex space-x-2">
+                {% if hotels.has_previous %}
+                <a href="?page={{ hotels.previous_page_number }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.city %}&city={{ request.GET.city }}{% endif %}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+                {% if hotels.has_next %}
+                <a href="?page={{ hotels.next_page_number }}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.city %}&city={{ request.GET.city }}{% endif %}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-hotel text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-600 mb-4">Henüz otel eklenmemiş.</p>
+            {% if can_add_hotel %}
+            <a href="{% url 'hotels:hotel_create' %}" class="inline-block px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                İlk Oteli Ekle
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

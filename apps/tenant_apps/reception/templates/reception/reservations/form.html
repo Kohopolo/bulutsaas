@@ -1,0 +1,970 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if reservation %}Rezervasyon Düzenle{% else %}Hızlı Rezervasyon (Walk-In){% endif %} - Resepsiyon{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+    
+    .form-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 0;
+        padding: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        min-height: calc(100vh - 60px);
+        overflow-y: visible;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        margin-top: 0;
+    }
+    
+    .form-section {
+        background: rgba(248, 249, 250, 0.8);
+        border-radius: 6px;
+        padding: 4px;
+        margin-bottom: 4px;
+        border-left: 2px solid #667eea;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+        color: #667eea;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-right: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 4px;
+        border: 1px solid #e0e0e0;
+        padding: 4px 8px;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+    
+    .price-display {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+        border-radius: 4px;
+        padding: 6px;
+        text-align: center;
+        margin: 6px 0;
+    }
+    
+    .price-display h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    
+    .price-display p {
+        margin: 2px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.75rem;
+    }
+    
+    .tc-kimlik-container {
+        max-width: 100%;
+    }
+    
+    .tc-digit {
+        width: 24px;
+        height: 28px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+    }
+    
+    .tc-digit:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .tc-digit.filled {
+        background-color: #f8f9fa;
+        border-color: #28a745;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .col-md-6, .col-12 {
+        padding-left: 4px;
+        padding-right: 4px;
+        box-sizing: border-box;
+    }
+    
+    .mb-0 {
+        margin-bottom: 0 !important;
+    }
+    
+    .alert {
+        border-radius: 10px;
+        border: none;
+        padding: 15px 20px;
+    }
+    
+    .alert-success {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+    }
+    
+    .alert-danger {
+        background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <!-- Django Messages -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}success{% endif %} alert-dismissible mb-3" role="alert">
+            <div class="d-flex">
+                <div><i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}check-circle{% endif %} me-2"></i></div>
+                <div>{{ message }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post" id="hizliRezervasyonForm">
+        {% csrf_token %}
+        
+        <!-- Ana Form Bölümleri -->
+        <div class="row">
+            <!-- Müşteri Bilgileri -->
+            <div class="col-md-6">
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-user"></i>
+                        Müşteri Bilgileri
+                    </h4>
+                    
+                    <div class="row">
+                        <!-- TC Kimlik No -->
+                        <div class="col-12 mb-0">
+                            <label class="form-label">TC Kimlik No <span class="text-danger">*</span></label>
+                            <div class="tc-kimlik-container d-flex gap-1">
+                                {% for i in "01234567890" %}
+                                <input type="text" class="form-control tc-digit" maxlength="1" data-index="{{ forloop.counter0 }}" pattern="[0-9]" required>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="customer_tc_no" id="id_customer_tc_no" value="{{ form.customer_tc_no.value|default:'' }}">
+                            <div class="invalid-feedback">TC kimlik numarası 11 haneli olmalıdır.</div>
+                            <div class="valid-feedback" id="tc-success-message" style="display: none;">
+                                <i class="fas fa-check-circle me-1"></i>Müşteri bilgileri bulundu ve dolduruldu!
+                            </div>
+                            <small class="form-text text-muted" style="font-size: 0.7rem;">11 haneli TC kimlik numarası girildiğinde müşteri bilgileri otomatik doldurulacaktır</small>
+                            {% if form.customer_tc_no.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.customer_tc_no.errors }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Ad ve Soyad -->
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Ad <span class="text-danger">*</span></label>
+                            {{ form.customer_first_name }}
+                            {% if form.customer_first_name.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.customer_first_name.errors }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Soyad <span class="text-danger">*</span></label>
+                            {{ form.customer_last_name }}
+                            {% if form.customer_last_name.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.customer_last_name.errors }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Telefon ve E-posta -->
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Telefon <span class="text-danger">*</span></label>
+                            {{ form.customer_phone }}
+                            {% if form.customer_phone.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.customer_phone.errors }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">E-posta <span class="text-danger">*</span></label>
+                            {{ form.customer_email }}
+                            {% if form.customer_email.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.customer_email.errors }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Adres -->
+                        <div class="col-12 mb-0">
+                            <label class="form-label">Adres</label>
+                            {{ form.customer_address }}
+                            {% if form.customer_address.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.customer_address.errors }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rezervasyon Bilgileri -->
+            <div class="col-md-6">
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-calendar"></i>
+                        Rezervasyon Bilgileri
+                    </h4>
+                    
+                    <div class="row">
+                        <!-- Tarih Bilgileri -->
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Giriş Tarihi <span class="text-danger">*</span></label>
+                            {{ form.check_in_date }}
+                            {% if form.check_in_date.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.check_in_date.errors }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Çıkış Tarihi <span class="text-danger">*</span></label>
+                            {{ form.check_out_date }}
+                            {% if form.check_out_date.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.check_out_date.errors }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Oda Bilgileri -->
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Oda Tipi <span class="text-danger">*</span></label>
+                            {{ form.room }}
+                            {% if form.room.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.room.errors }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Oda Numarası</label>
+                            <select name="room_number_id" id="id_room_number_id" class="form-select">
+                                <option value="">Önce oda tipi seçiniz</option>
+                            </select>
+                            <small class="form-text text-muted" style="font-size: 0.7rem;">Oda numarası seçimi opsiyoneldir</small>
+                        </div>
+                        
+                        <!-- Misafir Sayıları -->
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Yetişkin Sayısı <span class="text-danger">*</span></label>
+                            {{ form.adult_count }}
+                            <p id="adultCapacityInfo" class="text-muted mt-1" style="display: none; font-size: 0.7rem;"></p>
+                            {% if form.adult_count.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.adult_count.errors }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Çocuk Sayısı</label>
+                            {{ form.child_count }}
+                            <p id="childCapacityInfo" class="text-muted mt-1" style="display: none; font-size: 0.7rem;"></p>
+                            {% if form.child_count.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.child_count.errors }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Çocuk Yaşları -->
+                        <div class="col-12" id="cocuk_yaslari_container" style="display: none;">
+                            <h6 class="fw-bold mb-1" style="font-size: 0.8rem; font-weight: bold;">Çocuk Yaşları <span class="text-danger">*</span></h6>
+                            <div id="cocuk_yaslari_form"></div>
+                        </div>
+                        
+                        <!-- Kapasite Hata Mesajı -->
+                        <div id="capacityError" class="col-12" style="display: none; background: rgba(244, 67, 54, 0.1); border: 1px solid #f44336; border-radius: 6px; padding: 8px; margin-top: 8px;">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong style="font-size: 0.85rem;">Kapasite Hatası:</strong>
+                            <ul id="capacityErrorList" class="mt-2 mb-0" style="list-style: disc; padding-left: 20px; font-size: 0.75rem;"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alt Bölümler -->
+        <div class="row" style="margin-top: 15px;">
+            <!-- Ödeme Bilgileri -->
+            <div class="col-md-6">
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-credit-card"></i>
+                        Ödeme Bilgileri
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Ödeme Yöntemi</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="">Ödeme yöntemi seçiniz...</option>
+                                <option value="nakit">Nakit</option>
+                                <option value="kredi_karti">Kredi Kartı</option>
+                                <option value="havale">Havale</option>
+                                <option value="cek">Çek</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-0">
+                            <label class="form-label">Ödeme Miktarı (₺)</label>
+                            {{ form.total_paid }}
+                            {% if form.total_paid.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.total_paid.errors }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Fiyat Hesaplama -->
+                    <div class="price-display">
+                        <h3 id="toplam-fiyat">0₺</h3>
+                        <p id="fiyat-detay">Gece sayısı ve oda tipi seçiniz</p>
+                    </div>
+                    
+                    <!-- Fiyat Detayları (Gizli) -->
+                    <div id="priceDetails" style="display: none; background: rgba(248, 249, 250, 0.9); border-radius: 6px; padding: 8px; margin-top: 8px;">
+                        <div class="row">
+                            <div class="col-md-6 mb-0">
+                                <p class="text-muted mb-0" style="font-size: 0.7rem;">Temel Fiyat</p>
+                                <p class="fw-bold mb-0" id="displayBasePrice" style="font-size: 0.85rem;">0.00</p>
+                            </div>
+                            <div class="col-md-6 mb-0">
+                                <p class="text-muted mb-0" style="font-size: 0.7rem;">Gece Sayısı</p>
+                                <p class="fw-bold mb-0" id="displayNights" style="font-size: 0.85rem;">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fiyat Alanları (Gizli) -->
+                    <div style="display: none;">
+                        {{ form.base_price }}
+                        {{ form.adult_price }}
+                        {{ form.child_price }}
+                        {{ form.extra_services_total }}
+                        {{ form.discount_amount }}
+                        {{ form.reception_discount_rate }}
+                        {{ form.reception_discount_amount }}
+                        {{ form.currency }}
+                        {{ form.total_amount }}
+                        {{ form.source }}
+                        {{ form.advance_payment }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notlar -->
+            <div class="col-md-6">
+                <div class="form-section">
+                    <h4 class="section-title">
+                        <i class="fas fa-sticky-note"></i>
+                        Notlar
+                    </h4>
+                        <div class="row">
+                        <div class="col-12 mb-0">
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <p class="text-danger mt-1" style="font-size: 0.75rem;">{{ form.notes.errors }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Butonları -->
+                <div class="row" style="margin-top: 8px;">
+                    <div class="col-12 text-center">
+                        <br>
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-save"></i> Rezervasyon Oluştur
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearForm()">
+                            <i class="fas fa-eraser"></i> Formu Temizle
+                        </button>
+                        <a href="{% url 'reception:reservation_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> İptal
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Otomatik Check-in Seçeneği -->
+        <div class="row" id="otomatik_checkin_container" style="display: none; margin-top: 15px;">
+            <div class="col-12">
+                <div class="form-section" style="background: rgba(40, 167, 69, 0.15); border-left: 4px solid #28a745; border-radius: 8px; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);">
+                    <h4 class="section-title" style="color: #28a745; font-size: 1rem;">
+                        <i class="fas fa-check-circle"></i>
+                        Otomatik Check-in Seçeneği
+                    </h4>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="otomatik_checkin" id="otomatik_checkin" value="1" style="transform: scale(1.2);">
+                                <label class="form-check-label" for="otomatik_checkin" style="font-size: 0.85rem;">
+                                    <strong>Rezervasyonu otomatik check-in yap</strong>
+                                    <br><small class="text-muted" style="font-size: 0.75rem;">Giriş tarihi bugün olduğu için rezervasyon otomatik olarak check-in durumuna alınacak ve oda dolu olarak işaretlenecektir.</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// TC Kimlik numarası yönetimi
+document.addEventListener('DOMContentLoaded', function() {
+    const tcDigits = document.querySelectorAll('.tc-digit');
+    const tcInput = document.getElementById('id_customer_tc_no');
+    
+    if (tcDigits.length === 0 || !tcInput) return;
+    
+    // Mevcut değeri doldur (düzenleme modunda)
+    if (tcInput.value && tcInput.value.length === 11) {
+        const value = tcInput.value;
+        for (let i = 0; i < 11 && i < tcDigits.length; i++) {
+            tcDigits[i].value = value[i] || '';
+        }
+    }
+    
+    tcDigits.forEach((digit, index) => {
+        digit.addEventListener('input', function(e) {
+            const value = e.target.value;
+            
+            // Sadece rakam kabul et
+            if (!/^\d$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+            
+            // Sonraki input'a geç
+            if (value && index < tcDigits.length - 1) {
+                tcDigits[index + 1].focus();
+            }
+            
+            // TC kimlik numarasını güncelle
+            updateTCKimlik();
+            
+            // 11 haneli olduğunda müşteri ara
+            if (getTCKimlik().length === 11) {
+                searchCustomer();
+            }
+        });
+        
+        digit.addEventListener('keydown', function(e) {
+            // Backspace ile önceki input'a geç
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                tcDigits[index - 1].focus();
+            }
+        });
+    });
+    
+    function updateTCKimlik() {
+        const tc = getTCKimlik();
+        tcInput.value = tc;
+        
+        // Validasyon
+        if (tc.length === 11) {
+            tcInput.classList.remove('is-invalid');
+            tcInput.classList.add('is-valid');
+            document.getElementById('tc-success-message').style.display = 'block';
+        } else {
+            tcInput.classList.remove('is-valid');
+            tcInput.classList.add('is-invalid');
+            document.getElementById('tc-success-message').style.display = 'none';
+        }
+    }
+    
+    function getTCKimlik() {
+        return Array.from(tcDigits).map(digit => digit.value).join('');
+    }
+    
+    function searchCustomer() {
+        const tc = getTCKimlik();
+        if (tc.length !== 11) return;
+        
+        // AJAX ile müşteri ara
+        fetch('{% url "reception:api_customer_find" %}?tc_no=' + encodeURIComponent(tc), {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.customer) {
+                fillCustomerData(data.customer);
+                document.getElementById('tc-success-message').style.display = 'block';
+            } else {
+                document.getElementById('tc-success-message').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Müşteri arama hatası:', error);
+        });
+    }
+    
+    function fillCustomerData(customer) {
+        const firstNameInput = document.getElementById('id_customer_first_name');
+        const lastNameInput = document.getElementById('id_customer_last_name');
+        const emailInput = document.getElementById('id_customer_email');
+        const phoneInput = document.getElementById('id_customer_phone');
+        const addressInput = document.getElementById('id_customer_address');
+        
+        if (firstNameInput && customer.first_name) firstNameInput.value = customer.first_name;
+        if (lastNameInput && customer.last_name) lastNameInput.value = customer.last_name;
+        if (emailInput && customer.email) emailInput.value = customer.email;
+        if (phoneInput && customer.phone) phoneInput.value = customer.phone;
+        if (addressInput && customer.address) addressInput.value = customer.address;
+    }
+    
+    // Oda tipi değiştiğinde oda numaralarını yükle
+    const roomSelect = document.getElementById('id_room');
+    const roomNumberSelect = document.getElementById('id_room_number_id');
+    const checkInDate = document.getElementById('id_check_in_date');
+    const checkOutDate = document.getElementById('id_check_out_date');
+    
+    function updateRoomNumbers() {
+        const roomId = roomSelect.value;
+        const checkIn = checkInDate.value;
+        const checkOut = checkOutDate.value;
+        
+        if (!roomId || !checkIn || !checkOut) {
+            roomNumberSelect.innerHTML = '<option value="">Önce oda tipi ve tarihleri seçiniz</option>';
+            return;
+        }
+        
+        // AJAX ile oda numaralarını yükle
+        fetch('{% url "reception:api_rooms_available" %}?room_id=' + encodeURIComponent(roomId) + '&check_in=' + encodeURIComponent(checkIn) + '&check_out=' + encodeURIComponent(checkOut), {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            roomNumberSelect.innerHTML = '<option value="">Oda seçiniz...</option>';
+            if (data.success && data.rooms) {
+                data.rooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.id;
+                    option.textContent = room.number + ' - ' + room.room_name;
+                    roomNumberSelect.appendChild(option);
+                });
+            } else {
+                roomNumberSelect.innerHTML = '<option value="">Müsait oda bulunamadı</option>';
+            }
+        })
+        .catch(error => {
+            console.error('Oda yükleme hatası:', error);
+            roomNumberSelect.innerHTML = '<option value="">Hata oluştu</option>';
+        });
+    }
+    
+    if (roomSelect && roomNumberSelect && checkInDate && checkOutDate) {
+        roomSelect.addEventListener('change', updateRoomNumbers);
+        checkInDate.addEventListener('change', updateRoomNumbers);
+        checkOutDate.addEventListener('change', updateRoomNumbers);
+    }
+    
+    // Misafir sayıları değiştiğinde çocuk yaş formunu güncelle
+    const yetiskinSayisi = document.getElementById('id_adult_count');
+    const cocukSayisi = document.getElementById('id_child_count');
+    
+    function generateCocukYaslari() {
+        const cocukSayisiValue = parseInt(cocukSayisi.value) || 0;
+        const container = document.getElementById('cocuk_yaslari_container');
+        const form = document.getElementById('cocuk_yaslari_form');
+        
+        if (cocukSayisiValue > 0) {
+            container.style.display = 'block';
+            
+            let html = '<div class="row">';
+            for (let i = 0; i < cocukSayisiValue; i++) {
+            html += `
+                    <div class="col-md-3 mb-0">
+                        <label class="form-label" style="font-size: 0.75rem;">${i + 1}. Çocuk Yaşı *</label>
+                        <select class="form-select" name="child_age_${i}" required style="font-size: 0.8rem; padding: 2px 6px;" onchange="updatePrice()">
+                            <option value="">Yaş seçin</option>
+                            <option value="0">0 yaş</option>
+                            <option value="1">1 yaş</option>
+                            <option value="2">2 yaş</option>
+                            <option value="3">3 yaş</option>
+                            <option value="4">4 yaş</option>
+                            <option value="5">5 yaş</option>
+                            <option value="6">6 yaş</option>
+                            <option value="7">7 yaş</option>
+                            <option value="8">8 yaş</option>
+                            <option value="9">9 yaş</option>
+                            <option value="10">10 yaş</option>
+                            <option value="11">11 yaş</option>
+                            <option value="12">12 yaş</option>
+                            <option value="13">13 yaş</option>
+                            <option value="14">14 yaş</option>
+                            <option value="15">15 yaş</option>
+                            <option value="16">16 yaş</option>
+                            <option value="17">17 yaş</option>
+                        </select>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            form.innerHTML = html;
+        } else {
+            container.style.display = 'none';
+            form.innerHTML = '';
+        }
+    }
+    
+    if (cocukSayisi) {
+        cocukSayisi.addEventListener('change', function() {
+            generateCocukYaslari();
+            updatePrice();
+        });
+    }
+    
+    // Otomatik check-in kontrolü
+    function checkOtomatikCheckin() {
+        const girisTarihi = checkInDate.value;
+        const bugun = new Date().toISOString().split('T')[0];
+        const otomatikCheckinContainer = document.getElementById('otomatik_checkin_container');
+        
+        if (girisTarihi === bugun) {
+            otomatikCheckinContainer.style.display = 'block';
+        } else {
+            otomatikCheckinContainer.style.display = 'none';
+            const checkbox = document.getElementById('otomatik_checkin');
+            if (checkbox) checkbox.checked = false;
+        }
+    }
+    
+    if (checkInDate) {
+        checkInDate.addEventListener('change', checkOtomatikCheckin);
+        checkInDate.addEventListener('input', checkOtomatikCheckin);
+        checkOtomatikCheckin();
+    }
+    
+    // Oda kapasite bilgileri
+    let roomsCapacity = {};
+    try {
+        roomsCapacity = {{ rooms_capacity|safe }};
+    } catch(e) {
+        roomsCapacity = {};
+    }
+    
+    function validateRoomCapacity() {
+        const roomId = parseInt(roomSelect.value);
+        const adults = parseInt(yetiskinSayisi.value) || 0;
+        const children = parseInt(cocukSayisi.value) || 0;
+        const total = adults + children;
+        
+        if (!roomId || !roomsCapacity[roomId]) {
+            return { valid: true };
+        }
+        
+        const capacity = roomsCapacity[roomId];
+        const errors = [];
+        
+        if (adults > capacity.max_adults) {
+            errors.push(`Maksimum yetişkin sayısı: ${capacity.max_adults} (Girdiğiniz: ${adults})`);
+        }
+        
+        if (children > capacity.max_children) {
+            errors.push(`Maksimum çocuk sayısı: ${capacity.max_children} (Girdiğiniz: ${children})`);
+        }
+        
+        if (total > capacity.max_total_capacity) {
+            errors.push(`Maksimum toplam misafir sayısı: ${capacity.max_total_capacity} (Toplam: ${total})`);
+        }
+        
+        return {
+            valid: errors.length === 0,
+            errors: errors,
+            capacity: capacity
+        };
+    }
+    
+    function updateCapacityInfo() {
+        const validation = validateRoomCapacity();
+        const capacityError = document.getElementById('capacityError');
+        const capacityErrorList = document.getElementById('capacityErrorList');
+        const adultCapacityInfo = document.getElementById('adultCapacityInfo');
+        const childCapacityInfo = document.getElementById('childCapacityInfo');
+        
+        if (!validation.valid && validation.errors) {
+            if (capacityError && capacityErrorList) {
+                capacityErrorList.innerHTML = '';
+                validation.errors.forEach(error => {
+                    const li = document.createElement('li');
+                    li.textContent = error;
+                    li.style.fontSize = '0.7rem';
+                    capacityErrorList.appendChild(li);
+                });
+                capacityError.style.display = 'block';
+            }
+        } else {
+            if (capacityError) {
+                capacityError.style.display = 'none';
+            }
+            
+                if (validation.capacity) {
+                if (adultCapacityInfo) {
+                    adultCapacityInfo.textContent = `Maksimum: ${validation.capacity.max_adults} yetişkin`;
+                    adultCapacityInfo.style.display = 'block';
+                    adultCapacityInfo.style.fontSize = '0.7rem';
+                }
+                if (childCapacityInfo) {
+                    childCapacityInfo.textContent = `Maksimum: ${validation.capacity.max_children} çocuk (Toplam: ${validation.capacity.max_total_capacity})`;
+                    childCapacityInfo.style.display = 'block';
+                    childCapacityInfo.style.fontSize = '0.7rem';
+                }
+            } else {
+                if (adultCapacityInfo) adultCapacityInfo.style.display = 'none';
+                if (childCapacityInfo) childCapacityInfo.style.display = 'none';
+            }
+        }
+    }
+    
+    if (roomSelect) {
+        roomSelect.addEventListener('change', updateCapacityInfo);
+    }
+    if (yetiskinSayisi) {
+        yetiskinSayisi.addEventListener('change', updateCapacityInfo);
+        yetiskinSayisi.addEventListener('input', updateCapacityInfo);
+    }
+    if (cocukSayisi) {
+        cocukSayisi.addEventListener('change', updateCapacityInfo);
+        cocukSayisi.addEventListener('input', updateCapacityInfo);
+    }
+    
+    updateCapacityInfo();
+    
+    // Fiyat hesaplama (global scope)
+    window.updatePrice = function() {
+        const odaTipiSelect = roomSelect;
+        const selectedOption = odaTipiSelect.options[odaTipiSelect.selectedIndex];
+        const girisTarihi = checkInDate.value;
+        const cikisTarihi = checkOutDate.value;
+        const adults = parseInt(yetiskinSayisi.value) || 1;
+        const children = parseInt(cocukSayisi.value) || 0;
+        
+        if (!selectedOption.value || !girisTarihi || !cikisTarihi) {
+            document.getElementById('toplam-fiyat').textContent = '0₺';
+            document.getElementById('fiyat-detay').textContent = 'Gece sayısı ve oda tipi seçiniz';
+            return;
+        }
+        
+        // Çocuk yaşlarını topla
+        const cocukYaslari = [];
+        for (let i = 0; i < children; i++) {
+            const ageInput = document.querySelector(`select[name="child_age_${i}"]`);
+            if (ageInput && ageInput.value) {
+                cocukYaslari.push(parseInt(ageInput.value));
+            }
+        }
+        
+        // AJAX ile fiyat hesapla
+        const formData = new FormData();
+        formData.append('room_id', selectedOption.value);
+        formData.append('check_in', girisTarihi);
+        formData.append('check_out', cikisTarihi);
+        formData.append('adults', adults);
+        formData.append('children', children);
+        formData.append('child_ages', JSON.stringify(cocukYaslari));
+        
+        fetch('{% url "reception:api_pricing_calculate" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    const error = new Error(data.error || 'Fiyat hesaplama başarısız oldu.');
+                    error.data = data;
+                    throw error;
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                document.getElementById('toplam-fiyat').textContent = '0₺';
+                document.getElementById('fiyat-detay').textContent = data.error;
+                return;
+            }
+            
+            if (data.success) {
+                const totalPrice = parseFloat(data.total_price);
+                document.getElementById('toplam-fiyat').textContent = totalPrice.toLocaleString('tr-TR') + '₺';
+                document.getElementById('fiyat-detay').textContent = `${data.nights} gece - Ortalama: ${(totalPrice / data.nights).toLocaleString('tr-TR')}₺/gece`;
+                
+                // Fiyat detaylarını göster
+                const priceDetails = document.getElementById('priceDetails');
+                if (priceDetails) {
+                    priceDetails.style.display = 'block';
+                    document.getElementById('displayBasePrice').textContent = totalPrice.toFixed(2);
+                    document.getElementById('displayNights').textContent = data.nights;
+                }
+                
+                // Hidden input'lara yaz
+                const basePriceInput = document.getElementById('id_base_price');
+                const totalAmountInput = document.getElementById('id_total_amount');
+                if (basePriceInput) basePriceInput.value = totalPrice.toFixed(2);
+                if (totalAmountInput) totalAmountInput.value = totalPrice.toFixed(2);
+            }
+        })
+        .catch(error => {
+            console.error('Fiyat hesaplama hatası:', error);
+            document.getElementById('toplam-fiyat').textContent = '0₺';
+            document.getElementById('fiyat-detay').textContent = error.message || 'Fiyat hesaplanamadı';
+        });
+    };
+    
+    // Otomatik fiyat güncelleme
+    if (roomSelect) {
+        roomSelect.addEventListener('change', function() {
+            updateCapacityInfo();
+            updatePrice();
+        });
+    }
+    if (checkInDate) {
+        checkInDate.addEventListener('change', function() {
+            updateRoomNumbers();
+            updatePrice();
+            checkOtomatikCheckin();
+        });
+    }
+    if (checkOutDate) {
+        checkOutDate.addEventListener('change', function() {
+            updateRoomNumbers();
+            updatePrice();
+        });
+    }
+    if (yetiskinSayisi) {
+        yetiskinSayisi.addEventListener('change', function() {
+            updateCapacityInfo();
+            updatePrice();
+        });
+    }
+    if (cocukSayisi) {
+        cocukSayisi.addEventListener('change', function() {
+            updateCapacityInfo();
+            generateCocukYaslari();
+            updatePrice();
+        });
+    }
+    
+    // Form gönderilirken çocuk yaşlarını JSON olarak kaydet
+    const form = document.getElementById('hizliRezervasyonForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Kapasite kontrolü
+            const validation = validateRoomCapacity();
+            if (!validation.valid) {
+                e.preventDefault();
+                alert('Oda kapasitesi aşıldı!\n\n' + validation.errors.join('\n'));
+                return false;
+            }
+            
+            const children = parseInt(cocukSayisi.value) || 0;
+            const childAges = [];
+            for (let i = 0; i < children; i++) {
+                const ageInput = document.querySelector(`select[name="child_age_${i}"]`);
+                if (ageInput && ageInput.value) {
+                    childAges.push(parseInt(ageInput.value));
+                }
+            }
+            
+            // Hidden input'a kaydet
+            let childAgesJsonInput = document.getElementById('id_child_ages_json');
+            if (!childAgesJsonInput) {
+                childAgesJsonInput = document.createElement('input');
+                childAgesJsonInput.type = 'hidden';
+                childAgesJsonInput.name = 'child_ages_json';
+                childAgesJsonInput.id = 'id_child_ages_json';
+                form.appendChild(childAgesJsonInput);
+            }
+            childAgesJsonInput.value = JSON.stringify(childAges);
+        });
+    }
+    
+    // Form temizleme
+    window.clearForm = function() {
+        form.reset();
+        tcDigits.forEach(digit => digit.value = '');
+        tcInput.value = '';
+        document.getElementById('tc-success-message').style.display = 'none';
+        document.getElementById('cocuk_yaslari_container').style.display = 'none';
+        document.getElementById('cocuk_yaslari_form').innerHTML = '';
+        document.getElementById('otomatik_checkin_container').style.display = 'none';
+        if (document.getElementById('otomatik_checkin')) {
+            document.getElementById('otomatik_checkin').checked = false;
+        }
+        if (roomNumberSelect) {
+            roomNumberSelect.innerHTML = '<option value="">Önce oda tipi seçiniz</option>';
+        }
+        updatePrice();
+    };
+    
+    // İlk yüklemede çocuk yaşlarını kontrol et
+    if (cocukSayisi && parseInt(cocukSayisi.value) > 0) {
+        generateCocukYaslari();
+    }
+});
+</script>
+{% endblock %}

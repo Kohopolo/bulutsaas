@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}SaaS 2026{% endblock %} - Super Admin Panel</title>
+    
+    <!-- VB Layout CSS (DEĞİŞMEZ!) -->
+    <link rel="stylesheet" href="{% static 'css/vb-layout.css' %}">
+    
+    <!-- Custom CSS (Opsiyonel) -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- VB Tarzı Tam Ekran Uygulama -->
+    <div class="desktop-app">
+        
+        <!-- Title Bar (Üst Başlık Çubuğu) -->
+        {% include 'includes/titlebar.html' %}
+        
+        <!-- Toolbar (Menü & Araç Çubuğu) -->
+        {% include 'includes/toolbar.html' %}
+        
+        <!-- Main Container (Sidebar + Content) -->
+        <div class="main-container">
+            
+            <!-- Sidebar (Sol Menü) -->
+            {% include 'includes/sidebar.html' %}
+            
+            <!-- Content Area (Sağ İçerik) -->
+            <div class="content-area">
+                {% block content %}
+                <!-- Sayfa içeriği buraya gelecek -->
+                {% endblock %}
+            </div>
+            
+        </div>
+        
+        <!-- Status Bar (Alt Durum Çubuğu) -->
+        {% include 'includes/statusbar.html' %}
+        
+    </div>
+    
+    <!-- VB Layout JS -->
+    <script src="{% static 'js/vb-layout.js' %}"></script>
+    
+    <!-- DataGrid Filters JS (Otomatik tablo filtreleme) -->
+    <script src="{% static 'js/datagrid-filters.js' %}"></script>
+    
+    <!-- Custom JS (Opsiyonel) -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
+
+

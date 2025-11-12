@@ -1,0 +1,128 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* VB Desktop Style Overrides */
+    #changelist {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 3px;
+        padding: 0;
+    }
+    
+    #changelist table {
+        border: 1px solid #dee2e6;
+        border-radius: 3px;
+    }
+    
+    #changelist thead th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    #changelist tbody tr:nth-child(even) {
+        background: white;
+    }
+    
+    #changelist tbody tr:nth-child(odd) {
+        background: #f8f9fa;
+    }
+    
+    #changelist tbody tr:hover {
+        background: #e9ecef;
+    }
+    
+    .object-tools {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .object-tools a {
+        padding: 7px 16px;
+        background: #3498db;
+        color: white;
+        border-radius: 3px;
+        text-decoration: none;
+        border: 1px solid #3498db;
+    }
+    
+    .object-tools a:hover {
+        background: #2980b9;
+        border-color: #2980b9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-vb shadow-sm border border-gray-200">
+    <!-- Toolbar -->
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            {% block object-tools %}
+            {% if has_add_permission %}
+            <a href="{% url opts|admin_urlname:'add' %}{% if is_popup %}?{{ is_popup }}{% endif %}" class="px-4 py-2 bg-vb-primary text-white rounded-vb hover:bg-blue-600 transition-colors text-sm">
+                <i class="fas fa-plus mr-2"></i>
+                {{ opts.verbose_name }} Ekle
+            </a>
+            {% endif %}
+            {% endblock %}
+        </div>
+        <div class="flex items-center space-x-2">
+            {% block search %}
+            {% search_form cl %}
+            {% endblock %}
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    {% block filters %}
+    {% if cl.has_filters %}
+    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div class="flex flex-wrap gap-3">
+            {% for spec in cl.filter_specs %}
+                {% admin_list_filter cl spec %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endblock %}
+    
+    <!-- Actions (Bulk Actions - Top) -->
+    {% if action_form and actions_on_top and cl.result_count %}
+    <div class="px-6 py-3 border-b border-gray-200">
+        {% include "admin/actions.html" %}
+    </div>
+    {% endif %}
+    
+    <!-- Date Hierarchy -->
+    {% if cl.date_hierarchy %}
+    <div class="px-6 py-3 border-b border-gray-200">
+        {% date_hierarchy cl %}
+    </div>
+    {% endif %}
+    
+    <!-- Results -->
+    <div class="p-6">
+        {% block result_list %}
+        {% result_list cl %}
+        {% endblock %}
+        
+        <!-- Actions (Bottom) -->
+        {% if action_form and actions_on_bottom and cl.result_count %}
+        <div class="mt-4">
+            {% include "admin/actions.html" %}
+        </div>
+        {% endif %}
+        
+        <!-- Pagination -->
+        {% block pagination %}
+        {% pagination cl %}
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}

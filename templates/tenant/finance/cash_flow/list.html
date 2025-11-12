@@ -1,0 +1,64 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Nakit Akışı - Kasa Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-vb-navy-500">
+            <i class="fas fa-chart-line mr-2 text-vb-primary"></i>Nakit Akışı
+        </h1>
+        <a href="{% url 'finance:cash_flow_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+            <i class="fas fa-plus mr-2"></i>Yeni Nakit Akışı
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <table class="w-full border-collapse">
+            <thead class="bg-vb-navy-500 text-white">
+                <tr>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Hesap</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Dönem</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Açılış</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Gelir</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Gider</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Net Akış</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Kapanış</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for flow in flows %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">{{ flow.account.name }}</td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm">{{ flow.get_period_type_display }}</div>
+                        <div class="text-xs text-gray-500">{{ flow.period_start|date:"d.m.Y" }} - {{ flow.period_end|date:"d.m.Y" }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-right">{{ flow.opening_balance|floatformat:2 }} {{ flow.account.currency }}</td>
+                    <td class="px-4 py-3 text-right text-green-600 font-semibold">+{{ flow.total_income|floatformat:2 }}</td>
+                    <td class="px-4 py-3 text-right text-red-600 font-semibold">-{{ flow.total_expense|floatformat:2 }}</td>
+                    <td class="px-4 py-3 text-right font-bold {% if flow.net_flow >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                        {{ flow.net_flow|floatformat:2 }}
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold">{{ flow.closing_balance|floatformat:2 }} {{ flow.account.currency }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-center gap-2">
+                            <a href="{% url 'finance:cash_flow_detail' flow.pk %}" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+                                Detay
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">Henüz nakit akışı bulunmamaktadır.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

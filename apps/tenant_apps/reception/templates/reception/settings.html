@@ -1,0 +1,133 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Resepsiyon Ayarları{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-cog mr-2 text-vb-primary"></i>
+            Resepsiyon Ayarları
+        </h2>
+        <a href="{% url 'reception:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Ana Ekran
+        </a>
+    </div>
+    
+    <!-- Ayarlar Formu -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Check-in/out Ayarları -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-door-open mr-2 text-vb-primary"></i>
+                    Check-in/out Ayarları
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Otomatik Check-out Saati</label>
+                        {{ form.auto_checkout_time }}
+                        {% if form.auto_checkout_time.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.auto_checkout_time.errors }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Erken Check-in İzni</label>
+                        <div class="flex items-center">
+                            {{ form.early_checkin_allowed }}
+                            <span class="ml-2 text-sm text-gray-600">Erken check-in'e izin ver</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Geç Check-out İzni</label>
+                        <div class="flex items-center">
+                            {{ form.late_checkout_allowed }}
+                            <span class="ml-2 text-sm text-gray-600">Geç check-out'a izin ver</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Geç Check-out Saat Limiti</label>
+                        {{ form.late_checkout_hour_limit }}
+                        {% if form.late_checkout_hour_limit.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.late_checkout_hour_limit.errors }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Erken/Geç Çıkış Ücretleri -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-money-bill-wave mr-2 text-vb-primary"></i>
+                    Erken/Geç Çıkış Ücretleri
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Erken Çıkış Ücreti</label>
+                        {{ form.early_checkout_fee }}
+                        {% if form.early_checkout_fee.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.early_checkout_fee.errors }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Geç Çıkış Ücreti</label>
+                        {{ form.late_checkout_fee }}
+                        {% if form.late_checkout_fee.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.late_checkout_fee.errors }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Erken Çıkış İade Oranı (%)</label>
+                        {{ form.early_checkout_refund_rate }}
+                        {% if form.early_checkout_refund_rate.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.early_checkout_refund_rate.errors }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Yazdırma Ayarları -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-vb-navy mb-4">
+                    <i class="fas fa-print mr-2 text-vb-primary"></i>
+                    Yazdırma Ayarları
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Otomatik Makbuz Yazdır</label>
+                        <div class="flex items-center">
+                            {{ form.print_receipt_auto }}
+                            <span class="ml-2 text-sm text-gray-600">Check-out'ta otomatik makbuz yazdır</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notlar -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Notlar</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.notes.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Kaydet Butonu -->
+            <div class="flex justify-end space-x-3 pt-6">
+                <a href="{% url 'reception:dashboard' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    İptal
+                </a>
+                <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                    <i class="fas fa-save mr-2"></i>
+                    Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Şikayet Listesi - Kalite Kontrol{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-exclamation-triangle mr-2 text-vb-primary"></i>
+            Şikayet Listesi
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'quality_control:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ana Ekran
+            </a>
+            <a href="{% url 'quality_control:complaint_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni Şikayet
+            </a>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if complaints %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Şikayet Tipi</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Öncelik</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Bildiren</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tarih</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900">{{ complaint.get_complaint_type_display }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ complaint.get_priority_display }}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if complaint.status == 'resolved' %}bg-green-100 text-green-800
+                                {% elif complaint.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ complaint.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ complaint.reported_by.get_full_name|default:"-" }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ complaint.reported_at|date:"d.m.Y H:i" }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <a href="#" class="text-vb-primary hover:text-blue-600 mr-3">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-gray-500">
+            <i class="fas fa-inbox text-4xl mb-4"></i>
+            <p>Henüz şikayet bulunmuyor</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

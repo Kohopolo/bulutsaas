@@ -1,0 +1,88 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Müşteri Listesi - Resepsiyon{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık ve Aksiyonlar -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-users mr-2 text-vb-primary"></i>
+            Müşteri Listesi
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'reception:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ana Ekran
+            </a>
+            <a href="{% url 'reception:guest_search' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-search mr-2"></i>
+                Müşteri Ara
+            </a>
+        </div>
+    </div>
+    
+    <!-- Müşteri Listesi -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if guests %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Müşteri Adı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">E-posta</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Telefon</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for guest in guests %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                            {{ guest.customer_first_name|default:guest.customer_id__first_name }} {{ guest.customer_last_name|default:guest.customer_id__last_name }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ guest.customer_email|default:guest.customer_id__email }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ guest.customer_phone|default:guest.customer_id__phone }}</td>
+                        <td class="px-4 py-3">
+                            {% if guest.customer_id %}
+                            <a href="{% url 'reception:guest_detail' guest.customer_id %}" class="text-vb-primary hover:text-blue-600" title="Detay">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sayfalama -->
+        {% if guests.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                Sayfa {{ guests.number }} / {{ guests.paginator.num_pages }}
+            </div>
+            <div class="flex space-x-2">
+                {% if guests.has_previous %}
+                <a href="?page={{ guests.previous_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+                {% if guests.has_next %}
+                <a href="?page={{ guests.next_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-600 mb-4">Henüz müşteri bulunamadı.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

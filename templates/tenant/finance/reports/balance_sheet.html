@@ -1,0 +1,43 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bilanço Raporu - Kasa Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <h1 class="text-2xl font-bold text-vb-navy-500 mb-6">
+        <i class="fas fa-chart-pie mr-2 text-vb-primary"></i>Bilanço Raporu
+    </h1>
+
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Hesap Bakiyeleri</h2>
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Hesap</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold">Tip</th>
+                        <th class="px-4 py-3 text-right text-sm font-semibold">Bakiye</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for account in accounts %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">{{ account.name }}</td>
+                        <td class="px-4 py-3">{{ account.get_account_type_display }}</td>
+                        <td class="px-4 py-3 text-right font-semibold {% if account.current_balance >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            {{ account.current_balance|floatformat:2 }} {{ account.currency }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="bg-vb-navy-500 text-white font-bold">
+                        <td colspan="2" class="px-4 py-3">TOPLAM</td>
+                        <td class="px-4 py-3 text-right">{{ total_balance|floatformat:2 }} TRY</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
