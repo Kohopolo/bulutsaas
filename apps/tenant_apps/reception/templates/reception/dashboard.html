@@ -1,0 +1,114 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Resepsiyon Dashboard{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-concierge-bell"></i> Resepsiyon Dashboard
+        </div>
+        <div class="groupbox-body">
+            <!-- İstatistikler -->
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="stat-card" style="background: #e8f4f8; padding: 15px; border: 1px solid #c0d4e0; border-radius: 3px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #2c5f8d;">{{ stats.total_reservations }}</div>
+                    <div style="color: #666; font-size: 13px;">Toplam Rezervasyon</div>
+                </div>
+                <div class="stat-card" style="background: #e8f4f8; padding: 15px; border: 1px solid #c0d4e0; border-radius: 3px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #2c5f8d;">{{ stats.confirmed_reservations }}</div>
+                    <div style="color: #666; font-size: 13px;">Onaylanmış</div>
+                </div>
+                <div class="stat-card" style="background: #e8f4f8; padding: 15px; border: 1px solid #c0d4e0; border-radius: 3px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #2c5f8d;">{{ stats.checked_in }}</div>
+                    <div style="color: #666; font-size: 13px;">Check-In Yapılan</div>
+                </div>
+                <div class="stat-card" style="background: #e8f4f8; padding: 15px; border: 1px solid #c0d4e0; border-radius: 3px;">
+                    <div style="font-size: 24px; font-weight: bold; color: #2c5f8d;">{{ stats.today_revenue|floatformat:2 }} ₺</div>
+                    <div style="color: #666; font-size: 13px;">Bugünkü Gelir</div>
+                </div>
+            </div>
+
+            <!-- Bekleyen Check-in'ler -->
+            <div class="groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-sign-in-alt"></i> Bekleyen Check-in'ler
+                </div>
+                <div class="groupbox-body">
+                    {% if pending_checkins %}
+                    <div class="datagrid">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Rezervasyon Kodu</th>
+                                    <th>Müşteri</th>
+                                    <th>Oda</th>
+                                    <th>Check-in Saati</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reservation in pending_checkins %}
+                                <tr>
+                                    <td>{{ reservation.reservation_code }}</td>
+                                    <td>{{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</td>
+                                    <td>{{ reservation.room.name }}</td>
+                                    <td>{{ reservation.check_in_time }}</td>
+                                    <td>
+                                        <a href="{% url 'reception:reservation_checkin' reservation.pk %}" class="vb-button primary">Check-in</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p style="text-align: center; color: #999; padding: 20px;">Bekleyen check-in bulunmamaktadır.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Bekleyen Check-out'lar -->
+            <div class="groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-sign-out-alt"></i> Bekleyen Check-out'lar
+                </div>
+                <div class="groupbox-body">
+                    {% if pending_checkouts %}
+                    <div class="datagrid">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Rezervasyon Kodu</th>
+                                    <th>Müşteri</th>
+                                    <th>Oda</th>
+                                    <th>Check-out Saati</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reservation in pending_checkouts %}
+                                <tr>
+                                    <td>{{ reservation.reservation_code }}</td>
+                                    <td>{{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</td>
+                                    <td>{{ reservation.room.name }}</td>
+                                    <td>{{ reservation.check_out_time }}</td>
+                                    <td>
+                                        <a href="{% url 'reception:reservation_checkout' reservation.pk %}" class="vb-button primary">Check-out</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p style="text-align: center; color: #999; padding: 20px;">Bekleyen check-out bulunmamaktadır.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

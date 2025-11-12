@@ -232,16 +232,25 @@
                 </div>
                 {% endif %}
                 
-                <!-- Resepsiyon Modülü - KALDIRILDI, YENİDEN İNŞA EDİLECEK -->
-                {# {% if has_reception_module %}
+                <!-- Resepsiyon Modülü -->
+                {% if has_reception_module %}
                 <div class="mb-2">
                     <a href="{% url 'reception:dashboard' %}" class="flex items-center px-3 py-2 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
                         <i class="fas fa-concierge-bell w-5"></i>
                         <span class="ml-3">Resepsiyon</span>
                     </a>
-                    ...
+                    <div class="pl-4">
+                        <a href="{% url 'reception:reservation_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-list w-4"></i>
+                            <span class="ml-3">Rezervasyonlar</span>
+                        </a>
+                        <a href="{% url 'reception:reservation_create' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-plus-circle w-4"></i>
+                            <span class="ml-3">Yeni Rezervasyon</span>
+                        </a>
+                    </div>
                 </div>
-                {% endif %} #}
+                {% endif %}
                 
                 <!-- Kat Hizmetleri Modülü -->
                 {% if has_housekeeping_module %}

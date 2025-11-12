@@ -1,0 +1,39 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if reservation %}Rezervasyon Düzenle{% else %}Yeni Rezervasyon{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-{% if reservation %}edit{% else %}plus{% endif %}"></i> 
+            {% if reservation %}Rezervasyon Düzenle{% else %}Yeni Rezervasyon{% endif %}
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label>{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="error-message">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% if reservation %}{% url 'reception:reservation_detail' reservation.pk %}{% else %}{% url 'reception:reservation_list' %}{% endif %}" 
+                       class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

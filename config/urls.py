@@ -37,8 +37,8 @@ urlpatterns = [
     # Otel Yönetimi
     path('hotels/', include('apps.tenant_apps.hotels.urls')),
     
-    # Resepsiyon (Ön Büro) - KALDIRILDI, YENİDEN İNŞA EDİLECEK
-    # path('reception/', include('apps.tenant_apps.reception.urls')),
+    # Resepsiyon (Ön Büro) - Rezervasyon odaklı
+    path('reception/', include('apps.tenant_apps.reception.urls')),
     
     # Kat Hizmetleri (Housekeeping)
     path('housekeeping/', include('apps.tenant_apps.housekeeping.urls')),

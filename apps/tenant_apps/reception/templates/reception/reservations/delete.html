@@ -1,0 +1,32 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Rezervasyon Sil{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-trash"></i> Rezervasyon Sil - {{ reservation.reservation_code }}
+        </div>
+        <div class="groupbox-body">
+            <p>Bu rezervasyonu silmek istediğinizden emin misiniz?</p>
+            
+            <div style="margin: 20px 0;">
+                <p><strong>Müşteri:</strong> {{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</p>
+                <p><strong>Oda:</strong> {{ reservation.room.name }}</p>
+                <p><strong>Tarih:</strong> {{ reservation.check_in_date|date:"d.m.Y" }} - {{ reservation.check_out_date|date:"d.m.Y" }}</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div style="text-align: right;">
+                    <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button danger">Sil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

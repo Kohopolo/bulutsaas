@@ -84,7 +84,7 @@ TENANT_APPS = [
     # Her tenant için ayrı schema'da çalışır
     'apps.tenant_apps.hotels',
     'apps.tenant_apps.reservations',
-    # 'apps.tenant_apps.reception',  # Resepsiyon (Ön Büro) - KALDIRILDI, YENİDEN İNŞA EDİLECEK
+    'apps.tenant_apps.reception',  # Resepsiyon (Ön Büro) - Rezervasyon odaklı
     'apps.tenant_apps.housekeeping',  # Kat Hizmetleri
     'apps.tenant_apps.technical_service',  # Teknik Servis
     'apps.tenant_apps.quality_control',  # Kalite Kontrol

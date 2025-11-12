@@ -1,0 +1,62 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Rezervasyon Detayı{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-info-circle"></i> Rezervasyon Detayı - {{ reservation.reservation_code }}
+        </div>
+        <div class="groupbox-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div>
+                    <h3>Müşteri Bilgileri</h3>
+                    <p><strong>Ad Soyad:</strong> {{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</p>
+                    <p><strong>E-posta:</strong> {{ reservation.customer.email }}</p>
+                    <p><strong>Telefon:</strong> {{ reservation.customer.phone }}</p>
+                </div>
+                <div>
+                    <h3>Rezervasyon Bilgileri</h3>
+                    <p><strong>Otel:</strong> {{ reservation.hotel.name }}</p>
+                    <p><strong>Oda:</strong> {{ reservation.room.name }}{% if reservation.room_number %} - {{ reservation.room_number.number }}{% endif %}</p>
+                    <p><strong>Durum:</strong> {{ reservation.get_status_display }}</p>
+                </div>
+                <div>
+                    <h3>Tarih Bilgileri</h3>
+                    <p><strong>Check-in:</strong> {{ reservation.check_in_date|date:"d.m.Y" }} {{ reservation.check_in_time }}</p>
+                    <p><strong>Check-out:</strong> {{ reservation.check_out_date|date:"d.m.Y" }} {{ reservation.check_out_time }}</p>
+                    <p><strong>Gece:</strong> {{ reservation.total_nights }}</p>
+                </div>
+                <div>
+                    <h3>Fiyatlandırma</h3>
+                    <p><strong>Oda Fiyatı:</strong> {{ reservation.room_rate|floatformat:2 }} {{ reservation.currency }}</p>
+                    <p><strong>İndirim:</strong> {{ reservation.discount_amount|floatformat:2 }} {{ reservation.currency }}</p>
+                    <p><strong>Toplam:</strong> {{ reservation.total_amount|floatformat:2 }} {{ reservation.currency }}</p>
+                    <p><strong>Ödenen:</strong> {{ reservation.total_paid|floatformat:2 }} {{ reservation.currency }}</p>
+                </div>
+            </div>
+
+            {% if reservation.special_requests %}
+            <div style="margin-top: 20px;">
+                <h3>Özel İstekler</h3>
+                <p>{{ reservation.special_requests }}</p>
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 20px; text-align: right;">
+                <a href="{% url 'reception:reservation_list' %}" class="vb-button">Geri</a>
+                <a href="{% url 'reception:reservation_update' reservation.pk %}" class="vb-button">Düzenle</a>
+                {% if reservation.can_check_in %}
+                <a href="{% url 'reception:reservation_checkin' reservation.pk %}" class="vb-button primary">Check-in</a>
+                {% endif %}
+                {% if reservation.can_check_out %}
+                <a href="{% url 'reception:reservation_checkout' reservation.pk %}" class="vb-button primary">Check-out</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
