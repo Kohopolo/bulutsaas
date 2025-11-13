@@ -1293,7 +1293,16 @@ def reservation_checkin(request, pk):
         reservation.status = ReservationStatus.CHECKED_IN
         reservation.checked_in_at = timezone.now()
         reservation.save()
-        messages.success(request, 'Check-in başarıyla yapıldı.')
+        
+        # Oda durumunu güncelle - Check-in yapıldığında oda DOLU olur
+        if reservation.room_number:
+            from apps.tenant_apps.hotels.models import RoomNumberStatus
+            reservation.room_number.status = RoomNumberStatus.OCCUPIED
+            reservation.room_number.save()
+            messages.success(request, 'Check-in başarıyla yapıldı. Oda durumu "Dolu" olarak güncellendi.')
+        else:
+            messages.success(request, 'Check-in başarıyla yapıldı.')
+        
         return redirect('reception:reservation_detail', pk=reservation.pk)
     
     context = {
@@ -1324,7 +1333,16 @@ def reservation_checkout(request, pk):
         reservation.status = ReservationStatus.CHECKED_OUT
         reservation.checked_out_at = timezone.now()
         reservation.save()
-        messages.success(request, 'Check-out başarıyla yapıldı.')
+        
+        # Oda durumunu güncelle - Check-out yapıldığında oda TEMİZLİK BEKLİYOR olur
+        if reservation.room_number:
+            from apps.tenant_apps.hotels.models import RoomNumberStatus
+            reservation.room_number.status = RoomNumberStatus.CLEANING_PENDING
+            reservation.room_number.save()
+            messages.success(request, 'Check-out başarıyla yapıldı. Oda durumu "Temizlik Bekliyor" olarak güncellendi.')
+        else:
+            messages.success(request, 'Check-out başarıyla yapıldı.')
+        
         return redirect('reception:reservation_detail', pk=reservation.pk)
     
     context = {

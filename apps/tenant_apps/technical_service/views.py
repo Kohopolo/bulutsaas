@@ -181,7 +181,13 @@ def request_start(request, pk):
     req.started_at = timezone.now()
     req.save()
     
-    return JsonResponse({'success': True, 'message': 'Bakım başlatıldı.'})
+    # Oda durumunu güncelle - Bakım başladığında oda BAKIMDA olur
+    if req.room_number:
+        from apps.tenant_apps.hotels.models import RoomNumberStatus
+        req.room_number.status = RoomNumberStatus.MAINTENANCE
+        req.room_number.save()
+    
+    return JsonResponse({'success': True, 'message': 'Bakım başlatıldı. Oda durumu "Bakımda" olarak güncellendi.'})
 
 
 @login_required
@@ -209,7 +215,35 @@ def request_complete(request, pk):
                 pass
         req.save()
         
-        messages.success(request, 'Bakım talebi tamamlandı.')
+        # Oda durumunu akıllı güncelle - Rezervasyon kontrolü yap
+        if req.room_number:
+            from apps.tenant_apps.hotels.models import RoomNumberStatus
+            from apps.tenant_apps.reception.models import Reservation, ReservationStatus
+            from datetime import date, timedelta
+            
+            today = date.today()
+            
+            # Bugün veya yarın bu odada rezervasyon var mı?
+            has_reservation = Reservation.objects.filter(
+                room_number=req.room_number,
+                check_in_date__lte=today + timedelta(days=1),
+                check_out_date__gte=today,
+                status__in=[ReservationStatus.CONFIRMED, ReservationStatus.CHECKED_IN],
+                is_deleted=False
+            ).exists()
+            
+            if has_reservation:
+                # Rezervasyon var → Oda DOLU olmalı (check-in bekliyor veya müşteri var)
+                req.room_number.status = RoomNumberStatus.OCCUPIED
+            else:
+                # Rezervasyon yok → Oda MÜSAİT olmalı
+                req.room_number.status = RoomNumberStatus.AVAILABLE
+            
+            req.room_number.save()
+            messages.success(request, 'Bakım talebi tamamlandı. Oda durumu güncellendi.')
+        else:
+            messages.success(request, 'Bakım talebi tamamlandı.')
+        
         return redirect('technical_service:request_detail', pk=req.pk)
     
     context = {'hotel': hotel, 'request': req}

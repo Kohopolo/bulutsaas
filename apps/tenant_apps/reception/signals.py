@@ -9,7 +9,8 @@ from django.dispatch import receiver
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
-from .models import Reservation, ReservationPayment, ReservationVoucher
+from datetime import timedelta
+from .models import Reservation, ReservationPayment, ReservationVoucher, ReservationStatus
 
 
 @receiver(post_save, sender=ReservationPayment)
@@ -428,3 +429,54 @@ def send_voucher_notification(sender, instance, created, **kwargs):
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f'Voucher bildirimi gönderilemedi: {str(e)}')
+
+
+# ==================== ODA DURUMU OTOMATIK GÜNCELLEME ====================
+
+@receiver(post_save, sender=Reservation)
+def update_room_status_on_reservation_change(sender, instance, created, **kwargs):
+    """
+    Rezervasyon durumu değiştiğinde oda durumunu otomatik güncelle
+    Check-in, check-out ve iptal durumlarında oda durumunu yönetir
+    """
+    if not instance.room_number:
+        return  # Oda numarası yoksa işlem yapma
+    
+    try:
+        from apps.tenant_apps.hotels.models import RoomNumberStatus
+        from datetime import date
+        
+        # Check-in yapıldıysa → Oda DOLU
+        if instance.is_checked_in and instance.status == ReservationStatus.CHECKED_IN:
+            if instance.room_number.status != RoomNumberStatus.OCCUPIED:
+                instance.room_number.status = RoomNumberStatus.OCCUPIED
+                instance.room_number.save()
+        
+        # Check-out yapıldıysa → Oda TEMİZLİK BEKLİYOR
+        elif instance.is_checked_out and instance.status == ReservationStatus.CHECKED_OUT:
+            if instance.room_number.status != RoomNumberStatus.CLEANING_PENDING:
+                instance.room_number.status = RoomNumberStatus.CLEANING_PENDING
+                instance.room_number.save()
+        
+        # Rezervasyon iptal edildiyse → Rezervasyon kontrolü yap
+        elif instance.status == ReservationStatus.CANCELLED:
+            today = date.today()
+            # Bugün veya yarın bu odada başka rezervasyon var mı?
+            has_other_reservation = Reservation.objects.filter(
+                room_number=instance.room_number,
+                check_in_date__lte=today + timedelta(days=1),
+                check_out_date__gte=today,
+                status__in=[ReservationStatus.CONFIRMED, ReservationStatus.CHECKED_IN],
+                is_deleted=False
+            ).exclude(pk=instance.pk).exists()
+            
+            if not has_other_reservation:
+                # Başka rezervasyon yok → Oda MÜSAİT
+                if instance.room_number.status != RoomNumberStatus.AVAILABLE:
+                    instance.room_number.status = RoomNumberStatus.AVAILABLE
+                    instance.room_number.save()
+    
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f'Oda durumu otomatik güncelleme hatası: {str(e)}')

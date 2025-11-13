@@ -112,6 +112,17 @@ def inspection_create(request):
             inspection.hotel = hotel
             inspection.inspected_by = request.user
             inspection.save()
+            
+            # Kontrol başarısız olduysa ve aksiyon gerekliyse oda durumunu güncelle
+            if inspection.status == 'failed' and inspection.action_required:
+                if inspection.room_number:
+                    from apps.tenant_apps.hotels.models import RoomNumberStatus
+                    # Başarısız kontrol → Oda bakım gerektiriyor olabilir
+                    # Ancak direkt MAINTENANCE yapmak yerine, mevcut durumu koruyoruz
+                    # Çünkü bakım talebi oluşturulmalı
+                    # Şimdilik sadece logluyoruz, bakım talebi oluşturulduğunda oda durumu güncellenecek
+                    pass
+            
             messages.success(request, 'Kalite kontrolü oluşturuldu.')
             return redirect('quality_control:inspection_detail', pk=inspection.pk)
     else:

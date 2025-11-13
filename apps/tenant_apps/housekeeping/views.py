@@ -329,11 +329,35 @@ def task_complete(request, pk):
     
     task.save()
     
-    # Oda durumunu güncelle
-    task.room_number.status = RoomNumberStatus.CLEAN
+    # Oda durumunu akıllı güncelle - Rezervasyon kontrolü yap
+    from apps.tenant_apps.reception.models import Reservation, ReservationStatus
+    from datetime import date, timedelta
+    
+    today = date.today()
+    
+    # Bugün veya yarın bu odada rezervasyon var mı?
+    has_reservation = Reservation.objects.filter(
+        room_number=task.room_number,
+        check_in_date__lte=today + timedelta(days=1),
+        check_out_date__gte=today,
+        status__in=[ReservationStatus.CONFIRMED, ReservationStatus.CHECKED_IN],
+        is_deleted=False
+    ).exists()
+    
+    if has_reservation:
+        # Rezervasyon var → Oda DOLU olmalı (check-in bekliyor veya müşteri var)
+        task.room_number.status = RoomNumberStatus.OCCUPIED
+    else:
+        # Rezervasyon yok → Oda MÜSAİT olmalı
+        task.room_number.status = RoomNumberStatus.AVAILABLE
+    
     task.room_number.save()
     
-    return JsonResponse({'success': True, 'message': 'Görev tamamlandı.'})
+    return JsonResponse({
+        'success': True, 
+        'message': 'Görev tamamlandı.',
+        'room_status': task.room_number.get_status_display()
+    })
 
 
 @login_required
