@@ -14,17 +14,31 @@ class PaymentGateway(TimeStampedModel, SoftDeleteModel):
     Sistemdeki tüm ödeme gateway'lerini yönetir
     """
     GATEWAY_CHOICES = [
+        # Gateway'ler
         ('iyzico', 'İyzico'),
         ('paytr', 'PayTR'),
         ('nestpay', 'NestPay'),
         ('payu', 'PayU'),
         ('paymes', 'Paymes'),
+        ('stripe', 'Stripe'),
+        # Türk Bankaları - Sanal Pos
         ('garanti', 'Garanti Sanal Pos'),
         ('isbank', 'İş Bankası Sanal Pos'),
         ('akbank', 'Akbank Sanal Pos'),
         ('ziraat', 'Ziraat Bankası Sanal Pos'),
         ('yapikredi', 'Yapı Kredi Sanal Pos'),
-        ('stripe', 'Stripe'),
+        ('denizbank', 'Denizbank Sanal Pos'),
+        ('halkbank', 'Halkbank Sanal Pos'),
+        ('qnbfinansbank', 'QNB Finansbank Sanal Pos'),
+        ('teb', 'TEB Sanal Pos'),
+        ('sekerbank', 'Şekerbank Sanal Pos'),
+        ('ingbank', 'ING Bank Sanal Pos'),
+        ('vakifbank', 'Vakıfbank Sanal Pos'),
+        ('fibabanka', 'Fibabanka Sanal Pos'),
+        ('albaraka', 'Albaraka Türk Sanal Pos'),
+        ('kuveytturk', 'Kuveyt Türk Sanal Pos'),
+        ('ziraatkatilim', 'Ziraat Katılım Sanal Pos'),
+        ('vakifkatilim', 'Vakıf Katılım Sanal Pos'),
         ('other', 'Diğer'),
     ]
     
@@ -182,6 +196,24 @@ class PaymentTransaction(TimeStampedModel):
     customer_city = models.CharField('Müşteri Şehir', max_length=100, blank=True)
     customer_country = models.CharField('Müşteri Ülke', max_length=100, default='Türkiye')
     customer_zip_code = models.CharField('Müşteri Posta Kodu', max_length=10, blank=True)
+    
+    # Kaynak Bilgisi (Hangi modülden geldiği)
+    source_module = models.CharField('Kaynak Modül', max_length=50, blank=True,
+                                     help_text='reception, tours, sales, refunds vb.')
+    source_id = models.IntegerField('Kaynak ID', null=True, blank=True,
+                                    help_text='Kaynak modülün kayıt ID\'si')
+    source_reference = models.CharField('Kaynak Referans', max_length=200, blank=True,
+                                        help_text='Rezervasyon no, Tur adı, Satış kaydı vb.')
+    
+    # Entegrasyon ID'leri (Diğer modüllerle bağlantı)
+    cash_transaction_id = models.IntegerField('Kasa İşlemi ID', null=True, blank=True,
+                                             help_text='Finance modülündeki CashTransaction ID')
+    accounting_payment_id = models.IntegerField('Muhasebe Ödeme ID', null=True, blank=True,
+                                               help_text='Accounting modülündeki Payment ID')
+    sales_record_id = models.IntegerField('Satış Kaydı ID', null=True, blank=True,
+                                         help_text='Sales modülündeki SalesRecord ID')
+    refund_transaction_id = models.IntegerField('İade İşlemi ID', null=True, blank=True,
+                                               help_text='Refunds modülündeki RefundTransaction ID')
     
     # Notlar
     notes = models.TextField('Notlar', blank=True)

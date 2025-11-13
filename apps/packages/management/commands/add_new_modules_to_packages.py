@@ -16,6 +16,7 @@ class Command(BaseCommand):
             'quality_control',
             'sales',
             'staff',
+            'payment_management',
         ]
         
         packages = Package.objects.filter(is_active=True)

@@ -67,6 +67,9 @@ urlpatterns = [
     # İade Yönetimi (Refunds)
     path('refunds/', include('apps.tenant_apps.refunds.urls')),
     
+    # Ödeme Yönetimi (Payment Management)
+    path('payment-management/', include('apps.tenant_apps.payment_management.urls')),
+    
     # Tenant Apps (tenant üyelerine özel) - Şimdilik kapalı
     # path('reservations/', include('apps.tenant_apps.reservations.urls')),
     # path('housekeeping/', include('apps.tenant_apps.housekeeping.urls')),

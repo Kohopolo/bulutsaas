@@ -2437,6 +2437,44 @@ def voucher_view(request, token):
     return render(request, 'reception/vouchers/public_view.html', context)
 
 
+@login_required
+@require_hotel_permission('view')
+def reservation_payment_link(request, pk):
+    """Rezervasyon için ödeme linki oluştur (Voucher oluştur ve ödeme linki döndür)"""
+    try:
+        hotel = request.active_hotel
+    except AttributeError:
+        messages.error(request, 'Aktif otel seçilmedi.')
+        return redirect('hotels:select_hotel')
+    
+    reservation = get_object_or_404(Reservation, pk=pk, hotel=hotel, is_deleted=False)
+    
+    # Voucher oluştur (yoksa)
+    from .utils import create_reservation_voucher
+    voucher = reservation.vouchers.filter(payment_status__in=['pending', 'partial']).first()
+    
+    if not voucher:
+        try:
+            voucher = create_reservation_voucher(reservation)
+            messages.success(request, 'Ödeme linki oluşturuldu.')
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Voucher oluşturulurken hata: {str(e)}', exc_info=True)
+            messages.error(request, f'Ödeme linki oluşturulamadı: {str(e)}')
+            return redirect('reception:reservation_detail', pk=reservation.pk)
+    
+    # Ödeme linkini göster
+    context = {
+        'reservation': reservation,
+        'voucher': voucher,
+        'payment_url': voucher.get_payment_url() if voucher.access_token else None,
+        'public_url': voucher.get_public_url() if voucher.access_token else None,
+    }
+    
+    return render(request, 'reception/reservations/payment_link.html', context)
+
+
 @require_http_methods(["GET", "POST"])
 def voucher_payment(request, token):
     """Voucher ödeme sayfası (Token ile - Public)"""
@@ -2536,6 +2574,10 @@ def voucher_payment(request, token):
                 customer_country=customer_info['country'],
                 status='pending',
                 notes=f'Voucher ödemesi: {voucher.voucher_code}',
+                # Kaynak bilgileri
+                source_module='reception',
+                source_id=voucher.reservation.pk if voucher.reservation else None,
+                source_reference=f'Voucher: {voucher.voucher_code} | Rezervasyon: {voucher.reservation.reservation_code if voucher.reservation else "N/A"}',
             )
             
             # Voucher'ı transaction ile ilişkilendir

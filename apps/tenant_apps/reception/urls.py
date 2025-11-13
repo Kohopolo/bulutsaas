@@ -25,6 +25,9 @@ urlpatterns = [
     path('reservations/<int:pk>/checkin/', views.reservation_checkin, name='reservation_checkin'),
     path('reservations/<int:pk>/checkout/', views.reservation_checkout, name='reservation_checkout'),
     
+    # Rezervasyon Ödeme Linki
+    path('reservations/<int:pk>/payment-link/', views.reservation_payment_link, name='reservation_payment_link'),
+    
     # Vouchers
     path('reservations/<int:pk>/voucher/create/', views.reservation_voucher_create, name='reservation_voucher_create'),
     path('vouchers/<int:pk>/', views.reservation_voucher_detail, name='reservation_voucher_detail'),

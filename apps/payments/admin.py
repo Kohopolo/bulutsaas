@@ -141,10 +141,10 @@ class TenantPaymentGatewayAdmin(admin.ModelAdmin):
 @admin.register(PaymentTransaction)
 class PaymentTransactionAdmin(admin.ModelAdmin):
     form = PaymentTransactionForm
-    list_display = ['transaction_id', 'tenant', 'gateway', 'amount', 'currency', 'status', 'payment_date', 'created_at']
-    list_filter = ['status', 'gateway', 'currency', 'is_3d_secure', 'created_at']
-    search_fields = ['transaction_id', 'order_id', 'reference_number', 'tenant__name']
-    readonly_fields = ['transaction_id', 'created_at', 'updated_at', 'gateway_response']
+    list_display = ['transaction_id', 'tenant', 'gateway', 'amount', 'currency', 'status', 'source_module', 'payment_date', 'created_at']
+    list_filter = ['status', 'gateway', 'currency', 'is_3d_secure', 'source_module', 'created_at']
+    search_fields = ['transaction_id', 'order_id', 'reference_number', 'tenant__name', 'source_reference', 'customer_email', 'customer_name']
+    readonly_fields = ['transaction_id', 'created_at', 'updated_at', 'gateway_response', 'cash_transaction_id', 'accounting_payment_id', 'sales_record_id', 'refund_transaction_id']
     raw_id_fields = ['tenant', 'gateway']
     date_hierarchy = 'created_at'
     fieldsets = (
@@ -153,6 +153,15 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
         }),
         ('Ödeme Bilgileri', {
             'fields': ('amount', 'currency', 'status', 'payment_method', 'installment_count')
+        }),
+        ('Kaynak Bilgileri', {
+            'fields': ('source_module', 'source_id', 'source_reference'),
+            'description': 'Bu ödeme işleminin hangi modülden geldiğini belirtir (reception, tours, sales, refunds vb.)'
+        }),
+        ('Entegrasyon ID\'leri', {
+            'fields': ('cash_transaction_id', 'accounting_payment_id', 'sales_record_id', 'refund_transaction_id'),
+            'description': 'Diğer modüllerle entegrasyon ID\'leri (otomatik oluşturulur)',
+            'classes': ('collapse',)
         }),
         ('Kart Bilgileri', {
             'fields': ('card_bin', 'card_last_four', 'card_type', 'is_3d_secure', 'md_status'),
@@ -164,6 +173,11 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
         }),
         ('Hata Bilgileri', {
             'fields': ('error_code', 'error_message'),
+            'classes': ('collapse',)
+        }),
+        ('Müşteri Bilgileri', {
+            'fields': ('customer_name', 'customer_surname', 'customer_email', 'customer_phone', 
+                      'customer_address', 'customer_city', 'customer_country', 'customer_zip_code'),
             'classes': ('collapse',)
         }),
         ('Tarih', {

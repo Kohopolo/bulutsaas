@@ -96,6 +96,7 @@ TENANT_APPS = [
     'apps.tenant_apps.finance',  # Kasa Yönetimi
     'apps.tenant_apps.accounting',  # Muhasebe Yönetimi
     'apps.tenant_apps.refunds',  # İade Yönetimi
+    'apps.tenant_apps.payment_management',  # Ödeme Yönetimi
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]

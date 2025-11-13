@@ -29,6 +29,8 @@ logger = logging.getLogger(__name__)
 
 def get_gateway_instance(gateway_code: str, tenant_config: TenantPaymentGateway):
     """Get gateway instance by code"""
+    from .gateways import GarantiGateway, DenizbankGateway, PayUGateway
+    
     config = {
         'api_key': tenant_config.api_key,
         'secret_key': tenant_config.secret_key,
@@ -43,6 +45,18 @@ def get_gateway_instance(gateway_code: str, tenant_config: TenantPaymentGateway)
         return PayTRGateway(config)
     elif gateway_code == 'nestpay':
         config['bank_code'] = tenant_config.settings.get('bank_code', 'isbank')
+        return NestPayGateway(config)
+    elif gateway_code == 'garanti':
+        return GarantiGateway(config)
+    elif gateway_code == 'denizbank':
+        return DenizbankGateway(config)
+    elif gateway_code == 'payu':
+        return PayUGateway(config)
+    # Diğer bankalar için NestPay kullan (banka kodunu settings'den al)
+    elif gateway_code in ['isbank', 'akbank', 'ziraat', 'yapikredi', 'halkbank', 
+                          'qnbfinansbank', 'teb', 'sekerbank', 'ingbank', 'vakifbank',
+                          'fibabanka', 'albaraka', 'kuveytturk', 'ziraatkatilim', 'vakifkatilim']:
+        config['bank_code'] = gateway_code
         return NestPayGateway(config)
     else:
         raise ValueError(f"Unknown gateway: {gateway_code}")
@@ -91,6 +105,10 @@ def initiate_payment(request, package_id):
             customer_address=request.POST.get('address', ''),
             customer_city=request.POST.get('city', ''),
             customer_zip_code=request.POST.get('zip_code', ''),
+            # Kaynak bilgileri
+            source_module='subscriptions',
+            source_id=package.id,
+            source_reference=f'Paket Ödemesi: {package.name}',
         )
         
         # Müşteri bilgileri

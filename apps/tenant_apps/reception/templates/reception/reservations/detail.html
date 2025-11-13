@@ -264,7 +264,15 @@
                     <div style="float: right; font-size: 14px;">
                         <span style="margin-right: 15px;">Toplam: <strong>{{ payment_summary.total_amount }} {{ reservation.currency }}</strong></span>
                         <span style="margin-right: 15px;">Ödenen: <strong style="color: green;">{{ payment_summary.total_paid }} {{ reservation.currency }}</strong></span>
-                        <span>Kalan: <strong style="color: {% if payment_summary.remaining_amount > 0 %}red{% else %}green{% endif %};">{{ payment_summary.remaining_amount }} {{ reservation.currency }}</strong></span>
+                        <span style="margin-right: 15px;">Kalan: <strong style="color: {% if payment_summary.remaining_amount > 0 %}red{% else %}green{% endif %};">{{ payment_summary.remaining_amount }} {{ reservation.currency }}</strong></span>
+                        {% if payment_summary.remaining_amount > 0 and not reservation.is_deleted %}
+                        <a href="{% url 'reception:reservation_payment_link' reservation.pk %}" 
+                           class="vb-button" 
+                           style="background: #28a745; color: white; border-color: #28a745; padding: 5px 15px; font-size: 13px; margin-left: 10px;"
+                           title="Online Ödeme Linki Oluştur">
+                            <i class="fas fa-link"></i> Ödeme Linki Oluştur
+                        </a>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>

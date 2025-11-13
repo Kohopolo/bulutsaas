@@ -107,6 +107,7 @@ def tenant_modules(request):
         'has_finance_module': 'finance' in enabled_module_codes and 'finance' in user_accessible_modules,
         'has_accounting_module': 'accounting' in enabled_module_codes and 'accounting' in user_accessible_modules,
         'has_refunds_module': 'refunds' in enabled_module_codes and 'refunds' in user_accessible_modules,
+        'has_payment_management_module': 'payment_management' in enabled_module_codes and 'payment_management' in user_accessible_modules,
         'has_users_module': True,  # Core modül, her zaman aktif
         'has_roles_module': True,  # Core modül, her zaman aktif
         'has_permissions_module': True,  # Core modül, her zaman aktif
