@@ -1,0 +1,128 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Kanal Komisyonu Detayı{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-percent"></i> Kanal Komisyonu Detayı
+            <div style="float: right;">
+                <a href="{% url 'channel_management:commission_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <!-- Sol Kolon -->
+                <div>
+                    <div class="form-groupbox" style="margin-bottom: 20px;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-info-circle"></i> Komisyon Bilgileri
+                        </div>
+                        <div class="groupbox-body">
+                            <div class="form-group">
+                                <label><strong>Kanal:</strong></label>
+                                <p><i class="{{ commission.configuration.template.icon }}"></i> {{ commission.configuration.name }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Komisyon Tarihi:</strong></label>
+                                <p>{{ commission.commission_date|date:"d.m.Y" }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Komisyon Oranı:</strong></label>
+                                <p style="font-size: 18px; font-weight: bold; color: #2c5f8d;">{{ commission.commission_rate }}%</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Temel Tutar:</strong></label>
+                                <p style="font-size: 16px; font-weight: bold;">{{ commission.base_amount|floatformat:2 }} {{ commission.currency }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Komisyon Tutarı:</strong></label>
+                                <p style="font-size: 18px; font-weight: bold; color: #dc3545;">{{ commission.commission_amount|floatformat:2 }} {{ commission.currency }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-groupbox">
+                        <div class="groupbox-header">
+                            <i class="fas fa-money-bill-wave"></i> Ödeme Bilgileri
+                        </div>
+                        <div class="groupbox-body">
+                            <div class="form-group">
+                                <label><strong>Ödeme Durumu:</strong></label>
+                                <p>
+                                    {% if commission.is_paid %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Ödendi</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #ffc107; color: #333; border-radius: 3px; font-size: 11px; font-weight: bold;">Ödenmedi</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% if commission.payment_date %}
+                            <div class="form-group">
+                                <label><strong>Ödeme Tarihi:</strong></label>
+                                <p>{{ commission.payment_date|date:"d.m.Y" }}</p>
+                            </div>
+                            {% endif %}
+                            {% if commission.payment_reference %}
+                            <div class="form-group">
+                                <label><strong>Ödeme Referansı:</strong></label>
+                                <p>{{ commission.payment_reference }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sağ Kolon -->
+                <div>
+                    {% if commission.reservation %}
+                    <div class="form-groupbox" style="margin-bottom: 20px;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-calendar-check"></i> Rezervasyon Bilgileri
+                        </div>
+                        <div class="groupbox-body">
+                            <div class="form-group">
+                                <label><strong>Rezervasyon Kodu:</strong></label>
+                                <p><strong>{{ commission.reservation.channel_reservation_code|default:commission.reservation.channel_reservation_id }}</strong></p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Misafir:</strong></label>
+                                <p>{{ commission.reservation.guest_name }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Check-in:</strong></label>
+                                <p>{{ commission.reservation.check_in_date|date:"d.m.Y" }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Check-out:</strong></label>
+                                <p>{{ commission.reservation.check_out_date|date:"d.m.Y" }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Toplam Tutar:</strong></label>
+                                <p style="font-size: 16px; font-weight: bold;">{{ commission.reservation.total_amount|floatformat:2 }} {{ commission.reservation.currency }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if commission.notes %}
+                    <div class="form-groupbox">
+                        <div class="groupbox-header">
+                            <i class="fas fa-sticky-note"></i> Notlar
+                        </div>
+                        <div class="groupbox-body">
+                            <p>{{ commission.notes }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

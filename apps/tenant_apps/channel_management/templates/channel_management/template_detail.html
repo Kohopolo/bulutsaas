@@ -1,0 +1,151 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{{ template.name }} - Kanal Şablonu Detayı{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="{{ template.icon }}"></i> {{ template.name }} - Kanal Şablonu Detayı
+            <div style="float: right;">
+                <a href="{% url 'channel_management:template_list' %}" class="vb-button" style="margin-right: 10px;">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+                <a href="{% url 'channel_management:configuration_create' %}?template_id={{ template.pk }}" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Bu Kanali Yapılandır
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <!-- Sol Kolon -->
+                <div>
+                    <div class="form-groupbox" style="margin-bottom: 20px;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-info-circle"></i> Temel Bilgiler
+                        </div>
+                        <div class="groupbox-body">
+                            <div class="form-group">
+                                <label><strong>Kanal Tipi:</strong></label>
+                                <p>{{ template.get_channel_type_display }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Açıklama:</strong></label>
+                                <p>{{ template.description|default:"-" }}</p>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>API Tipi:</strong></label>
+                                <p>{{ template.api_type|upper }}</p>
+                            </div>
+                            {% if template.api_documentation_url %}
+                            <div class="form-group">
+                                <label><strong>API Dokümantasyon:</strong></label>
+                                <p><a href="{{ template.api_documentation_url }}" target="_blank">{{ template.api_documentation_url }}</a></p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-groupbox">
+                        <div class="groupbox-header">
+                            <i class="fas fa-cog"></i> Özellikler
+                        </div>
+                        <div class="groupbox-body">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                <div>
+                                    <label style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-{% if template.supports_pricing %}check{% else %}times{% endif %}" style="color: {% if template.supports_pricing %}#28a745{% else %}#dc3545{% endif %};"></i>
+                                        <span>Fiyat Aktarımı</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-{% if template.supports_availability %}check{% else %}times{% endif %}" style="color: {% if template.supports_availability %}#28a745{% else %}#dc3545{% endif %};"></i>
+                                        <span>Müsaitlik Aktarımı</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-{% if template.supports_reservations %}check{% else %}times{% endif %}" style="color: {% if template.supports_reservations %}#28a745{% else %}#dc3545{% endif %};"></i>
+                                        <span>Rezervasyon Desteği</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-{% if template.supports_two_way %}check{% else %}times{% endif %}" style="color: {% if template.supports_two_way %}#28a745{% else %}#dc3545{% endif %};"></i>
+                                        <span>İki Yönlü Senkronizasyon</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fas fa-{% if template.supports_commission %}check{% else %}times{% endif %}" style="color: {% if template.supports_commission %}#28a745{% else %}#dc3545{% endif %};"></i>
+                                        <span>Komisyon Yönetimi</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sağ Kolon -->
+                <div>
+                    <div class="form-groupbox" style="margin-bottom: 20px;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-key"></i> Gerekli Alanlar
+                        </div>
+                        <div class="groupbox-body">
+                            {% if template.required_fields %}
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                {% for key, label in template.required_fields.items %}
+                                <li style="padding: 5px 0; border-bottom: 1px solid #eee;">
+                                    <strong>{{ label }}:</strong> <code>{{ key }}</code>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p style="color: #999;">Gerekli alan tanımlanmamış.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-groupbox" style="margin-bottom: 20px;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-percent"></i> Komisyon Bilgileri
+                        </div>
+                        <div class="groupbox-body">
+                            <div class="form-group">
+                                <label><strong>Varsayılan Komisyon Oranı:</strong></label>
+                                <p style="font-size: 18px; font-weight: bold; color: #2c5f8d;">{{ template.default_commission_rate }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if configurations %}
+                    <div class="form-groupbox">
+                        <div class="groupbox-header">
+                            <i class="fas fa-list"></i> Mevcut Konfigürasyonlar
+                        </div>
+                        <div class="groupbox-body">
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                {% for config in configurations %}
+                                <li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                                    <a href="{% url 'channel_management:configuration_detail' config.pk %}" style="color: #2c5f8d; text-decoration: none;">
+                                        {{ config.name }}
+                                    </a>
+                                    {% if config.hotel %}
+                                    <br><small style="color: #666;">{{ config.hotel.name }}</small>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

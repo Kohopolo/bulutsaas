@@ -102,6 +102,42 @@
     box-sizing: border-box;
 }
 
+/* ============================================
+   INPUT BORDER STANDARDI - REZERVASYON MODÜLÜ REFERANSI
+   Tüm input, select, textarea için zorunlu border
+   Tailwind CSS override için en yüksek öncelik
+   ============================================ */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="hidden"]),
+select:not([multiple]),
+textarea {
+    /* Border - ZORUNLU ve GÖRÜNÜR */
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    
+    /* Background */
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    
+    /* Box shadow ile ekstra border garantisi */
+    -webkit-box-shadow: inset 0 0 0 1px #6c757d !important;
+    -moz-box-shadow: inset 0 0 0 1px #6c757d !important;
+    box-shadow: inset 0 0 0 1px #6c757d !important;
+    
+    /* Padding ve temel stiller */
+    padding: 6px 10px !important;
+    border-radius: 3px !important;
+    font-size: 13px !important;
+    min-height: 32px !important;
+    box-sizing: border-box !important;
+    
+    /* Tarayıcı varsayılan stillerini kaldır */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
 html, body {
     width: 100%;
     height: 100%;
@@ -599,31 +635,175 @@ html, body {
 /* ============================================
    11. VB FORM CONTROLS
    ============================================ */
+/* REZERVASYON STANDARDI - Tüm modüllerde kullanılacak */
 .vb-input,
 .vb-select,
-.vb-textarea {
-    padding: 6px 10px;
-    border: 1px solid var(--grid-border);
-    border-radius: var(--border-radius-small);
-    background: white;
-    font-size: var(--font-size-base);
-    font-family: var(--font-family);
-    color: #333;
+.vb-textarea,
+.form-control,
+input.form-control,
+select.form-control,
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: var(--border-radius-small) !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: var(--font-size-base) !important;
+    font-family: var(--font-family) !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    min-height: 32px !important;
+    -webkit-box-shadow: inset 0 0 0 1px #6c757d !important;
+    -moz-box-shadow: inset 0 0 0 1px #6c757d !important;
+    box-shadow: inset 0 0 0 1px #6c757d !important;
 }
 
 .vb-input:focus,
 .vb-select:focus,
-.vb-textarea:focus {
-    outline: none;
-    border-color: var(--button-primary);
-    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+.vb-textarea:focus,
+.form-control:focus,
+input.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus {
+    outline: none !important;
+    border-color: var(--button-primary) !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
 }
 
 .vb-input[disabled],
 .vb-select[disabled],
-.vb-textarea[disabled] {
+.vb-textarea[disabled],
+.form-control[disabled],
+input.form-control[disabled],
+select.form-control[disabled],
+textarea.form-control[disabled] {
     background: #e9ecef;
     cursor: not-allowed;
+    color: #6c757d;
+}
+
+/* Form control için özel stiller - !important ile güçlendir */
+/* REZERVASYON STANDARDI - Input tipleri */
+input[type="text"].form-control,
+input[type="email"].form-control,
+input[type="number"].form-control,
+input[type="date"].form-control,
+input[type="time"].form-control,
+input[type="url"].form-control,
+input[type="password"].form-control,
+input.form-control[type="text"],
+input.form-control[type="email"],
+input.form-control[type="number"],
+input.form-control[type="date"],
+input.form-control[type="time"],
+input.form-control[type="url"],
+input.form-control[type="password"] {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: 3px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    min-height: 32px !important;
+}
+
+input[type="text"].form-control:focus,
+input[type="email"].form-control:focus,
+input[type="number"].form-control:focus,
+input[type="date"].form-control:focus,
+input[type="time"].form-control:focus,
+input[type="url"].form-control:focus,
+input[type="password"].form-control:focus,
+input.form-control[type="text"]:focus,
+input.form-control[type="email"]:focus,
+input.form-control[type="number"]:focus,
+input.form-control[type="date"]:focus,
+input.form-control[type="time"]:focus,
+input.form-control[type="url"]:focus,
+input.form-control[type="password"]:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+/* REZERVASYON STANDARDI - Select/Dropdown */
+select.form-control,
+select.form-control option {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: 3px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    min-height: 32px !important;
+}
+
+select.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+/* REZERVASYON STANDARDI - Textarea */
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: 3px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    font-family: var(--font-family) !important;
+    resize: vertical !important;
+    min-height: 80px !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+textarea.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
 }
 
 .vb-label {

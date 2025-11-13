@@ -17,18 +17,63 @@ class TenantPaymentGatewayForm(forms.ModelForm):
             'max_installment', 'is_active', 'is_test_mode', 'settings'
         ]
         widgets = {
-            'api_key': forms.TextInput(attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'}),
-            'secret_key': forms.TextInput(attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'}),
-            'merchant_id': forms.TextInput(attrs={'class': 'form-control'}),
-            'store_key': forms.TextInput(attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'}),
-            'gateway': forms.Select(attrs={'class': 'form-control'}),
-            'use_3d_secure': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'callback_url': forms.URLInput(attrs={'class': 'form-control'}),
-            'enable_installment': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'max_installment': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 12}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_test_mode': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'settings': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'gateway': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'id_gateway'
+            }),
+            'api_key': forms.TextInput(attrs={
+                'class': 'form-control',
+                'type': 'password',
+                'autocomplete': 'off',
+                'id': 'id_api_key'
+            }),
+            'secret_key': forms.TextInput(attrs={
+                'class': 'form-control',
+                'type': 'password',
+                'autocomplete': 'off',
+                'id': 'id_secret_key'
+            }),
+            'merchant_id': forms.TextInput(attrs={
+                'class': 'form-control',
+                'id': 'id_merchant_id'
+            }),
+            'store_key': forms.TextInput(attrs={
+                'class': 'form-control',
+                'type': 'password',
+                'autocomplete': 'off',
+                'id': 'id_store_key'
+            }),
+            'callback_url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'id': 'id_callback_url'
+            }),
+            'max_installment': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,
+                'max': 12,
+                'id': 'id_max_installment'
+            }),
+            'use_3d_secure': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'id_use_3d_secure'
+            }),
+            'enable_installment': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'id_enable_installment'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'id_is_active'
+            }),
+            'is_test_mode': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'id_is_test_mode'
+            }),
+            'settings': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'id': 'id_settings'
+            }),
         }
     
     def __init__(self, *args, **kwargs):

@@ -1,0 +1,224 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if configuration %}Kanal Konfigürasyonu Düzenle{% else %}Yeni Kanal Konfigürasyonu{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-{% if configuration %}edit{% else %}plus{% endif %}"></i>
+            {% if configuration %}Kanal Konfigürasyonu Düzenle{% else %}Yeni Kanal Konfigürasyonu{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'channel_management:configuration_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    {% if template %}
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><strong>Kanal Şablonu:</strong></label>
+                        <p style="padding: 6px 10px; background: #f8f9fa; border: 1px solid #ced4da; border-radius: 3px; font-size: 13px;">
+                            <i class="{{ template.icon }}"></i> {{ template.name }} ({{ template.get_channel_type_display }})
+                        </p>
+                        <input type="hidden" name="template" value="{{ template.pk }}">
+                    </div>
+                    {% else %}
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.template.id_for_label }}">{{ form.template.label }}</label>
+                        {{ form.template }}
+                        {% if form.template.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.template.help_text }}</small>
+                        {% endif %}
+                        {% if form.template.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.template.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.hotel.id_for_label }}">{{ form.hotel.label }}</label>
+                        {{ form.hotel }}
+                        {% if form.hotel.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.hotel.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.api_credentials.id_for_label }}">{{ form.api_credentials.label }}</label>
+                        {{ form.api_credentials }}
+                        {% if form.api_credentials.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.api_credentials.help_text }}</small>
+                        {% endif %}
+                        {% if form.api_credentials.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.api_credentials.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.api_endpoint.id_for_label }}">{{ form.api_endpoint.label }}</label>
+                        {{ form.api_endpoint }}
+                        {% if form.api_endpoint.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.api_endpoint.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.api_timeout.id_for_label }}">{{ form.api_timeout.label }}</label>
+                        {{ form.api_timeout }}
+                        {% if form.api_timeout.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.api_timeout.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.api_retry_count.id_for_label }}">{{ form.api_retry_count.label }}</label>
+                        {{ form.api_retry_count }}
+                        {% if form.api_retry_count.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.api_retry_count.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.sync_enabled }}
+                            <span>{{ form.sync_enabled.label }}</span>
+                        </label>
+                        {% if form.sync_enabled.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.sync_enabled.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.sync_interval.id_for_label }}">{{ form.sync_interval.label }}</label>
+                        {{ form.sync_interval }}
+                        {% if form.sync_interval.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.sync_interval.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.auto_sync_pricing }}
+                            <span>{{ form.auto_sync_pricing.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.auto_sync_availability }}
+                            <span>{{ form.auto_sync_availability.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.price_markup_percent.id_for_label }}">{{ form.price_markup_percent.label }}</label>
+                        {{ form.price_markup_percent }}
+                        {% if form.price_markup_percent.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.price_markup_percent.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.price_markup_amount.id_for_label }}">{{ form.price_markup_amount.label }}</label>
+                        {{ form.price_markup_amount }}
+                        {% if form.price_markup_amount.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.price_markup_amount.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.commission_rate.id_for_label }}">{{ form.commission_rate.label }}</label>
+                        {{ form.commission_rate }}
+                        {% if form.commission_rate.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.commission_rate.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.commission_calculation.id_for_label }}">{{ form.commission_calculation.label }}</label>
+                        {{ form.commission_calculation }}
+                        {% if form.commission_calculation.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.commission_calculation.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.auto_confirm_reservations }}
+                            <span>{{ form.auto_confirm_reservations.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.reservation_timeout.id_for_label }}">{{ form.reservation_timeout.label }}</label>
+                        {{ form.reservation_timeout }}
+                        {% if form.reservation_timeout.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.reservation_timeout.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.allow_modifications }}
+                            <span>{{ form.allow_modifications.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.allow_cancellations }}
+                            <span>{{ form.allow_cancellations.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.is_active }}
+                            <span>{{ form.is_active.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.is_test_mode }}
+                            <span>{{ form.is_test_mode.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.notes.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'channel_management:configuration_list' %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

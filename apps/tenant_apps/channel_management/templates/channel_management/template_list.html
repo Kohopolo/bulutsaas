@@ -1,0 +1,109 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Kanal Şablonları{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-list"></i> Kanal Şablonları
+        </div>
+        <div class="groupbox-body">
+            <!-- Popüler Kanallar -->
+            {% if popular_templates %}
+            <h3 style="margin-bottom: 15px; color: #333; font-size: 14px; font-weight: bold;">Popüler Kanallar</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                {% for template in popular_templates %}
+                <div style="background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px; padding: 15px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <i class="{{ template.icon }}" style="font-size: 24px; color: #2c5f8d; margin-right: 10px;"></i>
+                        <h4 style="margin: 0; font-size: 16px; font-weight: bold;">{{ template.name }}</h4>
+                    </div>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">{{ template.description|truncatewords:20 }}</p>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                        {% if template.supports_pricing %}
+                        <span style="display: inline-block; padding: 2px 6px; background: #28a745; color: white; border-radius: 3px; font-size: 10px;">Fiyat</span>
+                        {% endif %}
+                        {% if template.supports_availability %}
+                        <span style="display: inline-block; padding: 2px 6px; background: #17a2b8; color: white; border-radius: 3px; font-size: 10px;">Müsaitlik</span>
+                        {% endif %}
+                        {% if template.supports_reservations %}
+                        <span style="display: inline-block; padding: 2px 6px; background: #007bff; color: white; border-radius: 3px; font-size: 10px;">Rezervasyon</span>
+                        {% endif %}
+                        {% if template.supports_two_way %}
+                        <span style="display: inline-block; padding: 2px 6px; background: #6c757d; color: white; border-radius: 3px; font-size: 10px;">İki Yönlü</span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'channel_management:template_detail' template.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; width: 100%; text-align: center;">
+                        <i class="fas fa-info-circle"></i> Detaylar
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Tüm Kanallar (Kategoriye Göre) -->
+            {% for channel_type, type_templates in templates_by_type.items %}
+            <h3 style="margin-bottom: 15px; color: #333; font-size: 14px; font-weight: bold; margin-top: 30px;">
+                {{ type_templates.0.get_channel_type_display }}
+            </h3>
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kanal Adı</th>
+                                <th>API Tipi</th>
+                                <th>Özellikler</th>
+                                <th>Varsayılan Komisyon</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in type_templates %}
+                            <tr>
+                                <td>
+                                    <div style="display: flex; align-items: center;">
+                                        <i class="{{ template.icon }}" style="margin-right: 8px; color: #2c5f8d;"></i>
+                                        <strong>{{ template.name }}</strong>
+                                    </div>
+                                    {% if template.description %}
+                                    <br><small style="color: #666; font-size: 11px;">{{ template.description|truncatewords:15 }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ template.get_api_type_display|upper }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 3px; flex-wrap: wrap;">
+                                        {% if template.supports_pricing %}
+                                        <span style="display: inline-block; padding: 2px 6px; background: #28a745; color: white; border-radius: 3px; font-size: 10px;">Fiyat</span>
+                                        {% endif %}
+                                        {% if template.supports_availability %}
+                                        <span style="display: inline-block; padding: 2px 6px; background: #17a2b8; color: white; border-radius: 3px; font-size: 10px;">Müsaitlik</span>
+                                        {% endif %}
+                                        {% if template.supports_reservations %}
+                                        <span style="display: inline-block; padding: 2px 6px; background: #007bff; color: white; border-radius: 3px; font-size: 10px;">Rezervasyon</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ template.default_commission_rate }}%</td>
+                                <td>
+                                    <a href="{% url 'channel_management:template_detail' template.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; margin-right: 5px;">
+                                        <i class="fas fa-info-circle"></i> Detay
+                                    </a>
+                                    <a href="{% url 'channel_management:configuration_create' %}?template_id={{ template.pk }}" class="vb-button primary" style="padding: 4px 8px; font-size: 11px;">
+                                        <i class="fas fa-plus"></i> Yapılandır
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

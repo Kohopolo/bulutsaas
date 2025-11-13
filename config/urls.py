@@ -70,6 +70,9 @@ urlpatterns = [
     # Ödeme Yönetimi (Payment Management)
     path('payment-management/', include('apps.tenant_apps.payment_management.urls')),
     
+    # Kanal Yönetimi (Channel Management)
+    path('channel-management/', include('apps.tenant_apps.channel_management.urls')),
+    
     # Tenant Apps (tenant üyelerine özel) - Şimdilik kapalı
     # path('reservations/', include('apps.tenant_apps.reservations.urls')),
     # path('housekeeping/', include('apps.tenant_apps.housekeeping.urls')),

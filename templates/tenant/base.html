@@ -14,6 +14,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            corePlugins: {
+                // Form plugin'ini devre dışı bırak - bizim form stillerimizi kullanacağız
+                forms: false,
+            },
             theme: {
                 extend: {
                     colors: {
@@ -69,9 +73,125 @@
     <!-- VB Override - Modern trendleri bastır -->
     <link rel="stylesheet" href="{% static 'css/vb-override-modern.css' %}">
     
+    <!-- VB Style CSS - Form Standartları (Tailwind'den sonra yüklenmeli) -->
+    <link rel="stylesheet" href="{% static 'vb_theme/css/vb-style.css' %}">
+    
     <style>
         body {
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* ============================================
+           TAILWIND OVERRIDE - Form Standartları
+           Tailwind CSS'in form reset'lerini override et
+           ============================================ */
+        
+        /* EN YÜKSEK ÖNCELİK - Tüm form elementleri için zorunlu border */
+        input[type="text"].form-control,
+        input[type="email"].form-control,
+        input[type="number"].form-control,
+        input[type="date"].form-control,
+        input[type="time"].form-control,
+        input[type="url"].form-control,
+        input[type="password"].form-control,
+        input.form-control[type="text"],
+        input.form-control[type="email"],
+        input.form-control[type="number"],
+        input.form-control[type="date"],
+        input.form-control[type="time"],
+        input.form-control[type="url"],
+        input.form-control[type="password"],
+        select.form-control,
+        textarea.form-control,
+        .form-control,
+        input.form-control,
+        select.form-control,
+        textarea.form-control,
+        /* Tailwind class'larını da override et */
+        input[class*="form-control"],
+        select[class*="form-control"],
+        textarea[class*="form-control"] {
+            /* Border - ZORUNLU ve GÖRÜNÜR - En koyu gri (#495057) */
+            border: 1px solid #495057 !important;
+            border-width: 1px !important;
+            border-style: solid !important;
+            border-color: #495057 !important;
+            
+            /* Background - Beyaz */
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            
+            /* Padding ve Boyut */
+            padding: 6px 10px !important;
+            border-radius: 3px !important;
+            font-size: 13px !important;
+            min-height: 32px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            
+            /* Tarayıcı varsayılan stillerini kaldır */
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            
+            /* Box shadow ile ekstra border garantisi - ÇİFT BORDER */
+            -webkit-box-shadow: inset 0 0 0 1px #495057 !important;
+            -moz-box-shadow: inset 0 0 0 1px #495057 !important;
+            box-shadow: inset 0 0 0 1px #495057 !important;
+            
+            /* Outline kaldır */
+            outline: none !important;
+        }
+        
+        /* Textarea özel ayarları */
+        textarea.form-control,
+        textarea[class*="form-control"] {
+            min-height: 80px !important;
+            resize: vertical !important;
+        }
+        
+        /* Select özel ayarları */
+        select.form-control,
+        select[class*="form-control"] {
+            cursor: pointer !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23495057' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 8px center !important;
+            padding-right: 30px !important;
+        }
+        
+        /* Focus durumu - Mavi border */
+        input.form-control:focus,
+        select.form-control:focus,
+        textarea.form-control:focus,
+        .form-control:focus,
+        input[class*="form-control"]:focus,
+        select[class*="form-control"]:focus,
+        textarea[class*="form-control"]:focus {
+            outline: none !important;
+            border-color: #3498db !important;
+            border-width: 1px !important;
+            border-style: solid !important;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2), inset 0 0 0 1px #3498db !important;
+            background-color: #ffffff !important;
+        }
+        
+        /* Disabled durumu */
+        input.form-control:disabled,
+        select.form-control:disabled,
+        textarea.form-control:disabled,
+        .form-control:disabled {
+            background-color: #e9ecef !important;
+            border-color: #ced4da !important;
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
+        }
+        
+        /* Hover durumu */
+        input.form-control:hover:not(:disabled),
+        select.form-control:hover:not(:disabled),
+        textarea.form-control:hover:not(:disabled) {
+            border-color: #495057 !important;
         }
     </style>
     
@@ -669,6 +789,41 @@
                         <a href="{% url 'payment_management:transaction_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
                             <i class="fas fa-list w-4"></i>
                             <span class="ml-3">Ödeme İşlemleri</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Kanal Yönetimi Modülü -->
+                {% if has_channel_management_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('channel-management-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-network-wired w-5"></i>
+                            <span class="ml-3">Kanal Yönetimi</span>
+                        </div>
+                        <i id="channel-management-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="channel-management-module" class="hidden">
+                        <a href="{% url 'channel_management:template_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-list w-4"></i>
+                            <span class="ml-3">Kanal Şablonları</span>
+                        </a>
+                        <a href="{% url 'channel_management:configuration_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-cog w-4"></i>
+                            <span class="ml-3">Kanal Konfigürasyonları</span>
+                        </a>
+                        <a href="{% url 'channel_management:reservation_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-calendar-check w-4"></i>
+                            <span class="ml-3">Kanal Rezervasyonları</span>
+                        </a>
+                        <a href="{% url 'channel_management:pricing_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-tags w-4"></i>
+                            <span class="ml-3">Fiyat Yönetimi</span>
+                        </a>
+                        <a href="{% url 'channel_management:commission_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-vb-navy-400 hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-percent w-4"></i>
+                            <span class="ml-3">Komisyonlar</span>
                         </a>
                     </div>
                 </div>

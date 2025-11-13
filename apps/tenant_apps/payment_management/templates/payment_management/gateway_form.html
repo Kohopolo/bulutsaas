@@ -4,6 +4,80 @@
 {% block title %}{% if tenant_gateway %}Gateway Düzenle{% else %}Yeni Gateway Ekle{% endif %}{% endblock %}
 
 {% block content %}
+<style>
+/* Form Control Stilleri - Payment Management için */
+.form-control,
+input.form-control,
+select.form-control,
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.form-control:focus,
+input.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+input[type="text"].form-control,
+input[type="email"].form-control,
+input[type="number"].form-control,
+input[type="date"].form-control,
+input[type="time"].form-control,
+input[type="url"].form-control,
+input[type="password"].form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+select.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    resize: vertical !important;
+    min-height: 80px !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+</style>
 <div class="content-body">
     <div class="groupbox">
         <div class="groupbox-header">

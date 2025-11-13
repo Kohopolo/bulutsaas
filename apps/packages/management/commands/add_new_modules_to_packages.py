@@ -17,6 +17,7 @@ class Command(BaseCommand):
             'sales',
             'staff',
             'payment_management',
+            'channel_management',
         ]
         
         packages = Package.objects.filter(is_active=True)
