@@ -9,9 +9,9 @@
         <div class="groupbox-header">
             <i class="fas fa-list"></i> Rezervasyon Listesi
             <div style="float: right;">
-                <a href="{% url 'reception:reservation_create' %}" class="vb-button primary">
+                <button onclick="openReservationModalLocal()" class="vb-button primary">
                     <i class="fas fa-plus"></i> Yeni Rezervasyon
-                </a>
+                </button>
             </div>
         </div>
         <div class="groupbox-body">
@@ -65,7 +65,7 @@
                                 </td>
                                 <td>
                                     <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="vb-button small">Detay</a>
-                                    <a href="{% url 'reception:reservation_update' reservation.pk %}" class="vb-button small">Düzenle</a>
+                                    <button onclick="openReservationEditModal({{ reservation.pk }})" class="vb-button small">Düzenle</button>
                                 </td>
                             </tr>
                             {% empty %}
@@ -96,5 +96,375 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
+<!-- Rezervasyon Modal -->
+<!-- Form her zaman context'te olmalı, ama yine de kontrol edelim -->
+{% if form %}
+{% include 'reception/reservations/form_modal.html' %}
+{% else %}
+<!-- Form context'te yok, placeholder modal (bu durumda olmamalı) -->
+<div id="reservationModal" class="vb-modal" style="display: none;">
+    <div class="vb-modal-overlay" onclick="closeReservationModal()"></div>
+    <div class="vb-modal-content">
+        <div class="vb-modal-header">
+            <h3 class="vb-modal-title">Yeni Rezervasyon</h3>
+            <button type="button" class="vb-modal-close" onclick="closeReservationModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="vb-modal-body">
+            <p style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; display: block; margin-bottom: 20px; color: #ff9800;"></i>
+                Form yüklenemedi. Lütfen sayfayı yenileyin.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Modal açma/kapama fonksiyonları
+window.openReservationModalLocal = function() {
+    console.log('openReservationModalLocal çağrıldı');
+    
+    // Önce düzenleme modal container'ını temizle
+    const editContainer = document.getElementById('reservationEditModalContainer');
+    if (editContainer) {
+        editContainer.innerHTML = '';
+    }
+    
+    // Modal'ı bul - tüm sayfada ara (belki başka bir yerde render edilmiş)
+    let modal = document.getElementById('reservationModal');
+    console.log('Modal bulundu:', modal);
+    
+    // Eğer modal yoksa, form_modal.html include edilmemiş demektir
+    if (!modal) {
+        console.error('reservationModal elementi bulunamadı! Form modal render edilmemiş olabilir.');
+        // Modal'ı dinamik olarak oluşturmayı dene
+        console.warn('Modal bulunamadı, sayfayı yenileyin veya form context\'ini kontrol edin.');
+        alert('Rezervasyon formu yüklenemedi. Lütfen sayfayı yenileyin.');
+        return;
+    }
+    
+    // Modal'ı göster
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Form'u resetle (yeni rezervasyon için)
+    const form = document.getElementById('reservationForm');
+    if (form) {
+        form.reset();
+        // Form action'ı yeni rezervasyon için ayarla
+        const currentAction = form.action;
+        if (currentAction.includes('/edit/')) {
+            form.action = currentAction.replace(/\/\d+\/edit\//, '/create/');
+        } else if (!currentAction.includes('/create/')) {
+            // Eğer action'da create yoksa, doğru URL'i set et
+            form.action = '{% url "reception:reservation_create" %}';
+        }
+        console.log('Form action:', form.action);
+    } else {
+        console.error('reservationForm elementi bulunamadı!');
+    }
+    
+    // Event listener'ları bağla (eğer reception_reservation_form.js yüklendiyse)
+    setTimeout(() => {
+        if (typeof attachEventListeners === 'function') {
+            attachEventListeners();
+        }
+        
+        // İlk hesaplamaları yap
+        if (typeof calculateNights === 'function') {
+            calculateNights();
+        }
+        if (typeof updateGuestForms === 'function') {
+            updateGuestForms();
+        }
+    }, 100);
+};
+
+window.closeReservationModalLocal = function() {
+    // Tüm modal'ları kapat
+    const modals = document.querySelectorAll('#reservationModal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+    
+    // Container'ı temizle (düzenleme modal'ı için)
+    const container = document.getElementById('reservationEditModalContainer');
+    if (container) {
+        container.innerHTML = '';
+    }
+    
+    // Body overflow'u düzelt
+    document.body.style.overflow = '';
+};
+
+// Global fonksiyonları tanımla
+// Eğer reception_reservation_form.js yüklenmişse, onun fonksiyonlarını kullan
+// Değilse, local fonksiyonları kullan
+if (typeof window.openReservationModal === 'undefined') {
+    window.openReservationModal = window.openReservationModalLocal;
+}
+if (typeof window.closeReservationModal === 'undefined') {
+    window.closeReservationModal = window.closeReservationModalLocal;
+}
+
+// ESC tuşu ile modal'ı kapat
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (typeof window.closeReservationModal === 'function') {
+            window.closeReservationModal();
+        }
+    }
+});
+
+// Rezervasyon düzenleme modal'ını aç
+function openReservationEditModal(reservationId) {
+    // Önce tüm mevcut modal'ları kapat ve DOM'dan kaldır
+    const existingModals = document.querySelectorAll('#reservationModal');
+    existingModals.forEach(modal => {
+        if (modal.parentNode) {
+            // Modal'ı DOM'dan tamamen kaldır (sadece gizlemek yeterli değil)
+            modal.parentNode.removeChild(modal);
+        }
+    });
+    
+    // Container'ı temizle
+    let container = document.getElementById('reservationEditModalContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'reservationEditModalContainer';
+        document.body.appendChild(container);
+    } else {
+        container.innerHTML = '';
+    }
+    
+    // AJAX ile formu yükle
+    fetch(`/reception/reservations/${reservationId}/edit/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        // Content-Type kontrolü
+        const contentType = response.headers.get('content-type');
+        
+        // JSON response ise (yetki hatası)
+        if (contentType && contentType.includes('application/json')) {
+            return response.json().then(data => {
+                throw new Error(data.error || 'Yetki hatası');
+            });
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return response.text();
+    })
+    .then(html => {
+        // HTML sayfası döndüyse (redirect veya hata sayfası)
+        if (html.trim().startsWith('<!DOCTYPE') || html.trim().startsWith('<html')) {
+            console.error('HTML sayfası döndü (muhtemelen yetki hatası veya redirect):', html.substring(0, 300));
+            alert('Rezervasyon düzenleme formu yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin ve tekrar deneyin.');
+            return;
+        }
+        
+        // Yeni modal'ı ekle
+        container.innerHTML = html;
+        
+        // Modal'ı göster
+        const modal = document.getElementById('reservationModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // Tarih formatını düzelt (dd/mm/yyyy -> yyyy-MM-dd)
+            const checkInDateField = document.getElementById('id_check_in_date');
+            const checkOutDateField = document.getElementById('id_check_out_date');
+            
+            if (checkInDateField && checkInDateField.value) {
+                const dateValue = checkInDateField.value;
+                if (dateValue.includes('/')) {
+                    const parts = dateValue.split('/');
+                    if (parts.length === 3) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2];
+                        checkInDateField.value = `${year}-${month}-${day}`;
+                    }
+                }
+            }
+            
+            if (checkOutDateField && checkOutDateField.value) {
+                const dateValue = checkOutDateField.value;
+                if (dateValue.includes('/')) {
+                    const parts = dateValue.split('/');
+                    if (parts.length === 3) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2];
+                        checkOutDateField.value = `${year}-${month}-${day}`;
+                    }
+                }
+            }
+            
+            // Script'lerin yüklenmesi için kısa bir gecikme
+            setTimeout(() => {
+                // Event listener'ları bağla
+                if (typeof attachEventListeners === 'function') {
+                    attachEventListeners();
+                }
+                
+                // İlk hesaplamaları yap
+                if (typeof calculateNights === 'function') {
+                    calculateNights();
+                    calculateTotalAmount();
+                    updateRemainingAmount();
+                }
+                if (typeof updateGuestForms === 'function') {
+                    updateGuestForms();
+                }
+            }, 500);
+        } else {
+            console.error('Modal bulunamadı! HTML:', html.substring(0, 200));
+        }
+    })
+    .catch(error => {
+        console.error('Modal yükleme hatası:', error);
+        alert('Rezervasyon düzenleme formu yüklenirken bir hata oluştu.');
+    });
+}
+
+// Form submit handler (hem yeni rezervasyon hem de düzenleme için)
+document.addEventListener('submit', function(e) {
+    const form = e.target;
+    if (form.id === 'reservationForm') {
+        e.preventDefault();
+        
+        // Form verilerini hazırla
+        const formData = new FormData(form);
+        
+        // Misafir bilgilerini formData'ya ekle (JavaScript ile oluşturulan alanlar)
+        const adultCount = parseInt(document.getElementById('id_adult_count')?.value) || 0;
+        const childCount = parseInt(document.getElementById('id_child_count')?.value) || 0;
+        
+        // Yetişkin misafir bilgilerini ekle
+        for (let i = 1; i <= adultCount; i++) {
+            const firstName = document.querySelector(`input[name="adult_guest_${i}_first_name"]`)?.value;
+            const lastName = document.querySelector(`input[name="adult_guest_${i}_last_name"]`)?.value;
+            const tcNo = document.querySelector(`input[name="adult_guest_${i}_tc_no"]`)?.value;
+            const idSerial = document.querySelector(`input[name="adult_guest_${i}_id_serial_no"]`)?.value;
+            const gender = document.querySelector(`select[name="adult_guest_${i}_gender"]`)?.value;
+            const passportNo = document.querySelector(`input[name="adult_guest_${i}_passport_no"]`)?.value;
+            
+            if (firstName) formData.append(`adult_guest_${i}_first_name`, firstName);
+            if (lastName) formData.append(`adult_guest_${i}_last_name`, lastName);
+            if (tcNo) formData.append(`adult_guest_${i}_tc_no`, tcNo);
+            if (idSerial) formData.append(`adult_guest_${i}_id_serial_no`, idSerial);
+            if (gender) formData.append(`adult_guest_${i}_gender`, gender);
+            if (passportNo) formData.append(`adult_guest_${i}_passport_no`, passportNo);
+        }
+        
+        // Çocuk misafir bilgilerini ekle
+        for (let i = 1; i <= childCount; i++) {
+            const firstName = document.querySelector(`input[name="child_guest_${i}_first_name"]`)?.value;
+            const lastName = document.querySelector(`input[name="child_guest_${i}_last_name"]`)?.value;
+            const age = document.querySelector(`input[name="child_guest_${i}_age"]`)?.value;
+            const gender = document.querySelector(`select[name="child_guest_${i}_gender"]`)?.value;
+            const tcNo = document.querySelector(`input[name="child_guest_${i}_tc_no"]`)?.value;
+            const passportNo = document.querySelector(`input[name="child_guest_${i}_passport_no"]`)?.value;
+            const passportSerial = document.querySelector(`input[name="child_guest_${i}_passport_serial_no"]`)?.value;
+            
+            if (firstName) formData.append(`child_guest_${i}_first_name`, firstName);
+            if (lastName) formData.append(`child_guest_${i}_last_name`, lastName);
+            if (age) formData.append(`child_guest_${i}_age`, age);
+            if (gender) formData.append(`child_guest_${i}_gender`, gender);
+            if (tcNo) formData.append(`child_guest_${i}_tc_no`, tcNo);
+            if (passportNo) formData.append(`child_guest_${i}_passport_no`, passportNo);
+            if (passportSerial) formData.append(`child_guest_${i}_passport_serial_no`, passportSerial);
+        }
+        
+        // Ödeme bilgilerini ekle
+        const advancePayment = document.getElementById('advance_payment')?.value;
+        const paymentMethod = document.getElementById('payment_method')?.value;
+        if (advancePayment) formData.append('advance_payment', advancePayment);
+        if (paymentMethod) formData.append('payment_method', paymentMethod);
+        
+        // Müşteri bilgilerini ekle (form'da olmayabilir)
+        const customerFirstName = document.getElementById('customer_first_name')?.value;
+        const customerLastName = document.getElementById('customer_last_name')?.value;
+        const customerPhone = document.getElementById('customer_phone')?.value;
+        const customerEmail = document.getElementById('customer_email')?.value;
+        const customerAddress = document.getElementById('customer_address')?.value;
+        const customerTcNo = document.getElementById('customer_tc_no')?.value;
+        const customerNationality = document.getElementById('customer_nationality')?.value;
+        
+        if (customerFirstName) formData.append('customer_first_name', customerFirstName);
+        if (customerLastName) formData.append('customer_last_name', customerLastName);
+        if (customerPhone) formData.append('customer_phone', customerPhone);
+        if (customerEmail) formData.append('customer_email', customerEmail);
+        if (customerAddress) formData.append('customer_address', customerAddress);
+        if (customerTcNo) formData.append('customer_tc_no', customerTcNo);
+        if (customerNationality) formData.append('customer_nationality', customerNationality);
+        
+        console.log('Form gönderiliyor:', form.action);
+        console.log('Misafir sayıları:', { adultCount, childCount });
+        console.log('Ödeme bilgileri:', { advancePayment, paymentMethod });
+        
+        // AJAX ile formu gönder
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                return response.text().then(text => {
+                    // HTML döndüyse (redirect veya hata sayfası)
+                    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                        throw new Error('HTML sayfası döndü (muhtemelen redirect veya hata)');
+                    }
+                    // JSON parse edilebilir mi dene
+                    try {
+                        return JSON.parse(text);
+                    } catch {
+                        throw new Error('Geçersiz response formatı');
+                    }
+                });
+            }
+        })
+        .then(data => {
+            if (data.success) {
+                // Başarılı, sayfayı yenile veya yönlendir
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else if (data.reservation_id) {
+                    window.location.href = `/reception/reservations/${data.reservation_id}/`;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                // Hata var, formu güncelle
+                console.error('Form hataları:', data.errors);
+                alert('Form gönderilirken hatalar oluştu: ' + (data.message || 'Bilinmeyen hata'));
+            }
+        })
+        .catch(error => {
+            console.error('Form gönderme hatası:', error);
+            alert('Form gönderilirken bir hata oluştu: ' + error.message);
+        });
+    }
+});
+</script>
+
+<!-- Rezervasyon Düzenleme Modal Container -->
+<div id="reservationEditModalContainer"></div>
+{% endblock %}

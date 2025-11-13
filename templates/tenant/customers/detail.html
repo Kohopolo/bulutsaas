@@ -1,159 +1,369 @@
 {% extends "tenant/base.html" %}
 {% load static %}
 
-{% block title %}Müşteri Detayı - Bulut Acente{% endblock %}
+{% block title %}Müşteri Folyosu - {{ customer.get_full_name }}{% endblock %}
 
 {% block content %}
-<div class="p-6">
-    <div class="mb-4 flex justify-between items-center">
-        <a href="{% url 'tenant:customer_list' %}" class="text-vb-primary hover:text-blue-600">
-            <i class="fas fa-arrow-left mr-2"></i>Müşteri Listesine Dön
-        </a>
-        <div class="flex gap-2">
-            <a href="{% url 'tenant:customer_update' customer.pk %}" class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200">
-                <i class="fas fa-edit mr-2"></i>Düzenle
-            </a>
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-user-circle"></i> Müşteri Folyosu: {{ customer.get_full_name }}
+            <div style="float: right;">
+                <a href="{% url 'core:customer_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+                <a href="{% url 'core:customer_update' customer.pk %}" class="vb-button">
+                    <i class="fas fa-edit"></i> Düzenle
+                </a>
+            </div>
         </div>
-    </div>
-    
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Müşteri Bilgileri -->
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h3 class="text-xl font-bold text-vb-navy-500 mb-4">
-                    <i class="fas fa-user mr-2 text-vb-primary"></i>
-                    Müşteri Bilgileri
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">Müşteri Kodu</label>
-                        <p class="text-gray-900 font-medium">{{ customer.customer_code }}</p>
+        <div class="groupbox-body">
+            <!-- Müşteri Bilgileri -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">VIP Seviyesi</label>
-                        <p class="text-gray-900">
-                            {% if customer.is_vip %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                {{ customer.get_vip_level_display }}
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Müşteri Kodu:</span>
+                            <span class="voucher-value">{{ customer.customer_code }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ad Soyad:</span>
+                            <span class="voucher-value">{{ customer.get_full_name }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">E-posta:</span>
+                            <span class="voucher-value">{{ customer.email|default:"-" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Telefon:</span>
+                            <span class="voucher-value">{{ customer.phone|default:"-" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">TC No:</span>
+                            <span class="voucher-value">{{ customer.tc_no|default:"-" }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-chart-line"></i> İstatistikler
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Toplam Rezervasyon:</span>
+                            <span class="voucher-value" style="font-weight: bold;">{{ customer.total_reservations }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Toplam Harcama:</span>
+                            <span class="voucher-value" style="font-weight: bold; color: green;">{{ customer.total_spent|floatformat:2 }} ₺</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Sadakat Puanı:</span>
+                            <span class="voucher-value" style="font-weight: bold;">{{ customer.loyalty_points }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">VIP Seviyesi:</span>
+                            <span class="voucher-value">
+                                {% if customer.is_vip %}
+                                    <span style="color: gold;">{{ customer.get_vip_level_display }}</span>
+                                {% else %}
+                                    Normal
+                                {% endif %}
                             </span>
-                            {% else %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                Normal
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-bed"></i> Reception Özet
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Toplam Tutar:</span>
+                            <span class="voucher-value">{{ total_reception_amount|floatformat:2 }} ₺</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ödenen:</span>
+                            <span class="voucher-value" style="color: green;">{{ total_reception_paid|floatformat:2 }} ₺</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Kalan:</span>
+                            <span class="voucher-value" style="color: {% if total_reception_remaining > 0 %}red{% else %}green{% endif %};">
+                                {{ total_reception_remaining|floatformat:2 }} ₺
                             </span>
-                            {% endif %}
-                        </p>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Rezervasyon Sayısı:</span>
+                            <span class="voucher-value">{{ reception_reservations|length|default:0 }}</span>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">Ad Soyad</label>
-                        <p class="text-gray-900 font-medium">{{ customer.get_full_name }}</p>
+                </div>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-map-marker-alt"></i> İletişim
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">E-posta</label>
-                        <p class="text-gray-900">{{ customer.email }}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">Telefon</label>
-                        <p class="text-gray-900">{{ customer.phone }}</p>
-                    </div>
-                    {% if customer.tc_no %}
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">TC Kimlik No</label>
-                        <p class="text-gray-900">{{ customer.tc_no }}</p>
-                    </div>
-                    {% endif %}
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">Toplam Rezervasyon</label>
-                        <p class="text-gray-900 font-semibold text-lg">{{ customer.total_reservations }}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">Toplam Harcama</label>
-                        <p class="text-gray-900 font-semibold text-lg text-green-600">{{ customer.total_spent|floatformat:2 }} ₺</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">Sadakat Puanı</label>
-                        <p class="text-gray-900 font-semibold text-lg">{{ customer.loyalty_points }}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-semibold text-gray-600">Durum</label>
-                        <p class="text-gray-900">
-                            {% if customer.is_active %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Aktif</span>
-                            {% else %}
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Pasif</span>
-                            {% endif %}
-                        </p>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Adres:</span>
+                            <span class="voucher-value">{{ customer.address|default:"-"|truncatewords:5 }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Şehir:</span>
+                            <span class="voucher-value">{{ customer.city|default:"-" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ülke:</span>
+                            <span class="voucher-value">{{ customer.country|default:"Türkiye" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Durum:</span>
+                            <span class="voucher-value">
+                                {% if customer.is_active %}
+                                    <span style="color: green;">✓ Aktif</span>
+                                {% else %}
+                                    <span style="color: red;">✗ Pasif</span>
+                                {% endif %}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Tur Rezervasyonları -->
-            {% if tour_reservations %}
-            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h3 class="text-xl font-bold text-vb-navy-500 mb-4">
-                    <i class="fas fa-route mr-2 text-vb-primary"></i>
-                    Tur Rezervasyonları
-                </h3>
-                <div class="space-y-3">
-                    {% for reservation in tour_reservations %}
-                    <div class="border border-gray-200 rounded-lg p-4">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-semibold text-gray-900">{{ reservation.tour.name }}</p>
-                                <p class="text-sm text-gray-500">{{ reservation.reservation_code }}</p>
-                                <p class="text-sm text-gray-500">{{ reservation.created_at|date:"d.m.Y H:i" }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-semibold text-gray-900">{{ reservation.total_amount|floatformat:2 }} ₺</p>
-                                <span class="px-2 py-1 text-xs rounded-full 
-                                    {% if reservation.status == 'confirmed' %}bg-green-100 text-green-800
-                                    {% elif reservation.status == 'completed' %}bg-blue-100 text-blue-800
-                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                    {{ reservation.get_status_display }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
+            <!-- Reception Rezervasyonları -->
+            {% if reception_reservations %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-calendar-check"></i> Otel Rezervasyonları ({{ reception_reservations|length }})
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Rezervasyon Kodu</th>
+                                <th>Otel</th>
+                                <th>Oda</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Gece</th>
+                                <th>Tutar</th>
+                                <th>Ödenen</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in reception_reservations %}
+                            <tr>
+                                <td>{{ reservation.reservation_code }}</td>
+                                <td>{{ reservation.hotel.name }}</td>
+                                <td>{{ reservation.room.name }}{% if reservation.room_number %} - {{ reservation.room_number.number }}{% endif %}</td>
+                                <td>{{ reservation.check_in_date|date:"d.m.Y" }}</td>
+                                <td>{{ reservation.check_out_date|date:"d.m.Y" }}</td>
+                                <td>{{ reservation.total_nights }}</td>
+                                <td>{{ reservation.total_amount|floatformat:2 }} {{ reservation.currency }}</td>
+                                <td>{{ reservation.total_paid|floatformat:2 }} {{ reservation.currency }}</td>
+                                <td>{{ reservation.get_status_display }}</td>
+                                <td>
+                                    <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="vb-button small">
+                                        <i class="fas fa-eye"></i> Detay
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
             {% endif %}
-        </div>
-        
-        <!-- Yan Panel -->
-        <div class="space-y-6">
+            
+            <!-- Reception Ödemeleri -->
+            {% if reception_payments %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-credit-card"></i> Otel Ödemeleri ({{ reception_payments|length }})
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Rezervasyon</th>
+                                <th>Tutar</th>
+                                <th>Yöntem</th>
+                                <th>Tip</th>
+                                <th>Fiş No</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in reception_payments %}
+                            <tr>
+                                <td>{{ payment.payment_date|date:"d.m.Y" }}</td>
+                                <td>
+                                    <a href="{% url 'reception:reservation_detail' payment.reservation.pk %}">
+                                        {{ payment.reservation.reservation_code }}
+                                    </a>
+                                </td>
+                                <td>{{ payment.payment_amount|floatformat:2 }} {{ payment.currency }}</td>
+                                <td>{{ payment.get_payment_method_display }}</td>
+                                <td>{{ payment.get_payment_type_display }}</td>
+                                <td>{{ payment.receipt_no|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Accounting Faturaları -->
+            {% if accounting_invoices %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-file-invoice"></i> Faturalar ({{ accounting_invoices|length }})
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Fatura No</th>
+                                <th>Tarih</th>
+                                <th>Rezervasyon</th>
+                                <th>Tutar</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in accounting_invoices %}
+                            <tr>
+                                <td>{{ invoice.invoice_number }}</td>
+                                <td>{{ invoice.invoice_date|date:"d.m.Y" }}</td>
+                                <td>{{ invoice.source_reference }}</td>
+                                <td>{{ invoice.total_amount|floatformat:2 }} {{ invoice.currency }}</td>
+                                <td>{{ invoice.get_status_display }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Finance Kasa İşlemleri -->
+            {% if finance_transactions %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-cash-register"></i> Kasa İşlemleri ({{ finance_transactions|length }})
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>İşlem No</th>
+                                <th>Tarih</th>
+                                <th>Tip</th>
+                                <th>Tutar</th>
+                                <th>Yöntem</th>
+                                <th>Rezervasyon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in finance_transactions %}
+                            <tr>
+                                <td>{{ transaction.transaction_number }}</td>
+                                <td>{{ transaction.payment_date|date:"d.m.Y H:i" }}</td>
+                                <td>{{ transaction.get_transaction_type_display }}</td>
+                                <td>{{ transaction.amount|floatformat:2 }} {{ transaction.currency }}</td>
+                                <td>{{ transaction.get_payment_method_display }}</td>
+                                <td>{{ transaction.source_reference }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Tur Rezervasyonları -->
+            {% if tour_reservations %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-route"></i> Tur Rezervasyonları ({{ tour_reservations|length }})
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Rezervasyon Kodu</th>
+                                <th>Tur</th>
+                                <th>Tarih</th>
+                                <th>Tutar</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in tour_reservations %}
+                            <tr>
+                                <td>{{ reservation.reservation_code }}</td>
+                                <td>{{ reservation.tour.name }}</td>
+                                <td>{{ reservation.created_at|date:"d.m.Y" }}</td>
+                                <td>{{ reservation.total_amount|floatformat:2 }} {{ reservation.currency }}</td>
+                                <td>{{ reservation.get_status_display }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Sadakat Geçmişi -->
             {% if loyalty_history %}
-            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-vb-navy-500 mb-4">
-                    <i class="fas fa-star mr-2 text-vb-primary"></i>
-                    Sadakat Geçmişi
-                </h3>
-                <div class="space-y-2">
-                    {% for history in loyalty_history %}
-                    <div class="border-l-4 border-vb-primary pl-3 py-2">
-                        <p class="text-sm font-semibold {% if history.points > 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                            {% if history.points > 0 %}+{% endif %}{{ history.points }} puan
-                        </p>
-                        <p class="text-xs text-gray-600">{{ history.reason }}</p>
-                        <p class="text-xs text-gray-500">{{ history.created_at|date:"d.m.Y H:i" }}</p>
-                    </div>
-                    {% endfor %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-star"></i> Sadakat Geçmişi
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Puan</th>
+                                <th>Neden</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for history in loyalty_history %}
+                            <tr>
+                                <td>{{ history.created_at|date:"d.m.Y H:i" }}</td>
+                                <td style="color: {% if history.points > 0 %}green{% else %}red{% endif %};">
+                                    {% if history.points > 0 %}+{% endif %}{{ history.points }}
+                                </td>
+                                <td>{{ history.reason }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
             {% endif %}
             
             <!-- Notlar -->
             {% if notes %}
-            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h3 class="text-lg font-bold text-vb-navy-500 mb-4">
-                    <i class="fas fa-sticky-note mr-2 text-vb-primary"></i>
-                    Notlar
-                </h3>
-                <div class="space-y-3">
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-sticky-note"></i> Notlar
+                </div>
+                <div class="groupbox-body">
                     {% for note in notes %}
-                    <div class="border border-gray-200 rounded-lg p-3">
-                        <p class="text-sm text-gray-900">{{ note.note }}</p>
-                        <p class="text-xs text-gray-500 mt-2">{{ note.created_at|date:"d.m.Y H:i" }}</p>
+                    <div style="padding: 10px; border-bottom: 1px solid #ddd; margin-bottom: 10px;">
+                        <p style="margin: 0; color: #333;">{{ note.note }}</p>
+                        <small style="color: #999;">{{ note.created_at|date:"d.m.Y H:i" }}</small>
                     </div>
                     {% endfor %}
                 </div>
@@ -162,5 +372,44 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
+<style>
+.voucher-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.voucher-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.voucher-value {
+    color: #666;
+}
+
+.form-groupbox {
+    background: #f8f9fa;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    padding: 0;
+}
+
+.groupbox-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c5f8d;
+}
+
+.groupbox-body {
+    padding: 12px;
+}
+</style>
+{% endblock %}

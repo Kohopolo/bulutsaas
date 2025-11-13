@@ -5,6 +5,7 @@ Rezervasyon odaklı profesyonel otel resepsiyon yönetim sistemi
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+from django.contrib.auth.models import User
 from decimal import Decimal
 from datetime import date, timedelta
 from apps.core.models import TimeStampedModel, SoftDeleteModel
@@ -99,14 +100,51 @@ class Reservation(TimeStampedModel, SoftDeleteModel):
         db_index=True
     )
     
+    # Rezervasyon Aracıları
+    reservation_agent = models.ForeignKey(
+        'sales.Agency',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservations',
+        verbose_name='Rezervasyon Acentesi',
+        help_text='Rezervasyonu yapan acente (varsa)'
+    )
+    reservation_channel = models.ForeignKey(
+        'channels.Channel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservations',
+        verbose_name='Rezervasyon Kanalı',
+        help_text='Booking.com, Expedia vb. (varsa)'
+    )
+    
     # Fiyatlandırma
-    room_rate = models.DecimalField('Oda Fiyatı', max_digits=10, decimal_places=2, default=0)
+    room_rate = models.DecimalField('Oda Fiyatı', max_digits=10, decimal_places=2, default=0,
+                                   help_text='Gecelik oda fiyatı')
+    is_manual_price = models.BooleanField('Manuel Fiyat mı?', default=False,
+                                         help_text='Fiyat manuel olarak girildi mi?')
     total_nights = models.IntegerField('Toplam Gece', default=1)
     total_amount = models.DecimalField('Toplam Tutar', max_digits=12, decimal_places=2, default=0)
+    discount_type = models.CharField('İndirim Tipi', max_length=20, 
+                                    choices=[('percentage', 'Yüzde'), ('fixed', 'Sabit Tutar')],
+                                    blank=True, null=True)
     discount_amount = models.DecimalField('İndirim Tutarı', max_digits=10, decimal_places=2, default=0)
+    discount_percentage = models.DecimalField('İndirim Yüzdesi', max_digits=5, decimal_places=2, default=0,
+                                            validators=[MinValueValidator(Decimal('0'))])
     tax_amount = models.DecimalField('Vergi Tutarı', max_digits=10, decimal_places=2, default=0)
     total_paid = models.DecimalField('Ödenen Tutar', max_digits=12, decimal_places=2, default=0)
-    currency = models.CharField('Para Birimi', max_length=3, default='TRY')
+    currency = models.CharField('Para Birimi', max_length=3, default='TRY',
+                               choices=[('TRY', 'Türk Lirası'), ('USD', 'US Dollar'), 
+                                       ('EUR', 'Euro'), ('GBP', 'British Pound')])
+    
+    # Özel Durumlar
+    is_comp = models.BooleanField('Comp Rezervasyon mu?', default=False,
+                                 help_text='Ücretsiz rezervasyon')
+    is_no_show = models.BooleanField('No-Show mu?', default=False,
+                                    help_text='Rezervasyon yapıp gelmeyen misafir')
+    no_show_reason = models.TextField('No-Show Nedeni', blank=True)
     
     # Özel İstekler ve Notlar
     special_requests = models.TextField('Özel İstekler', blank=True)
@@ -117,10 +155,36 @@ class Reservation(TimeStampedModel, SoftDeleteModel):
     is_checked_out = models.BooleanField('Check-Out Yapıldı mı?', default=False)
     checked_in_at = models.DateTimeField('Check-In Tarihi', null=True, blank=True)
     checked_out_at = models.DateTimeField('Check-Out Tarihi', null=True, blank=True)
+    early_check_in = models.BooleanField('Erken Check-in mi?', default=False,
+                                       help_text='Normal check-in saatinden önce giriş yapıldı')
+    late_check_out = models.BooleanField('Geç Check-out mu?', default=False,
+                                        help_text='Normal check-out saatinden sonra çıkış yapıldı')
+    early_check_in_fee = models.DecimalField('Erken Check-in Ücreti', max_digits=10, decimal_places=2, default=0)
+    late_check_out_fee = models.DecimalField('Geç Check-out Ücreti', max_digits=10, decimal_places=2, default=0)
     
     # İptal Bilgileri
+    is_cancelled = models.BooleanField('İptal Edildi mi?', default=False)
     cancelled_at = models.DateTimeField('İptal Tarihi', null=True, blank=True)
     cancellation_reason = models.TextField('İptal Nedeni', blank=True)
+    cancellation_refund_amount = models.DecimalField('İptal İade Tutarı', max_digits=12, decimal_places=2, default=0)
+    
+    # Kullanıcı Takibi
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_reservations',
+        verbose_name='Oluşturan Kullanıcı'
+    )
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_reservations',
+        verbose_name='Güncelleyen Kullanıcı'
+    )
     
     class Meta:
         verbose_name = 'Rezervasyon'
@@ -143,13 +207,24 @@ class Reservation(TimeStampedModel, SoftDeleteModel):
             if self.total_nights < 1:
                 self.total_nights = 1
         
-        # Toplam tutarı hesapla
-        if self.room_rate and self.total_nights:
-            self.total_amount = Decimal(str(self.room_rate)) * Decimal(str(self.total_nights))
-            if self.discount_amount:
-                self.total_amount -= Decimal(str(self.discount_amount))
-            if self.tax_amount:
-                self.total_amount += Decimal(str(self.tax_amount))
+        # Comp rezervasyon ise toplam tutar 0
+        if self.is_comp:
+            self.total_amount = Decimal('0')
+            if not self.is_manual_price:
+                self.room_rate = Decimal('0')
+        else:
+            # Toplam tutarı hesapla
+            if self.room_rate and self.total_nights:
+                base_amount = Decimal(str(self.room_rate)) * Decimal(str(self.total_nights))
+                
+                # İndirim hesaplama
+                if self.discount_type == 'percentage' and self.discount_percentage > 0:
+                    discount = base_amount * (Decimal(str(self.discount_percentage)) / Decimal('100'))
+                    self.discount_amount = discount
+                elif self.discount_type == 'fixed' and self.discount_amount > 0:
+                    pass  # discount_amount zaten set edilmiş
+                
+                self.total_amount = base_amount - self.discount_amount + self.tax_amount
         
         super().save(*args, **kwargs)
     
@@ -172,4 +247,290 @@ class Reservation(TimeStampedModel, SoftDeleteModel):
         return (self.is_checked_in and 
                 not self.is_checked_out and
                 self.check_out_date <= date.today())
+    
+    def calculate_total_paid(self):
+        """Toplam ödenen tutarı hesapla (payments tablosundan)"""
+        return self.payments.filter(is_deleted=False).aggregate(
+            total=models.Sum('payment_amount')
+        )['total'] or Decimal('0')
+    
+    def update_total_paid(self):
+        """Toplam ödenen tutarı güncelle"""
+        self.total_paid = self.calculate_total_paid()
+        self.save(update_fields=['total_paid'])
+
+
+# ==================== REZERVASYON MİSAFİRLERİ ====================
+
+class ReservationGuest(TimeStampedModel):
+    """
+    Rezervasyon Misafir Bilgileri
+    Yetişkin ve çocuk misafirlerin detaylı bilgileri
+    """
+    GUEST_TYPE_CHOICES = [
+        ('adult', 'Yetişkin'),
+        ('child', 'Çocuk'),
+    ]
+    
+    GENDER_CHOICES = [
+        ('male', 'Erkek'),
+        ('female', 'Kadın'),
+        ('other', 'Diğer'),
+    ]
+    
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        related_name='guests',
+        verbose_name='Rezervasyon'
+    )
+    
+    guest_type = models.CharField('Misafir Tipi', max_length=20, choices=GUEST_TYPE_CHOICES)
+    guest_order = models.IntegerField('Misafir Sırası', default=1,
+                                     help_text='Misafir sırası (1, 2, 3...)')
+    
+    # Kişisel Bilgiler
+    first_name = models.CharField('Ad', max_length=100)
+    last_name = models.CharField('Soyad', max_length=100)
+    gender = models.CharField('Cinsiyet', max_length=10, choices=GENDER_CHOICES, blank=True)
+    birth_date = models.DateField('Doğum Tarihi', null=True, blank=True)
+    age = models.IntegerField('Yaş', null=True, blank=True,
+                             help_text='Çocuklar için yaş bilgisi')
+    
+    # Kimlik Bilgileri
+    tc_no = models.CharField('TC Kimlik No', max_length=11, blank=True)
+    passport_no = models.CharField('Pasaport No', max_length=50, blank=True)
+    passport_serial_no = models.CharField('Pasaport Seri No', max_length=20, blank=True)
+    id_serial_no = models.CharField('Kimlik Seri No', max_length=20, blank=True,
+                                   help_text='TC Kimlik seri no')
+    nationality = models.CharField('Vatandaşlık', max_length=100, default='Türkiye')
+    
+    # İletişim (Opsiyonel - Ana müşteri bilgileri kullanılabilir)
+    email = models.EmailField('E-posta', blank=True)
+    phone = models.CharField('Telefon', max_length=20, blank=True)
+    
+    class Meta:
+        verbose_name = 'Rezervasyon Misafiri'
+        verbose_name_plural = 'Rezervasyon Misafirleri'
+        ordering = ['reservation', 'guest_type', 'guest_order']
+        indexes = [
+            models.Index(fields=['reservation', 'guest_type']),
+            models.Index(fields=['tc_no']),
+            models.Index(fields=['passport_no']),
+        ]
+    
+    def __str__(self):
+        return f"{self.reservation.reservation_code} - {self.first_name} {self.last_name} ({self.get_guest_type_display()})"
+
+
+# ==================== REZERVASYON ÖDEMELERİ ====================
+
+class ReservationPayment(TimeStampedModel, SoftDeleteModel):
+    """
+    Rezervasyon Ödeme Kayıtları
+    Rezervasyon üzerinden yapılan tüm ödemeler
+    """
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'Nakit'),
+        ('credit_card', 'Kredi Kartı'),
+        ('debit_card', 'Banka Kartı'),
+        ('transfer', 'Havale/EFT'),
+        ('check', 'Çek'),
+        ('other', 'Diğer'),
+    ]
+    
+    PAYMENT_TYPE_CHOICES = [
+        ('advance', 'Ön Ödeme'),
+        ('full', 'Tam Ödeme'),
+        ('partial', 'Kısmi Ödeme'),
+        ('refund', 'İade'),
+    ]
+    
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name='Rezervasyon'
+    )
+    
+    payment_date = models.DateField('Ödeme Tarihi', default=date.today)
+    payment_amount = models.DecimalField('Ödeme Tutarı', max_digits=12, decimal_places=2,
+                                       validators=[MinValueValidator(Decimal('0.01'))])
+    payment_method = models.CharField('Ödeme Yöntemi', max_length=20, choices=PAYMENT_METHOD_CHOICES)
+    payment_type = models.CharField('Ödeme Tipi', max_length=20, choices=PAYMENT_TYPE_CHOICES)
+    currency = models.CharField('Para Birimi', max_length=3, default='TRY')
+    
+    # Entegrasyon
+    cash_transaction = models.ForeignKey(
+        'finance.CashTransaction',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservation_payments',
+        verbose_name='Kasa İşlemi'
+    )
+    accounting_payment = models.ForeignKey(
+        'accounting.Payment',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservation_payments',
+        verbose_name='Muhasebe Ödemesi'
+    )
+    
+    # Notlar
+    notes = models.TextField('Notlar', blank=True)
+    receipt_no = models.CharField('Fiş No', max_length=50, blank=True)
+    
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_reservation_payments',
+        verbose_name='Oluşturan Kullanıcı'
+    )
+    
+    class Meta:
+        verbose_name = 'Rezervasyon Ödemesi'
+        verbose_name_plural = 'Rezervasyon Ödemeleri'
+        ordering = ['-payment_date', '-created_at']
+        indexes = [
+            models.Index(fields=['reservation', 'payment_date']),
+            models.Index(fields=['payment_method']),
+        ]
+    
+    def __str__(self):
+        return f"{self.reservation.reservation_code} - {self.payment_amount} {self.currency} ({self.get_payment_method_display()})"
+
+
+# ==================== REZERVASYON ZAMAN ÇİZELGESİ ====================
+
+class ReservationTimeline(TimeStampedModel):
+    """
+    Rezervasyon Güncelleme Geçmişi
+    Rezervasyon üzerinde yapılan tüm değişikliklerin kaydı
+    """
+    ACTION_TYPE_CHOICES = [
+        ('created', 'Oluşturuldu'),
+        ('updated', 'Güncellendi'),
+        ('checkin', 'Check-in Yapıldı'),
+        ('checkout', 'Check-out Yapıldı'),
+        ('payment', 'Ödeme Eklendi'),
+        ('cancelled', 'İptal Edildi'),
+        ('no_show', 'No-Show İşaretlendi'),
+        ('comp', 'Comp Olarak İşaretlendi'),
+        ('status_changed', 'Durum Değişti'),
+    ]
+    
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        related_name='timeline',
+        verbose_name='Rezervasyon'
+    )
+    
+    action_type = models.CharField('İşlem Tipi', max_length=50, choices=ACTION_TYPE_CHOICES)
+    action_description = models.TextField('İşlem Açıklaması', blank=True)
+    
+    # Değişiklik Detayları (JSON)
+    old_value = models.JSONField('Eski Değer', default=dict, blank=True,
+                                 help_text='Değişiklik öncesi değerler')
+    new_value = models.JSONField('Yeni Değer', default=dict, blank=True,
+                                help_text='Değişiklik sonrası değerler')
+    
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservation_timeline_actions',
+        verbose_name='Kullanıcı'
+    )
+    
+    class Meta:
+        verbose_name = 'Rezervasyon Zaman Çizelgesi'
+        verbose_name_plural = 'Rezervasyon Zaman Çizelgeleri'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['reservation', 'action_type']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.reservation.reservation_code} - {self.get_action_type_display()} ({self.created_at})"
+
+
+# ==================== REZERVASYON VOUCHER'LARI ====================
+
+class ReservationVoucher(TimeStampedModel):
+    """
+    Rezervasyon Voucher'ları
+    Dinamik şablonlarla voucher oluşturma
+    """
+    reservation = models.ForeignKey(
+        Reservation,
+        on_delete=models.CASCADE,
+        related_name='vouchers',
+        verbose_name='Rezervasyon'
+    )
+    
+    voucher_template = models.ForeignKey(
+        'reception.VoucherTemplate',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vouchers',
+        verbose_name='Voucher Şablonu'
+    )
+    
+    voucher_code = models.CharField('Voucher Kodu', max_length=50, unique=True, db_index=True)
+    voucher_data = models.JSONField('Voucher Verileri', default=dict, blank=True,
+                                   help_text='Şablon için veri')
+    
+    # Durum
+    is_sent = models.BooleanField('Gönderildi mi?', default=False)
+    sent_at = models.DateTimeField('Gönderilme Tarihi', null=True, blank=True)
+    sent_via = models.CharField('Gönderim Yöntemi', max_length=20, blank=True,
+                               choices=[('email', 'E-posta'), ('whatsapp', 'WhatsApp'), ('sms', 'SMS')])
+    
+    class Meta:
+        verbose_name = 'Rezervasyon Voucher'
+        verbose_name_plural = 'Rezervasyon Voucher\'ları'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['reservation']),
+            models.Index(fields=['voucher_code']),
+        ]
+    
+    def __str__(self):
+        return f"{self.reservation.reservation_code} - {self.voucher_code}"
+
+
+# ==================== VOUCHER ŞABLONLARI ====================
+
+class VoucherTemplate(TimeStampedModel, SoftDeleteModel):
+    """
+    Voucher Şablonları
+    Dinamik voucher şablonları
+    """
+    name = models.CharField('Şablon Adı', max_length=200)
+    code = models.SlugField('Şablon Kodu', max_length=50, unique=True)
+    description = models.TextField('Açıklama', blank=True)
+    
+    # Şablon İçeriği
+    template_html = models.TextField('HTML Şablon', help_text='HTML şablon içeriği')
+    template_css = models.TextField('CSS Stilleri', blank=True, help_text='Özel CSS stilleri')
+    
+    # Ayarlar
+    is_active = models.BooleanField('Aktif mi?', default=True)
+    is_default = models.BooleanField('Varsayılan Şablon mu?', default=False)
+    
+    class Meta:
+        verbose_name = 'Voucher Şablonu'
+        verbose_name_plural = 'Voucher Şablonları'
+        ordering = ['-is_default', 'name']
+    
+    def __str__(self):
+        return self.name
 

@@ -10,7 +10,7 @@ class ReceptionConfig(AppConfig):
     verbose_name = 'Resepsiyon (Ön Büro)'
     
     def ready(self):
-        """Signal'ları import et"""
+        """Signals'ları yükle"""
         try:
             import apps.tenant_apps.reception.signals  # noqa
         except ImportError:

@@ -105,10 +105,17 @@ class PackageModuleInlineForm(forms.ModelForm):
         help_texts = {
             'module': 'Hangi modül eklenecek?',
             'permissions': 'Modül yetkileri JSON formatında (örn: {"view": true, "add": true})',
-            'limits': 'Modül limitleri JSON formatında. Hotels modülü için örnek: {"max_hotels": 5, "max_room_numbers": 100, "max_users": 10, "max_reservations": 500, "max_ai_credits": 1000}. Tur modülü için örnek: {"max_tours": 100}',
+            'limits': 'Modül limitleri JSON formatında. Hotels modülü için örnek: {"max_hotels": 5, "max_room_numbers": 100, "max_users": 10, "max_reservations": 500, "max_ai_credits": 1000}. Tur modülü için örnek: {"max_tours": 100}. Reception modülü için örnek: {"max_reservations": 1000, "max_reservations_per_month": 100}',
             'is_enabled': 'Bu modül bu pakette aktif mi?',
             'is_required': 'Bu modül bu pakette zorunlu mu?',
         }
         widgets = {
             'limits': forms.Textarea(attrs={'rows': 3, 'placeholder': '{"max_hotels": 5, "max_room_numbers": 100, "max_users": 10, "max_reservations": 500, "max_ai_credits": 1000}'}),
+            'module': forms.Select(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Tüm aktif modülleri göster
+        from apps.modules.models import Module
+        self.fields['module'].queryset = Module.objects.filter(is_active=True).order_by('sort_order', 'name')

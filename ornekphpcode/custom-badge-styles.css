@@ -1,0 +1,41 @@
+/* Custom Badge Styles for Better Visibility */
+
+/* Purple badge for temizlik_bekliyor status */
+.bg-purple {
+    background-color: #6f42c1 !important;
+    color: white !important;
+}
+
+.bg-purple.text-white {
+    color: white !important;
+}
+
+/* Enhanced badge styling for all status types */
+.badge.bg-danger,
+.badge.bg-success,
+.badge.bg-warning,
+.badge.bg-info,
+.badge.bg-purple,
+.badge.bg-dark,
+.badge.bg-primary {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* Ensure warning badges have dark text for better contrast */
+.badge.bg-warning {
+    color: #000 !important;
+    text-shadow: none !important;
+}
+
+/* Avatar styles for statistics */
+.avatar.bg-purple {
+    background-color: #6f42c1 !important;
+    color: white !important;
+}
+
+/* Hover effects for better interactivity */
+.badge:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
+}

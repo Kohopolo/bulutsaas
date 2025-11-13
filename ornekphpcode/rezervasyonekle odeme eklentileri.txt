@@ -1,0 +1,896 @@
+<?php
+/**
+ * Rezervasyon Ekleme Sayfası - Adım Adım
+ * Otel Rezervasyon Sistemi - Admin Panel
+ */
+
+// Session başlat (sadece bir kez)
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Error reporting'i aç
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Güvenlik ve gerekli dosyaları dahil et
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
+
+// CSRF token oluştur
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Basit yetki kontrolü (şimdilik devre dışı)
+// if (!hasPermission('rezervasyon_ekle')) {
+//     header('Location: 403.php');
+//     exit;
+// }
+
+// Seçilen oda bilgilerini al (URL'den)
+$selected_room_info = null;
+$selected_date = null;
+
+if (isset($_GET['room_id']) && isset($_GET['date'])) {
+    $room_id = (int)$_GET['room_id'];
+    $selected_date = $_GET['date'];
+    
+    // Oda bilgilerini veritabanından al
+    $selected_room_info = fetchOne("
+        SELECT r.*, rt.oda_tipi_adi, rt.max_yetiskin, rt.max_cocuk 
+        FROM odalar r 
+        JOIN oda_tipleri rt ON r.oda_tipi_id = rt.id 
+        WHERE r.id = ?
+    ", [$room_id]);
+}
+
+// Form işleme
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF token kontrolü
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die('CSRF token hatası');
+    }
+    
+    try {
+        // Form verilerini al
+        $giris_tarihi = $_POST['giris_tarihi'];
+        $cikis_tarihi = $_POST['cikis_tarihi'];
+        $yetiskin_sayisi = (int)$_POST['yetiskin_sayisi'];
+        $cocuk_sayisi = (int)$_POST['cocuk_sayisi'];
+        $cocuk_yaslari = $_POST['cocuk_yaslari'] ?? [];
+        $oda_tipi_id = (int)$_POST['oda_tipi_id'];
+        $oda_numarasi_id = (int)$_POST['oda_numarasi_id'];
+        $toplam_tutar = (float)$_POST['toplam_tutar'];
+        $odenen_tutar = (float)$_POST['odenen_tutar'];
+        $musteri_ad = $_POST['musteri_ad'];
+        $musteri_soyad = $_POST['musteri_soyad'];
+        $musteri_email = $_POST['musteri_email'];
+        $musteri_telefon = $_POST['musteri_telefon'];
+        $musteri_tc_kimlik = $_POST['musteri_tc_kimlik'];
+        $odeme_yontemi = $_POST['odeme_yontemi'];
+        $odeme_tutari = (float)$_POST['odeme_tutari'];
+        $odeme_provider = $_POST['odeme_provider'] ?? null;
+        $taksit_sayisi = (int)($_POST['taksit_sayisi'] ?? 1);
+        
+        // Yetişkin bilgileri
+        $yetiskin_bilgileri = [];
+        for ($i = 0; $i < $yetiskin_sayisi; $i++) {
+            $yetiskin_bilgileri[] = [
+                'ad' => $_POST["yetiskin_ad_$i"],
+                'soyad' => $_POST["yetiskin_soyad_$i"],
+                'cinsiyet' => $_POST["yetiskin_cinsiyet_$i"],
+                'tc_kimlik' => $_POST["yetiskin_tc_$i"] ?? null
+            ];
+        }
+        
+        // Çocuk bilgileri
+        $cocuk_bilgileri = [];
+        for ($i = 0; $i < $cocuk_sayisi; $i++) {
+            $cocuk_bilgileri[] = [
+                'ad' => $_POST["cocuk_ad_$i"],
+                'soyad' => $_POST["cocuk_soyad_$i"],
+                'yas' => (int)$_POST["cocuk_yas_$i"],
+                'cinsiyet' => $_POST["cocuk_cinsiyet_$i"]
+            ];
+        }
+        
+        // Veritabanı işlemlerini başlat
+        $pdo->beginTransaction();
+        
+        // Müşteri ID'sini al veya oluştur
+        $musteri_id = null;
+        if ($musteri_tc_kimlik) {
+            $existing_customer = fetchOne("SELECT id FROM musteriler WHERE tc_kimlik = ?", [$musteri_tc_kimlik]);
+            if ($existing_customer) {
+                $musteri_id = $existing_customer['id'];
+            }
+        }
+        
+        if (!$musteri_id) {
+            // Yeni müşteri oluştur
+            $stmt = $pdo->prepare("
+                INSERT INTO musteriler (ad, soyad, email, telefon, tc_kimlik, olusturma_tarihi) 
+                VALUES (?, ?, ?, ?, ?, NOW())
+            ");
+            $stmt->execute([$musteri_ad, $musteri_soyad, $musteri_email, $musteri_telefon, $musteri_tc_kimlik]);
+            $musteri_id = $pdo->lastInsertId();
+        }
+        
+        // Rezervasyon oluştur
+        $stmt = $pdo->prepare("
+            INSERT INTO rezervasyonlar (
+                musteri_id, giris_tarihi, cikis_tarihi, oda_tipi_id, oda_numarasi_id,
+                yetiskin_sayisi, cocuk_sayisi, toplam_tutar, odenen_tutar, kalan_tutar,
+                durum, olusturma_tarihi, olusturan_kullanici_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'onaylandi', NOW(), ?)
+        ");
+        $kalan_tutar = $toplam_tutar - $odenen_tutar;
+        $stmt->execute([
+            $musteri_id, $giris_tarihi, $cikis_tarihi, $oda_tipi_id, $oda_numarasi_id,
+            $yetiskin_sayisi, $cocuk_sayisi, $toplam_tutar, $odenen_tutar, $kalan_tutar,
+            $_SESSION['user_id']
+        ]);
+        $rezervasyon_id = $pdo->lastInsertId();
+        
+        // Yetişkin bilgilerini kaydet
+        foreach ($yetiskin_bilgileri as $yetiskin) {
+            $stmt = $pdo->prepare("
+                INSERT INTO rezervasyon_kisileri (
+                    rezervasyon_id, ad, soyad, cinsiyet, tc_kimlik, yas, tip
+                ) VALUES (?, ?, ?, ?, ?, NULL, 'yetiskin')
+            ");
+            $stmt->execute([$rezervasyon_id, $yetiskin['ad'], $yetiskin['soyad'], $yetiskin['cinsiyet'], $yetiskin['tc_kimlik']]);
+        }
+        
+        // Çocuk bilgilerini kaydet
+        foreach ($cocuk_bilgileri as $cocuk) {
+            $stmt = $pdo->prepare("
+                INSERT INTO rezervasyon_kisileri (
+                    rezervasyon_id, ad, soyad, cinsiyet, tc_kimlik, yas, tip
+                ) VALUES (?, ?, ?, ?, NULL, ?, 'cocuk')
+            ");
+            $stmt->execute([$rezervasyon_id, $cocuk['ad'], $cocuk['soyad'], $cocuk['cinsiyet'], $cocuk['yas']]);
+        }
+        
+        // Ödeme işlemi (şimdilik basit)
+        if ($odenen_tutar > 0) {
+            // Basit ödeme kaydı
+            $stmt = $pdo->prepare("
+                INSERT INTO odemeler (
+                    rezervasyon_id, tutar, odeme_yontemi, durum, olusturma_tarihi
+                ) VALUES (?, ?, ?, 'tamamlandi', NOW())
+            ");
+            $stmt->execute([$rezervasyon_id, $odeme_tutari, $odeme_yontemi]);
+        }
+        
+        // İşlemi onayla
+        $pdo->commit();
+        
+        // Başarı mesajı
+        $_SESSION['success'] = 'Rezervasyon başarıyla oluşturuldu!';
+        // header('Location: rezervasyonlar.php');
+        // exit;
+        
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $error = 'Rezervasyon oluşturulurken hata oluştu: ' . $e->getMessage();
+    }
+}
+
+// Oda tiplerini al (basit)
+$oda_tipleri = [];
+try {
+    $oda_tipleri = fetchAll("SELECT * FROM oda_tipleri WHERE durum = 'aktif' ORDER BY oda_tipi_adi");
+} catch (Exception $e) {
+    $oda_tipleri = [];
+}
+
+// Ödeme sağlayıcılarını al (basit)
+$odeme_saglayicilari = [];
+try {
+    $odeme_saglayicilari = fetchAll("SELECT * FROM odeme_providerlari WHERE durum = 'aktif' ORDER BY provider_adi");
+} catch (Exception $e) {
+    $odeme_saglayicilari = [];
+}
+?>
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezervasyon Ekle - Otel Yönetim Sistemi</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Admin CSS -->
+    <link href="assets/css/admin.css" rel="stylesheet">
+    
+    <!-- JavaScript - Sayfanın başında -->
+    <script>
+        console.log('JavaScript yüklendi!');
+        
+        let currentStep = 1;
+        let reservationData = {};
+        
+        // Date validation and guest selection
+        function validateDatesAndShowGuests() {
+            console.log('validateDatesAndShowGuests called');
+            const girisTarihi = document.getElementById('giris_tarihi').value;
+            const cikisTarihi = document.getElementById('cikis_tarihi').value;
+            const nextButton = document.getElementById('next-to-step-2');
+            
+            console.log('Dates:', { girisTarihi, cikisTarihi });
+            console.log('Next button:', nextButton);
+            
+            if (girisTarihi && cikisTarihi && new Date(cikisTarihi) > new Date(girisTarihi)) {
+                console.log('Dates valid, showing guest selection and button');
+                document.getElementById('guest-selection').style.display = 'block';
+                nextButton.disabled = false;
+                nextButton.style.display = 'inline-block';
+                return true;
+            } else {
+                console.log('Dates invalid, hiding guest selection and button');
+                document.getElementById('guest-selection').style.display = 'none';
+                nextButton.disabled = true;
+                nextButton.style.display = 'none';
+                return false;
+            }
+        }
+        
+        // Child age inputs management
+        function updateChildAgeInputs() {
+            const cocukSayisi = parseInt(document.getElementById('cocuk_sayisi').value);
+            const container = document.getElementById('child_ages_container');
+            const inputsDiv = document.getElementById('child_ages_inputs');
+            
+            if (cocukSayisi > 0) {
+                container.style.display = 'block';
+                inputsDiv.innerHTML = '';
+                
+                for (let i = 0; i < cocukSayisi; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'col-md-4 mb-3';
+                    div.innerHTML = `
+                        <label class="form-label">${i + 1}. Çocuk Yaşı</label>
+                        <select class="form-select" name="cocuk_yaslari[]" required>
+                            <option value="">Yaş seçin</option>
+                            ${generateAgeOptions()}
+                        </select>
+                    `;
+                    inputsDiv.appendChild(div);
+                }
+            } else {
+                container.style.display = 'none';
+                inputsDiv.innerHTML = '';
+            }
+        }
+        
+        function generateAgeOptions() {
+            let options = '';
+            for (let i = 0; i <= 17; i++) {
+                options += `<option value="${i}">${i} yaş</option>`;
+            }
+            return options;
+        }
+        
+        // Load room types for step 2
+        function loadRoomTypes() {
+            console.log('Loading room types...');
+            const odaTipiSelect = document.getElementById('oda_tipi_id');
+            if (!odaTipiSelect) return;
+            
+            // Clear existing options
+            odaTipiSelect.innerHTML = '<option value="">Yükleniyor...</option>';
+            
+            // Get guest information from step 1
+            const yetiskinSayisi = document.getElementById('yetiskin_sayisi').value;
+            const cocukSayisi = document.getElementById('cocuk_sayisi').value;
+            const girisTarihi = document.getElementById('giris_tarihi').value;
+            const cikisTarihi = document.getElementById('cikis_tarihi').value;
+            
+            if (!yetiskinSayisi || !girisTarihi || !cikisTarihi) {
+                odaTipiSelect.innerHTML = '<option value="">Önce tarih ve kişi sayısını seçin</option>';
+                return;
+            }
+            
+            // For now, add some sample room types
+            odaTipiSelect.innerHTML = `
+                <option value="">Oda tipi seçin</option>
+                <option value="1">Standart Oda (2 Kişi)</option>
+                <option value="2">Deluxe Oda (3 Kişi)</option>
+                <option value="3">Suite Oda (4 Kişi)</option>
+                <option value="4">Aile Odası (6 Kişi)</option>
+            `;
+            
+            console.log('Room types loaded');
+        }
+        
+        // Step navigation functions
+        function showStep(stepNumber) {
+            console.log('Showing step:', stepNumber);
+            
+            // Hide all steps
+            const steps = document.querySelectorAll('.step-container');
+            console.log('Found steps:', steps.length);
+            steps.forEach((step, index) => {
+                console.log(`Step ${index + 1}:`, step.id, 'display:', step.style.display);
+                step.style.display = 'none';
+            });
+            
+            // Show current step
+            const currentStep = document.getElementById(`step-${stepNumber}`);
+            console.log('Current step element:', currentStep);
+            if (currentStep) {
+                currentStep.style.display = 'block';
+                console.log('Step', stepNumber, 'displayed');
+                
+                // Load data for specific steps
+                if (stepNumber === 2) {
+                    loadRoomTypes();
+                }
+            } else {
+                console.error('Step', stepNumber, 'not found!');
+            }
+            
+            // Update step indicators
+            const indicators = document.querySelectorAll('.step-indicator');
+            indicators.forEach((indicator, index) => {
+                if (index + 1 <= stepNumber) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+        
+        function nextStep() {
+            console.log('Next step called, current step:', currentStep);
+            if (currentStep < 6) {
+                currentStep++;
+                console.log('Moving to step:', currentStep);
+                showStep(currentStep);
+            }
+        }
+        
+        function prevStep() {
+            console.log('Previous step called, current step:', currentStep);
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            // Set minimum dates
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('giris_tarihi').min = today;
+            document.getElementById('cikis_tarihi').min = today;
+            
+            // Add event listeners
+            console.log('Adding event listeners');
+            document.getElementById('giris_tarihi').addEventListener('change', validateDatesAndShowGuests);
+            document.getElementById('cikis_tarihi').addEventListener('change', validateDatesAndShowGuests);
+            document.getElementById('cocuk_sayisi').addEventListener('change', updateChildAgeInputs);
+            
+            // Add room type selection listener
+            const odaTipiSelect = document.getElementById('oda_tipi_id');
+            if (odaTipiSelect) {
+                odaTipiSelect.addEventListener('change', function() {
+                    const nextButton = document.getElementById('next-to-step-3');
+                    if (nextButton) {
+                        if (this.value) {
+                            nextButton.disabled = false;
+                        } else {
+                            nextButton.disabled = true;
+                        }
+                    }
+                });
+            }
+            
+            // Add step navigation event listeners
+            const stepButtons = document.querySelectorAll('[id^="next-to-step-"], [id^="back-to-step-"]');
+            stepButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const buttonId = this.id;
+                    console.log('Button clicked:', buttonId);
+                    if (buttonId.includes('next-to-step-')) {
+                        nextStep();
+                    } else if (buttonId.includes('back-to-step-')) {
+                        prevStep();
+                    }
+                });
+            });
+            
+            // Show first step initially
+            showStep(1);
+        });
+    </script>
+    <!-- Custom CSS -->
+    <style>
+        .step-container {
+            display: none;
+        }
+        
+        .step-container.active {
+            display: block;
+        }
+        
+        .step {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            color: #6c757d;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .step.active {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .step.completed {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .tc-digit {
+            width: 30px;
+            height: 40px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin: 0 2px;
+        }
+        
+        .tc-digit.filled {
+            background-color: #e8f5e8;
+            border-color: #28a745;
+        }
+        
+        .tc-digit:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <?php include 'includes/sidebar.php'; ?>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 ms-sm-auto px-md-4">
+                <!-- Header -->
+                <?php include 'includes/header.php'; ?>
+                
+                <!-- Page Content -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-plus-circle me-2"></i>Yeni Rezervasyon Ekle</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <a href="rezervasyonlar.php" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Geri Dön
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Alert Messages -->
+                <?php if (isset($success)): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($success) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+                
+                <?php if (isset($error)): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i><?= htmlspecialchars($error) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+                
+                <!-- Step Indicators -->
+                <div class="d-flex justify-content-center mb-4">
+                    <div class="step active">1</div>
+                    <span class="me-3">Tarih & Kişi</span>
+                    <div class="step">2</div>
+                    <span class="me-3">Oda Seçimi</span>
+                    <div class="step">3</div>
+                    <span class="me-3">Rezervasyon Özeti</span>
+                    <div class="step">4</div>
+                    <span class="me-3">Müşteri Bilgileri</span>
+                    <div class="step">5</div>
+                    <span class="me-3">Kişi Detayları</span>
+                </div>
+                
+                <!-- Form -->
+                <form method="POST" id="reservation-form">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    
+                    <!-- Step 1: Date and Guest Selection -->
+                    <div class="step-container active" id="step-1">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Adım 1: Tarih ve Kişi Sayısı</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="giris_tarihi" class="form-label">Giriş Tarihi *</label>
+                                            <input type="date" class="form-control" id="giris_tarihi" name="giris_tarihi" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="cikis_tarihi" class="form-label">Çıkış Tarihi *</label>
+                                            <input type="date" class="form-control" id="cikis_tarihi" name="cikis_tarihi" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Guest Selection (Initially Hidden) -->
+                                <div id="guest-selection" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="yetiskin_sayisi" class="form-label">Yetişkin Sayısı *</label>
+                                                <select class="form-select" id="yetiskin_sayisi" name="yetiskin_sayisi" required>
+                                                    <option value="">Seçin</option>
+                                                    <?php for ($i = 1; $i <= 10; $i++): ?>
+                                                        <option value="<?= $i ?>"><?= $i ?> Kişi</option>
+                                                    <?php endfor; ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="cocuk_sayisi" class="form-label">Çocuk Sayısı</label>
+                                                <select class="form-select" id="cocuk_sayisi" name="cocuk_sayisi">
+                                                    <option value="0">Çocuk Yok</option>
+                                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                        <option value="<?= $i ?>"><?= $i ?> Çocuk</option>
+                                                    <?php endfor; ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Child Ages Container -->
+                                    <div id="child_ages_container" style="display: none;">
+                                        <h6>Çocuk Yaşları</h6>
+                                        <div id="child_ages_inputs" class="row">
+                                            <!-- Child age inputs will be generated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-primary" id="next-to-step-2" disabled style="display: none;">
+                                        Devam Et <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Room Selection -->
+                    <div class="step-container" id="step-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-bed me-2"></i>Adım 2: Oda Seçimi</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="oda_tipi_id" class="form-label">Oda Tipi *</label>
+                                            <select class="form-select" id="oda_tipi_id" name="oda_tipi_id" required>
+                                                <option value="">Önce tarih ve kişi sayısını seçin</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="oda_numarasi_id" class="form-label">Oda Numarası</label>
+                                            <select class="form-select" id="oda_numarasi_id" name="oda_numarasi_id">
+                                                <option value="">Otomatik atama</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-secondary" id="back-to-step-1">
+                                        <i class="fas fa-arrow-left me-1"></i>Geri
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="next-to-step-3" disabled>
+                                        Devam Et <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Reservation Summary -->
+                    <div class="step-container" id="step-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Adım 3: Rezervasyon Özeti</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Rezervasyon Detayları</h6>
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <td><strong>Giriş Tarihi:</strong></td>
+                                                <td id="summary-checkin">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Çıkış Tarihi:</strong></td>
+                                                <td id="summary-checkout">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Gece Sayısı:</strong></td>
+                                                <td id="summary-nights">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Yetişkin:</strong></td>
+                                                <td id="summary-adults">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Çocuk:</strong></td>
+                                                <td id="summary-children">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Oda Tipi:</strong></td>
+                                                <td id="summary-room-type">-</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Oda Numarası:</strong></td>
+                                                <td id="summary-room-number">-</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Fiyat Bilgileri</h6>
+                                        <div id="price_loading" style="display: none;">
+                                            <div class="text-center">
+                                                <div class="spinner-border" role="status">
+                                                    <span class="visually-hidden">Yükleniyor...</span>
+                                                </div>
+                                                <p>Fiyat hesaplanıyor...</p>
+                                            </div>
+                                        </div>
+                                        <div id="price_summary" style="display: none;">
+                                            <div class="alert alert-info">
+                                                <h5 id="total_price">0 ₺</h5>
+                                                <p id="price_details" class="mb-0">-</p>
+                                            </div>
+                                            <input type="hidden" id="toplam_tutar" name="toplam_tutar" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-secondary" id="back-to-step-2">
+                                        <i class="fas fa-arrow-left me-1"></i>Geri
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="next-to-step-4" disabled>
+                                        Devam Et <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Customer Information -->
+                    <div class="step-container" id="step-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Adım 4: Müşteri Bilgileri</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">TC Kimlik No</label>
+                                            <div class="d-flex justify-content-center">
+                                                <?php for ($i = 0; $i < 11; $i++): ?>
+                                                    <input type="text" class="tc-digit" maxlength="1" data-index="<?= $i ?>">
+                                                <?php endfor; ?>
+                                            </div>
+                                            <input type="hidden" id="musteri_tc_kimlik" name="musteri_tc_kimlik">
+                                            <div id="tc-success-message" class="alert alert-success mt-2" style="display: none;">
+                                                <i class="fas fa-check-circle me-2"></i>Müşteri bulundu, bilgiler otomatik dolduruldu.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="customer-info-fields" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="musteri_ad" class="form-label">Ad *</label>
+                                                <input type="text" class="form-control" id="musteri_ad" name="musteri_ad" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="musteri_soyad" class="form-label">Soyad *</label>
+                                                <input type="text" class="form-control" id="musteri_soyad" name="musteri_soyad" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="musteri_email" class="form-label">Email *</label>
+                                                <input type="email" class="form-control" id="musteri_email" name="musteri_email" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="musteri_telefon" class="form-label">Telefon *</label>
+                                                <input type="tel" class="form-control" id="musteri_telefon" name="musteri_telefon" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-secondary" id="back-to-step-3">
+                                        <i class="fas fa-arrow-left me-1"></i>Geri
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="next-to-step-5">
+                                        Devam Et <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5: Guest Details -->
+                    <div class="step-container" id="step-5">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Adım 5: Kişi Detayları</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="adult-forms">
+                                    <!-- Adult forms will be generated here -->
+                                </div>
+                                
+                                <div id="child-details" style="display: none;">
+                                    <h6>Çocuk Bilgileri</h6>
+                                    <div id="child-forms">
+                                        <!-- Child forms will be generated here -->
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-secondary" id="back-to-step-4">
+                                        <i class="fas fa-arrow-left me-1"></i>Geri
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="next-to-step-6">
+                                        Devam Et <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 6: Payment -->
+                    <div class="step-container" id="step-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Adım 6: Ödeme</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="odenen_tutar" class="form-label">Ödenen Tutar (₺)</label>
+                                            <input type="number" class="form-control" id="odenen_tutar" name="odenen_tutar" step="0.01" min="0" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Kalan Tutar</label>
+                                            <div id="remaining_amount" class="form-control-plaintext fw-bold text-warning">0 ₺</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="odeme_yontemi" class="form-label">Ödeme Yöntemi *</label>
+                                            <select class="form-select" id="odeme_yontemi" name="odeme_yontemi" required>
+                                                <option value="">Seçin</option>
+                                                <option value="nakit">Nakit</option>
+                                                <option value="kredi_karti">Kredi Kartı</option>
+                                                <option value="sanal_pos">Sanal POS</option>
+                                                <option value="havale">Havale</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="odeme_tutari" class="form-label">Ödeme Tutarı (₺)</label>
+                                            <input type="number" class="form-control" id="odeme_tutari" name="odeme_tutari" step="0.01" min="0" required>
+                                            <small class="text-muted">Maksimum: <span id="max_odeme_tutari">0</span> ₺</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Virtual POS Options -->
+                                <div id="sanal_pos_options" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="payment_provider" class="form-label">Ödeme Sağlayıcısı</label>
+                                                <select class="form-select" id="payment_provider" name="payment_provider">
+                                                    <option value="">Sağlayıcı seçiniz...</option>
+                                                    <?php
+                                                    $providers = fetchAll("SELECT * FROM odeme_providerlari WHERE durum = 'aktif' ORDER BY provider_adi");
+                                                    foreach ($providers as $provider): ?>
+                                                        <option value="<?= $provider['id'] ?>"><?= htmlspecialchars($provider['provider_adi']) ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label for="taksit_sayisi" class="form-label">Taksit Sayısı</label>
+                                                <select class="form-select" id="taksit_sayisi" name="taksit_sayisi">
+                                                    <option value="1">Peşin</option>
+                                                    <option value="2">2 Taksit</option>
+                                                    <option value="3">3 Taksit</option>
+                                                    <option value="6">6 Taksit</option>
+                                                    <option value="9">9 Taksit</option>
+                                                    <option value="12">12 Taksit</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-secondary" id="back-to-step-5">
+                                        <i class="fas fa-arrow-left me-1"></i>Geri
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save me-1"></i>Rezervasyonu Kaydet
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

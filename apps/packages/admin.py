@@ -11,6 +11,13 @@ class PackageModuleInline(admin.TabularInline):
     fields = ['module', 'permissions', 'limits', 'is_enabled', 'is_required']
     verbose_name = 'Paket Modülü'
     verbose_name_plural = 'Paket Modülleri'
+    
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        # Tüm aktif modülleri göster
+        from apps.modules.models import Module
+        formset.form.base_fields['module'].queryset = Module.objects.filter(is_active=True).order_by('sort_order', 'name')
+        return formset
 
 
 class PackageAIInline(admin.TabularInline):

@@ -1,62 +1,613 @@
 {% extends "tenant/base.html" %}
 {% load static %}
 
-{% block title %}Rezervasyon Detayı{% endblock %}
+{% block title %}Rezervasyon Detayı - {{ reservation.reservation_code }}{% endblock %}
 
 {% block content %}
 <div class="content-body">
     <div class="groupbox">
         <div class="groupbox-header">
-            <i class="fas fa-info-circle"></i> Rezervasyon Detayı - {{ reservation.reservation_code }}
+            <i class="fas fa-calendar-check"></i> Rezervasyon Detayı: {{ reservation.reservation_code }}
+            <div style="float: right;">
+                {% if customer_folio_url %}
+                <a href="{{ customer_folio_url }}" class="vb-button primary" title="Müşteri Folyosu">
+                    <i class="fas fa-user-circle"></i> Müşteri Folyosu
+                </a>
+                {% endif %}
+                <button onclick="openReservationEditModal({{ reservation.pk }})" class="vb-button primary">
+                    <i class="fas fa-edit"></i> Düzenle
+                </button>
+                <a href="{% url 'reception:reservation_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
         </div>
         <div class="groupbox-body">
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-                <div>
-                    <h3>Müşteri Bilgileri</h3>
-                    <p><strong>Ad Soyad:</strong> {{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</p>
-                    <p><strong>E-posta:</strong> {{ reservation.customer.email }}</p>
-                    <p><strong>Telefon:</strong> {{ reservation.customer.phone }}</p>
+            <!-- Rezervasyon Bilgileri -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Rezervasyon Kodu:</span>
+                            <span class="voucher-value">{{ reservation.reservation_code }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Durum:</span>
+                            <span class="voucher-value">{{ reservation.get_status_display }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Kaynak:</span>
+                            <span class="voucher-value">{{ reservation.get_source_display }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Otel:</span>
+                            <span class="voucher-value">{{ reservation.hotel.name }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Oda Tipi:</span>
+                            <span class="voucher-value">{{ reservation.room.name }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Oda No:</span>
+                            <span class="voucher-value">{{ reservation.room_number.number|default:"-" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <h3>Rezervasyon Bilgileri</h3>
-                    <p><strong>Otel:</strong> {{ reservation.hotel.name }}</p>
-                    <p><strong>Oda:</strong> {{ reservation.room.name }}{% if reservation.room_number %} - {{ reservation.room_number.number }}{% endif %}</p>
-                    <p><strong>Durum:</strong> {{ reservation.get_status_display }}</p>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-calendar"></i> Tarih Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Check-in:</span>
+                            <span class="voucher-value">{{ reservation.check_in_date|date:"d.m.Y" }} {{ reservation.check_in_time|time:"H:i"|default:"" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Check-out:</span>
+                            <span class="voucher-value">{{ reservation.check_out_date|date:"d.m.Y" }} {{ reservation.check_out_time|time:"H:i"|default:"" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Geceleme:</span>
+                            <span class="voucher-value">{{ reservation.total_nights }} gece</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Yetişkin:</span>
+                            <span class="voucher-value">{{ reservation.adult_count }} kişi</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Çocuk:</span>
+                            <span class="voucher-value">{{ reservation.child_count }} kişi</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Oluşturulma:</span>
+                            <span class="voucher-value">{{ reservation.created_at|date:"d.m.Y H:i" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <h3>Tarih Bilgileri</h3>
-                    <p><strong>Check-in:</strong> {{ reservation.check_in_date|date:"d.m.Y" }} {{ reservation.check_in_time }}</p>
-                    <p><strong>Check-out:</strong> {{ reservation.check_out_date|date:"d.m.Y" }} {{ reservation.check_out_time }}</p>
-                    <p><strong>Gece:</strong> {{ reservation.total_nights }}</p>
-                </div>
-                <div>
-                    <h3>Fiyatlandırma</h3>
-                    <p><strong>Oda Fiyatı:</strong> {{ reservation.room_rate|floatformat:2 }} {{ reservation.currency }}</p>
-                    <p><strong>İndirim:</strong> {{ reservation.discount_amount|floatformat:2 }} {{ reservation.currency }}</p>
-                    <p><strong>Toplam:</strong> {{ reservation.total_amount|floatformat:2 }} {{ reservation.currency }}</p>
-                    <p><strong>Ödenen:</strong> {{ reservation.total_paid|floatformat:2 }} {{ reservation.currency }}</p>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-lira-sign"></i> Fiyat Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Gecelik Fiyat:</span>
+                            <span class="voucher-value">{{ reservation.room_rate }} {{ reservation.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Toplam Tutar:</span>
+                            <span class="voucher-value" style="font-weight: bold; font-size: 16px;">{{ reservation.total_amount }} {{ reservation.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">İndirim:</span>
+                            <span class="voucher-value">-{{ reservation.discount_amount }} {{ reservation.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ödenen:</span>
+                            <span class="voucher-value">{{ reservation.total_paid }} {{ reservation.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Kalan:</span>
+                            <span class="voucher-value" style="color: {% if reservation.get_remaining_amount > 0 %}red{% else %}green{% endif %};">
+                                {{ reservation.get_remaining_amount }} {{ reservation.currency }}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ödeme Durumu:</span>
+                            <span class="voucher-value">
+                                {% if reservation.is_paid %}
+                                    <span style="color: green;">✓ Tamamlandı</span>
+                                {% else %}
+                                    <span style="color: orange;">⚠ Kısmi/Kalan</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            {% if reservation.special_requests %}
-            <div style="margin-top: 20px;">
-                <h3>Özel İstekler</h3>
-                <p>{{ reservation.special_requests }}</p>
+            
+            <!-- Müşteri Bilgileri -->
+            {% if customer %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-user"></i> Müşteri Bilgileri
+                    {% if customer_folio_url %}
+                    <div style="float: right;">
+                        <a href="{{ customer_folio_url }}" class="vb-button small">
+                            <i class="fas fa-external-link-alt"></i> Folyo Görüntüle
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <div class="voucher-row">
+                        <span class="voucher-label">Ad Soyad:</span>
+                        <span class="voucher-value">{{ customer.first_name }} {{ customer.last_name }}</span>
+                    </div>
+                    <div class="voucher-row">
+                        <span class="voucher-label">E-posta:</span>
+                        <span class="voucher-value">{{ customer.email|default:"-" }}</span>
+                    </div>
+                    <div class="voucher-row">
+                        <span class="voucher-label">Telefon:</span>
+                        <span class="voucher-value">{{ customer.phone|default:"-" }}</span>
+                    </div>
+                    <div class="voucher-row">
+                        <span class="voucher-label">TC No:</span>
+                        <span class="voucher-value">{{ customer.tc_no|default:"-" }}</span>
+                    </div>
+                </div>
             </div>
             {% endif %}
-
-            <div style="margin-top: 20px; text-align: right;">
-                <a href="{% url 'reception:reservation_list' %}" class="vb-button">Geri</a>
-                <a href="{% url 'reception:reservation_update' reservation.pk %}" class="vb-button">Düzenle</a>
-                {% if reservation.can_check_in %}
-                <a href="{% url 'reception:reservation_checkin' reservation.pk %}" class="vb-button primary">Check-in</a>
-                {% endif %}
-                {% if reservation.can_check_out %}
-                <a href="{% url 'reception:reservation_checkout' reservation.pk %}" class="vb-button primary">Check-out</a>
-                {% endif %}
+            
+            <!-- Misafir Bilgileri -->
+            {% if guests %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-users"></i> Misafir Bilgileri
+                </div>
+                <div class="groupbox-body">
+                    {% if adult_guests %}
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #2563eb;">Yetişkin Misafirler</h4>
+                        <table class="vb-datagrid" style="table-layout: auto; width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 50px; padding: 10px 12px;">Sıra</th>
+                                    <th style="min-width: 150px; padding: 10px 12px;">Ad Soyad</th>
+                                    <th style="min-width: 100px; padding: 10px 12px;">Cinsiyet</th>
+                                    <th style="min-width: 130px; padding: 10px 12px;">TC Kimlik No</th>
+                                    <th style="min-width: 140px; padding: 10px 12px;">Kimlik Seri No</th>
+                                    <th style="min-width: 140px; padding: 10px 12px;">Pasaport No</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for guest in adult_guests %}
+                                <tr>
+                                    <td style="padding: 10px 12px;">{{ guest.guest_order }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.first_name }} {{ guest.last_name }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.get_gender_display|default:"-" }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.tc_no|default:"-" }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.id_serial_no|default:"-" }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.passport_no|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    
+                    {% if child_guests %}
+                    <div>
+                        <h4 style="margin-bottom: 10px; color: #2563eb;">Çocuk Misafirler</h4>
+                        <table class="vb-datagrid" style="table-layout: auto; width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 50px; padding: 10px 12px;">Sıra</th>
+                                    <th style="min-width: 150px; padding: 10px 12px;">Ad Soyad</th>
+                                    <th style="min-width: 60px; padding: 10px 12px;">Yaş</th>
+                                    <th style="min-width: 100px; padding: 10px 12px;">Cinsiyet</th>
+                                    <th style="min-width: 130px; padding: 10px 12px;">TC Kimlik No</th>
+                                    <th style="min-width: 140px; padding: 10px 12px;">Pasaport No</th>
+                                    <th style="min-width: 140px; padding: 10px 12px;">Pasaport Seri No</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for guest in child_guests %}
+                                <tr>
+                                    <td style="padding: 10px 12px;">{{ guest.guest_order }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.first_name }} {{ guest.last_name }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.age|default:"-" }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.get_gender_display|default:"-" }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.tc_no|default:"-" }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.passport_no|default:"-" }}</td>
+                                    <td style="padding: 10px 12px;">{{ guest.passport_serial_no|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not adult_guests and not child_guests %}
+                    <p style="text-align: center; color: #666; padding: 20px;">Henüz misafir bilgisi kaydedilmemiştir.</p>
+                    {% endif %}
+                </div>
             </div>
+            {% endif %}
+            
+            <!-- Ödemeler -->
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-credit-card"></i> Ödemeler
+                    {% if payment_summary %}
+                    <div style="float: right; font-size: 14px;">
+                        <span style="margin-right: 15px;">Toplam: <strong>{{ payment_summary.total_amount }} {{ reservation.currency }}</strong></span>
+                        <span style="margin-right: 15px;">Ödenen: <strong style="color: green;">{{ payment_summary.total_paid }} {{ reservation.currency }}</strong></span>
+                        <span>Kalan: <strong style="color: {% if payment_summary.remaining_amount > 0 %}red{% else %}green{% endif %};">{{ payment_summary.remaining_amount }} {{ reservation.currency }}</strong></span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="groupbox-body">
+                    {% if payments %}
+                    <table class="vb-datagrid" style="table-layout: auto; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 100px; padding: 10px 12px;">Tarih</th>
+                                <th style="min-width: 120px; padding: 10px 12px;">Tutar</th>
+                                <th style="min-width: 120px; padding: 10px 12px;">Yöntem</th>
+                                <th style="min-width: 120px; padding: 10px 12px;">Tip</th>
+                                <th style="min-width: 140px; padding: 10px 12px;">Fiş No</th>
+                                <th style="min-width: 200px; padding: 10px 12px;">Notlar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td style="padding: 10px 12px;">{{ payment.payment_date|date:"d.m.Y" }}</td>
+                                <td style="padding: 10px 12px;">{{ payment.payment_amount }} {{ payment.currency }}</td>
+                                <td style="padding: 10px 12px;">{{ payment.get_payment_method_display }}</td>
+                                <td style="padding: 10px 12px;">{{ payment.get_payment_type_display }}</td>
+                                <td style="padding: 10px 12px;">{{ payment.receipt_no|default:"-" }}</td>
+                                <td style="padding: 10px 12px;">{{ payment.notes|truncatewords:10|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="text-align: center; color: #666; padding: 20px;">Henüz ödeme kaydı bulunmamaktadır.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-history"></i> İşlem Geçmişi
+                </div>
+                <div class="groupbox-body">
+                    {% if timeline %}
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        {% for item in timeline %}
+                        <div style="padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between;">
+                            <div>
+                                <strong>{{ item.get_action_type_display }}</strong>
+                                <p style="margin: 5px 0; color: #666; font-size: 13px;">{{ item.action_description }}</p>
+                                <small style="color: #999;">{{ item.user.get_full_name|default:item.user.username }} - {{ item.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p style="text-align: center; color: #666; padding: 20px;">Henüz işlem geçmişi bulunmamaktadır.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Voucher'lar -->
+            {% if vouchers %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-ticket-alt"></i> Voucher'lar
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Voucher Kodu</th>
+                                <th>Şablon</th>
+                                <th>Gönderim</th>
+                                <th>Oluşturulma</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for voucher in vouchers %}
+                            <tr>
+                                <td>{{ voucher.voucher_code }}</td>
+                                <td>{{ voucher.voucher_template.name|default:"Varsayılan" }}</td>
+                                <td>
+                                    {% if voucher.is_sent %}
+                                        <span style="color: green;">✓ {{ voucher.get_sent_via_display }} - {{ voucher.sent_at|date:"d.m.Y H:i" }}</span>
+                                    {% else %}
+                                        <span style="color: orange;">Gönderilmedi</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ voucher.created_at|date:"d.m.Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'reception:reservation_voucher_detail' voucher.pk %}" class="vb-button small">
+                                        <i class="fas fa-eye"></i> Görüntüle
+                                    </a>
+                                    <a href="{% url 'reception:reservation_voucher_pdf' voucher.pk %}" class="vb-button small">
+                                        <i class="fas fa-download"></i> PDF
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- İlgili Rezervasyonlar -->
+            {% if related_reservations %}
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-list"></i> Diğer Rezervasyonlar ({{ customer.get_full_name }})
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid" style="table-layout: auto; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="min-width: 180px; padding: 10px 12px;">Rezervasyon Kodu</th>
+                                <th style="min-width: 100px; padding: 10px 12px;">Check-in</th>
+                                <th style="min-width: 100px; padding: 10px 12px;">Check-out</th>
+                                <th style="min-width: 200px; padding: 10px 12px;">Oda</th>
+                                <th style="min-width: 120px; padding: 10px 12px;">Tutar</th>
+                                <th style="min-width: 100px; padding: 10px 12px;">Durum</th>
+                                <th style="min-width: 120px; padding: 10px 12px;">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rel_res in related_reservations %}
+                            <tr>
+                                <td style="padding: 10px 12px;">{{ rel_res.reservation_code }}</td>
+                                <td style="padding: 10px 12px;">{{ rel_res.check_in_date|date:"d.m.Y" }}</td>
+                                <td style="padding: 10px 12px;">{{ rel_res.check_out_date|date:"d.m.Y" }}</td>
+                                <td style="padding: 10px 12px;">{{ rel_res.room.name }}</td>
+                                <td style="padding: 10px 12px;">{{ rel_res.total_amount }} {{ rel_res.currency }}</td>
+                                <td style="padding: 10px 12px;">{{ rel_res.get_status_display }}</td>
+                                <td style="padding: 10px 12px;">
+                                    <a href="{% url 'reception:reservation_detail' rel_res.pk %}" class="vb-button small">
+                                        <i class="fas fa-eye"></i> Detay
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-{% endblock %}
 
+<style>
+.voucher-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.voucher-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.voucher-value {
+    color: #666;
+}
+
+.form-groupbox {
+    background: #f8f9fa;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    padding: 0;
+}
+
+.groupbox-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c5f8d;
+}
+
+.groupbox-body {
+    padding: 12px;
+}
+</style>
+
+<!-- Rezervasyon Düzenleme Modal Container -->
+<div id="reservationEditModalContainer"></div>
+
+<script>
+// Rezervasyon düzenleme modal'ını aç
+function openReservationEditModal(reservationId) {
+    // Önce tüm mevcut modal'ları kapat ve DOM'dan kaldır
+    const existingModals = document.querySelectorAll('#reservationModal');
+    existingModals.forEach(modal => {
+        if (modal.parentNode) {
+            // Modal'ı DOM'dan tamamen kaldır (sadece gizlemek yeterli değil)
+            modal.parentNode.removeChild(modal);
+        }
+    });
+    
+    // Container'ı temizle
+    let container = document.getElementById('reservationEditModalContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'reservationEditModalContainer';
+        document.body.appendChild(container);
+    } else {
+        container.innerHTML = '';
+    }
+    
+    // AJAX ile formu yükle
+    fetch(`/reception/reservations/${reservationId}/edit/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Yeni modal'ı ekle
+        container.innerHTML = html;
+        
+        // Modal'ı göster
+        const modal = document.getElementById('reservationModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // Script'leri çalıştır (innerHTML ile eklenen script'ler otomatik çalışmaz)
+            console.log('Script\'ler çalıştırılıyor...');
+            const scripts = container.querySelectorAll('script');
+            console.log('Bulunan script sayısı:', scripts.length);
+            
+            scripts.forEach((oldScript, index) => {
+                console.log(`Script ${index + 1} işleniyor...`, oldScript.src || 'inline');
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                    newScript.onload = function() {
+                        console.log('✓ Script yüklendi:', oldScript.src);
+                    };
+                    newScript.onerror = function() {
+                        console.error('✗ Script yükleme hatası:', oldScript.src);
+                    };
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                } else {
+                    // Inline script'i doğrudan çalıştır
+                    console.log('Inline script içeriği:', oldScript.textContent.substring(0, 100) + '...');
+                    try {
+                        // Script'i global scope'ta çalıştır
+                        const scriptFunction = new Function(oldScript.textContent);
+                        scriptFunction();
+                        console.log('✓ Inline script çalıştırıldı');
+                    } catch (e) {
+                        console.error('✗ Script çalıştırma hatası:', e);
+                        console.error('Script içeriği:', oldScript.textContent);
+                    }
+                    // Script'i DOM'a da ekle (bazı durumlarda gerekli olabilir)
+                    newScript.textContent = oldScript.textContent;
+                    oldScript.parentNode.appendChild(newScript);
+                }
+            });
+            
+            console.log('Script işleme tamamlandı');
+            
+            // Script'lerin yüklenmesi için daha uzun bir gecikme
+            setTimeout(() => {
+                console.log('=== MODAL YÜKLENDİ, VERİLER YÜKLENİYOR ===');
+                
+                // Event listener'ları bağla
+                if (typeof attachEventListeners === 'function') {
+                    attachEventListeners();
+                    console.log('✓ Event listener\'lar bağlandı');
+                } else {
+                    console.warn('✗ attachEventListeners fonksiyonu bulunamadı!');
+                }
+                
+                // Misafir formlarını oluştur (eğer fonksiyon varsa)
+                if (typeof updateGuestForms === 'function') {
+                    updateGuestForms();
+                    console.log('✓ Misafir formları oluşturuldu');
+                } else {
+                    console.warn('✗ updateGuestForms fonksiyonu bulunamadı!');
+                }
+                
+                // Rezervasyon verilerini yükle (form_modal.html içindeki loadReservationData fonksiyonu)
+                console.log('loadReservationData fonksiyonu kontrol ediliyor...');
+                console.log('window.loadReservationData:', typeof window.loadReservationData);
+                if (typeof window.loadReservationData === 'function') {
+                    console.log('✓ loadReservationData fonksiyonu bulundu, çağrılıyor...');
+                    try {
+                        window.loadReservationData();
+                        console.log('✓ loadReservationData başarıyla çağrıldı');
+                    } catch (e) {
+                        console.error('✗ loadReservationData çağrılırken hata:', e);
+                    }
+                } else {
+                    console.error('✗ loadReservationData fonksiyonu bulunamadı!');
+                    console.log('Mevcut window fonksiyonları:', Object.keys(window).filter(k => typeof window[k] === 'function' && k.includes('load')));
+                }
+                
+                // İlk hesaplamaları yap
+                if (typeof calculateNights === 'function') {
+                    setTimeout(() => {
+                        calculateNights();
+                        calculateTotalAmount();
+                        updateRemainingAmount();
+                    }, 300);
+                }
+            }, 800); // Daha uzun gecikme (script'lerin tamamen yüklenmesi için)
+        } else {
+            console.error('Modal bulunamadı!');
+        }
+    })
+    .catch(error => {
+        console.error('Modal yükleme hatası:', error);
+        alert('Rezervasyon düzenleme formu yüklenirken bir hata oluştu.');
+    });
+}
+
+// Form submit handler
+document.addEventListener('submit', function(e) {
+    const form = e.target;
+    if (form.id === 'reservationForm' && form.action.includes('/edit/')) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const reservationId = form.action.match(/\/(\d+)\/edit\//)[1];
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Başarılı, sayfayı yenile
+                window.location.href = data.redirect_url || window.location.href;
+            } else {
+                // Hata var, formu güncelle
+                console.error('Form hataları:', data.errors);
+                alert('Form gönderilirken hatalar oluştu. Lütfen kontrol edin.');
+            }
+        })
+        .catch(error => {
+            console.error('Form gönderme hatası:', error);
+            alert('Form gönderilirken bir hata oluştu.');
+        });
+    }
+});
+</script>
+
+<!-- Rezervasyon Form JavaScript -->
+<script src="{% static 'js/reception_reservation_form.js' %}"></script>
+{% endblock %}

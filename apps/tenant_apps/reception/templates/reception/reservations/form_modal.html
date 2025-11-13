@@ -1,0 +1,960 @@
+{% load static %}
+<!-- Rezervasyon Ekleme/Düzenleme Modal -->
+{% if form %}
+<!-- Form var, modal render ediliyor -->
+<div id="reservationModal" class="vb-modal" style="display: none;"
+     {% if reservation %}
+     data-customer='{{ customer_data_json|safe }}'
+     data-guests='{{ guests_data_json|safe }}'
+     data-payment='{{ payment_data_json|safe }}'
+     {% endif %}>
+    <div class="vb-modal-overlay" onclick="closeReservationModal()"></div>
+    <div class="vb-modal-content" style="max-width: 95vw; max-height: 95vh; width: 1400px;">
+        <div class="vb-modal-header">
+            <h3 class="vb-modal-title">
+                <i class="fas fa-calendar-check"></i>
+                {% if reservation %}Rezervasyon Düzenle{% else %}Yeni Rezervasyon{% endif %}
+            </h3>
+            <button type="button" class="vb-modal-close" onclick="closeReservationModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="reservationForm" method="post" action="{% if reservation %}{% url 'reception:reservation_update' reservation.pk %}{% else %}{% url 'reception:reservation_create' %}{% endif %}">
+            {% csrf_token %}
+            <input type="hidden" name="hotel" value="{{ hotel.id }}">
+            
+            <div class="vb-modal-body" style="overflow-y: auto; max-height: calc(95vh - 120px);">
+                <!-- Grid Container -->
+                <div class="reservation-form-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 15px;">
+                    
+                    <!-- GRID 1: Temel Bilgiler -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-info-circle"></i> Temel Bilgiler
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Check-in Tarihi <span class="text-red-500">*</span></label>
+                                {{ form.check_in_date }}
+                                {{ form.check_in_date.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Check-out Tarihi <span class="text-red-500">*</span></label>
+                                {{ form.check_out_date }}
+                                {{ form.check_out_date.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Geceleme Sayısı</label>
+                                <input type="text" id="total_nights_display" class="form-control" readonly value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Check-in Saati</label>
+                                {{ form.check_in_time }}
+                            </div>
+                            <div class="form-group">
+                                <label>Check-out Saati</label>
+                                {{ form.check_out_time }}
+                            </div>
+                            <div class="form-group">
+                                <label>Yetişkin Sayısı <span class="text-red-500">*</span></label>
+                                {{ form.adult_count }}
+                                {{ form.adult_count.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Çocuk Sayısı</label>
+                                {{ form.child_count }}
+                                {{ form.child_count.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Çocuk Yaşları</label>
+                                <div id="child_ages_container" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 2: Oda Seçimi -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-bed"></i> Oda Seçimi
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Oda Tipi <span class="text-red-500">*</span></label>
+                                {{ form.room }}
+                                {{ form.room.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Oda Numarası</label>
+                                {{ form.room_number }}
+                                {{ form.room_number.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Oda Durumu</label>
+                                <input type="text" id="room_status_display" class="form-control" readonly value="-">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 3: Fiyatlandırma -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-lira-sign"></i> Fiyatlandırma
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Oda Fiyatı (Gecelik) <span class="text-red-500">*</span></label>
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    {{ form.room_rate }}
+                                    <button type="button" id="calculatePriceBtn" class="vb-button small" title="Fiyat Hesapla">
+                                        <i class="fas fa-calculator"></i>
+                                    </button>
+                                </div>
+                                {{ form.room_rate.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    {{ form.is_manual_price }}
+                                    {{ form.is_manual_price.label }}
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>İndirim Tipi</label>
+                                {{ form.discount_type }}
+                            </div>
+                            <div class="form-group">
+                                <label>İndirim Yüzdesi (%)</label>
+                                {{ form.discount_percentage }}
+                            </div>
+                            <div class="form-group">
+                                <label>İndirim Tutarı</label>
+                                {{ form.discount_amount }}
+                            </div>
+                            <div class="form-group">
+                                <label>Vergi Tutarı</label>
+                                {{ form.tax_amount }}
+                            </div>
+                            <div class="form-group">
+                                <label>Para Birimi</label>
+                                {{ form.currency }}
+                            </div>
+                            <div class="form-group">
+                                <label>Toplam Tutar</label>
+                                <input type="text" id="total_amount_display" class="form-control" readonly value="0.00" style="font-weight: bold; font-size: 16px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 4: Rezervasyon Kaynağı -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-source"></i> Rezervasyon Kaynağı
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Rezervasyon Durumu <span class="text-red-500">*</span></label>
+                                {{ form.status }}
+                                {{ form.status.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Rezervasyon Kaynağı</label>
+                                {{ form.source }}
+                            </div>
+                            <div class="form-group">
+                                <label>Rezervasyon Acentesi</label>
+                                {{ form.reservation_agent }}
+                            </div>
+                            <div class="form-group">
+                                <label>Rezervasyon Kanalı</label>
+                                {{ form.reservation_channel }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 5: Müşteri Bilgileri -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-user"></i> Müşteri Bilgileri
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group" style="grid-column: span 4;">
+                                <label>Müşteri Ara (TC No, Email, Telefon)</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="text" id="customer_search" class="form-control" placeholder="TC No, Email veya Telefon ile ara...">
+                                    <button type="button" id="searchCustomerBtn" class="vb-button primary">
+                                        <i class="fas fa-search"></i> Ara
+                                    </button>
+                                </div>
+                                <div id="customer_search_results" style="margin-top: 10px;"></div>
+                            </div>
+                            {{ form.customer }}
+                            <div class="form-group">
+                                <label>Ad <span class="text-red-500">*</span></label>
+                                <input type="text" id="customer_first_name" class="form-control" name="customer_first_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Soyad <span class="text-red-500">*</span></label>
+                                <input type="text" id="customer_last_name" class="form-control" name="customer_last_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Telefon <span class="text-red-500">*</span></label>
+                                <input type="text" id="customer_phone" class="form-control" name="customer_phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label>E-posta</label>
+                                <input type="email" id="customer_email" class="form-control" name="customer_email">
+                            </div>
+                            <div class="form-group">
+                                <label>Adres</label>
+                                <textarea id="customer_address" class="form-control" name="customer_address" rows="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>TC Kimlik No</label>
+                                <input type="text" id="customer_tc_no" class="form-control" name="customer_tc_no" maxlength="11">
+                            </div>
+                            <div class="form-group">
+                                <label>Pasaport No</label>
+                                <input type="text" id="customer_passport_no" class="form-control" name="customer_passport_no">
+                            </div>
+                            <div class="form-group">
+                                <label>Vatandaşlık</label>
+                                <input type="text" id="customer_nationality" class="form-control" name="customer_nationality" value="Türkiye">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 6: Yetişkin Misafirler -->
+                    <div class="form-groupbox" style="grid-column: span 3;" id="adult_guests_section">
+                        <div class="groupbox-header">
+                            <i class="fas fa-users"></i> Yetişkin Misafirler
+                        </div>
+                        <div class="groupbox-body" id="adult_guests_container">
+                            {% if reservation and guest_formset %}
+                            <!-- Formset ile mevcut misafirleri göster (Düzenleme) -->
+                            {{ guest_formset.management_form }}
+                            {% for form in guest_formset %}
+                                {% if form.guest_type.value == 'adult' %}
+                                <div class="guest-form-row" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 10px; padding: 10px; background: white; border: 1px solid #d4d4d4; border-radius: 3px;">
+                                    {{ form.id }}
+                                    {{ form.guest_type }}
+                                    {{ form.guest_order }}
+                                    <div class="form-group">
+                                        <label>Ad <span class="text-red-500">*</span></label>
+                                        {{ form.first_name }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Soyad <span class="text-red-500">*</span></label>
+                                        {{ form.last_name }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Cinsiyet</label>
+                                        {{ form.gender }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>TC Kimlik No</label>
+                                        {{ form.tc_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Kimlik Seri No</label>
+                                        {{ form.id_serial_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Pasaport No</label>
+                                        {{ form.passport_no }}
+                                    </div>
+                                    {% if guest_formset.can_delete %}
+                                    <div class="form-group" style="grid-column: span 6;">
+                                        <label>{{ form.DELETE }} Sil</label>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% else %}
+                            <!-- JavaScript ile dinamik olarak eklenecek (Yeni Rezervasyon) -->
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 7: Çocuk Misafirler -->
+                    <div class="form-groupbox" style="grid-column: span 3; {% if not reservation or not guest_formset %}display: none;{% endif %}" id="child_guests_section">
+                        <div class="groupbox-header">
+                            <i class="fas fa-child"></i> Çocuk Misafirler
+                        </div>
+                        <div class="groupbox-body" id="child_guests_container">
+                            {% if reservation and guest_formset %}
+                            <!-- Formset ile mevcut misafirleri göster (Düzenleme) -->
+                            {% for form in guest_formset %}
+                                {% if form.guest_type.value == 'child' %}
+                                <div class="guest-form-row" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 10px; padding: 10px; background: white; border: 1px solid #d4d4d4; border-radius: 3px;">
+                                    {{ form.id }}
+                                    {{ form.guest_type }}
+                                    {{ form.guest_order }}
+                                    <div class="form-group">
+                                        <label>Ad <span class="text-red-500">*</span></label>
+                                        {{ form.first_name }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Soyad <span class="text-red-500">*</span></label>
+                                        {{ form.last_name }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Yaş</label>
+                                        {{ form.age }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Cinsiyet</label>
+                                        {{ form.gender }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>TC Kimlik No</label>
+                                        {{ form.tc_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Pasaport No</label>
+                                        {{ form.passport_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Seri No</label>
+                                        {{ form.passport_serial_no }}
+                                    </div>
+                                    {% if guest_formset.can_delete %}
+                                    <div class="form-group" style="grid-column: span 7;">
+                                        <label>{{ form.DELETE }} Sil</label>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                            {% else %}
+                            <!-- JavaScript ile dinamik olarak eklenecek (Yeni Rezervasyon) -->
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 8: Ödeme Bilgileri -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-credit-card"></i> Ödeme Bilgileri
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Ödeme Yöntemi</label>
+                                <select id="payment_method" class="form-control" name="payment_method">
+                                    <option value="">Seçiniz...</option>
+                                    <option value="cash">Nakit</option>
+                                    <option value="credit_card">Kredi Kartı</option>
+                                    <option value="debit_card">Banka Kartı</option>
+                                    <option value="transfer">Havale/EFT</option>
+                                    <option value="check">Çek</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Ön Ödeme</label>
+                                <input type="number" id="advance_payment" class="form-control" name="advance_payment" step="0.01" min="0" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Kalan Tutar</label>
+                                <input type="text" id="remaining_amount_display" class="form-control" readonly value="0.00" style="font-weight: bold;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 9: Özel Durumlar -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-exclamation-triangle"></i> Özel Durumlar
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>
+                                    {{ form.is_comp }}
+                                    {{ form.is_comp.label }}
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    {{ form.is_no_show }}
+                                    {{ form.is_no_show.label }}
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    {{ form.early_check_in }}
+                                    {{ form.early_check_in.label }}
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    {{ form.late_check_out }}
+                                    {{ form.late_check_out.label }}
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>Erken Check-in Ücreti</label>
+                                {{ form.early_check_in_fee }}
+                            </div>
+                            <div class="form-group">
+                                <label>Geç Check-out Ücreti</label>
+                                {{ form.late_check_out_fee }}
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>No-Show Nedeni</label>
+                                {{ form.no_show_reason }}
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>Özel İstekler</label>
+                                {{ form.special_requests }}
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>İç Notlar (Personel için)</label>
+                                {{ form.internal_notes }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="vb-modal-footer">
+                <button type="button" class="vb-button" onclick="closeReservationModal()">İptal</button>
+                <button type="submit" class="vb-button primary">
+                    <i class="fas fa-save"></i> Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal CSS -->
+<style>
+.vb-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vb-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.vb-modal-content {
+    position: relative;
+    background: white;
+    border: 2px solid #c0d4e0;
+    border-radius: 3px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    max-height: 95vh;
+}
+
+.vb-modal-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vb-modal-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #2c5f8d;
+    margin: 0;
+}
+
+.vb-modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.vb-modal-close:hover {
+    color: #000;
+}
+
+.vb-modal-body {
+    padding: 0;
+    overflow-y: auto;
+}
+
+.vb-modal-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #c0d4e0;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.form-groupbox {
+    background: #f8f9fa;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    padding: 0;
+}
+
+.groupbox-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c5f8d;
+}
+
+.groupbox-body {
+    padding: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.form-control {
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.vb-button {
+    padding: 6px 12px;
+    border: 1px solid #c0d4e0;
+    border-radius: 3px;
+    background: #e8f4f8;
+    color: #2c5f8d;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.vb-button.primary {
+    background: #0078d4;
+    color: white;
+    border-color: #0063b1;
+}
+
+.vb-button:hover {
+    background: #d4e8f0;
+}
+
+.vb-button.primary:hover {
+    background: #0063b1;
+}
+
+.vb-button.small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+</style>
+
+<!-- Rezervasyon Form JavaScript -->
+<script src="{% static 'js/reception_reservation_form.js' %}"></script>
+
+{% if reservation %}
+<!-- Rezervasyon Verilerini Yükle -->
+<script>
+// Rezervasyon verilerini form'a yükle
+(function() {
+    // Script'in çalışması için DOM'un hazır olmasını bekle
+    function loadReservationData() {
+        console.log('=== REZERVASYON VERİLERİ YÜKLENİYOR ===');
+        console.log('loadReservationData fonksiyonu çağrıldı');
+        
+        // JSON verilerini modal'dan data attribute'larından al
+        const modal = document.getElementById('reservationModal');
+        if (!modal) {
+            console.error('reservationModal bulunamadı!');
+            return;
+        }
+        
+        // JSON verilerini güvenli şekilde parse et
+        let customerData = null;
+        let guestsData = [];
+        let paymentData = {};
+        
+        try {
+            const customerJsonStr = modal.getAttribute('data-customer');
+            console.log('Müşteri JSON (data-attr):', customerJsonStr);
+            if (customerJsonStr && customerJsonStr !== 'null' && customerJsonStr.trim() !== '') {
+                customerData = JSON.parse(customerJsonStr);
+                console.log('✓ Müşteri verisi yüklendi:', customerData);
+            } else {
+                console.warn('Müşteri verisi null veya boş');
+            }
+        } catch (e) {
+            console.error('Müşteri JSON parse hatası:', e);
+        }
+        
+        try {
+            const guestsJsonStr = modal.getAttribute('data-guests');
+            console.log('Misafir JSON (data-attr):', guestsJsonStr);
+            if (guestsJsonStr && guestsJsonStr.trim() !== '') {
+                guestsData = JSON.parse(guestsJsonStr);
+                console.log('✓ Misafir verisi yüklendi:', guestsData, 'Toplam:', guestsData.length);
+            } else {
+                console.warn('Misafir verisi boş');
+            }
+        } catch (e) {
+            console.error('Misafir JSON parse hatası:', e);
+        }
+        
+        try {
+            const paymentJsonStr = modal.getAttribute('data-payment');
+            console.log('Ödeme JSON (data-attr):', paymentJsonStr);
+            if (paymentJsonStr && paymentJsonStr.trim() !== '') {
+                paymentData = JSON.parse(paymentJsonStr);
+                console.log('✓ Ödeme verisi yüklendi:', paymentData);
+            } else {
+                console.warn('Ödeme verisi boş');
+            }
+        } catch (e) {
+            console.error('Ödeme JSON parse hatası:', e);
+        }
+        
+        const reservationData = {
+            customer: customerData,
+            guests: guestsData,
+            payment: paymentData,
+        };
+        
+        console.log('=== REZERVASYON VERİLERİ (PARSE EDİLMİŞ) ===');
+        console.log('Müşteri:', customerData);
+        console.log('Misafirler:', guestsData);
+        console.log('Ödeme:', paymentData);
+        console.log('Toplam veri:', reservationData);
+        
+        // Tarih formatını düzelt (dd/mm/yyyy -> yyyy-MM-dd)
+        const checkInDateField = document.getElementById('id_check_in_date');
+        const checkOutDateField = document.getElementById('id_check_out_date');
+        
+        if (checkInDateField && checkInDateField.value) {
+            // Eğer dd/mm/yyyy formatındaysa dönüştür
+            const dateValue = checkInDateField.value;
+            if (dateValue.includes('/')) {
+                const parts = dateValue.split('/');
+                if (parts.length === 3) {
+                    const day = parts[0].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
+                    const year = parts[2];
+                    checkInDateField.value = `${year}-${month}-${day}`;
+                }
+            }
+        }
+        
+        if (checkOutDateField && checkOutDateField.value) {
+            // Eğer dd/mm/yyyy formatındaysa dönüştür
+            const dateValue = checkOutDateField.value;
+            if (dateValue.includes('/')) {
+                const parts = dateValue.split('/');
+                if (parts.length === 3) {
+                    const day = parts[0].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
+                    const year = parts[2];
+                    checkOutDateField.value = `${year}-${month}-${day}`;
+                }
+            }
+        }
+        
+        // Müşteri bilgilerini doldur
+        console.log('Müşteri verisi kontrol ediliyor...', reservationData.customer);
+        if (reservationData.customer && reservationData.customer !== null) {
+            const customer = reservationData.customer;
+            console.log('Müşteri verileri:', customer);
+            
+            // Kısa bir gecikme ile müşteri bilgilerini doldur (form alanları render olana kadar bekle)
+            setTimeout(() => {
+                const customerFirst = document.getElementById('customer_first_name');
+                const customerLast = document.getElementById('customer_last_name');
+                const customerPhone = document.getElementById('customer_phone');
+                const customerEmail = document.getElementById('customer_email');
+                const customerAddress = document.getElementById('customer_address');
+                const customerTcNo = document.getElementById('customer_tc_no');
+                const customerPassportNo = document.getElementById('customer_passport_no');
+                const customerNationality = document.getElementById('customer_nationality');
+                const customerHidden = document.querySelector('input[name="customer"]');
+                
+                console.log('Müşteri form alanları aranıyor...');
+                console.log('customer_first_name:', customerFirst);
+                console.log('customer_last_name:', customerLast);
+                console.log('customer_phone:', customerPhone);
+                
+                if (customerFirst) {
+                    customerFirst.value = customer.first_name || '';
+                    console.log('✓ Müşteri adı dolduruldu:', customer.first_name);
+                } else {
+                    console.error('✗ customer_first_name elementi bulunamadı!');
+                }
+                
+                if (customerLast) {
+                    customerLast.value = customer.last_name || '';
+                    console.log('✓ Müşteri soyadı dolduruldu:', customer.last_name);
+                } else {
+                    console.error('✗ customer_last_name elementi bulunamadı!');
+                }
+                
+                if (customerPhone) {
+                    customerPhone.value = customer.phone || '';
+                    console.log('✓ Müşteri telefonu dolduruldu:', customer.phone);
+                } else {
+                    console.error('✗ customer_phone elementi bulunamadı!');
+                }
+                
+                if (customerEmail) {
+                    customerEmail.value = customer.email || '';
+                    console.log('✓ Müşteri e-postası dolduruldu:', customer.email);
+                } else {
+                    console.warn('✗ customer_email elementi bulunamadı!');
+                }
+                
+                if (customerAddress) {
+                    customerAddress.value = customer.address || '';
+                    console.log('✓ Müşteri adresi dolduruldu:', customer.address);
+                } else {
+                    console.warn('✗ customer_address elementi bulunamadı!');
+                }
+                
+                if (customerTcNo) {
+                    customerTcNo.value = customer.tc_no || '';
+                    console.log('✓ Müşteri TC No dolduruldu:', customer.tc_no);
+                } else {
+                    console.warn('✗ customer_tc_no elementi bulunamadı!');
+                }
+                
+                if (customerPassportNo) {
+                    customerPassportNo.value = customer.passport_no || '';
+                    console.log('✓ Müşteri pasaport no dolduruldu:', customer.passport_no);
+                } else {
+                    console.warn('✗ customer_passport_no elementi bulunamadı!');
+                }
+                
+                if (customerNationality) {
+                    customerNationality.value = customer.nationality || 'Türkiye';
+                    console.log('✓ Müşteri uyruğu dolduruldu:', customer.nationality);
+                } else {
+                    console.warn('✗ customer_nationality elementi bulunamadı!');
+                }
+                
+                if (customerHidden) {
+                    customerHidden.value = customer.id || '';
+                    console.log('✓ Müşteri ID dolduruldu:', customer.id);
+                } else {
+                    console.warn('✗ customer hidden input bulunamadı!');
+                }
+                
+                console.log('Müşteri bilgileri doldurma işlemi tamamlandı');
+            }, 300); // Form alanlarının render olması için gecikme
+        } else {
+            console.warn('Müşteri verisi bulunamadı veya null!', reservationData.customer);
+        }
+        
+        // Ödeme bilgilerini doldur
+        console.log('Ödeme verisi kontrol ediliyor...', reservationData.payment);
+        if (reservationData.payment && Object.keys(reservationData.payment).length > 0) {
+            const payment = reservationData.payment;
+            console.log('Ödeme verileri:', payment);
+            
+            // Kısa bir gecikme ile ödeme bilgilerini doldur (form alanları render olana kadar bekle)
+            setTimeout(() => {
+                const advancePaymentField = document.getElementById('advance_payment');
+                const paymentMethodField = document.getElementById('payment_method');
+                const remainingAmountField = document.getElementById('remaining_amount_display');
+                
+                console.log('Ödeme form alanları aranıyor...');
+                console.log('advance_payment:', advancePaymentField);
+                console.log('payment_method:', paymentMethodField);
+                console.log('remaining_amount_display:', remainingAmountField);
+                
+                if (advancePaymentField) {
+                    const totalPaid = payment.total_paid || 0;
+                    advancePaymentField.value = totalPaid;
+                    console.log('✓ Ön ödeme dolduruldu:', totalPaid);
+                } else {
+                    console.error('✗ advance_payment elementi bulunamadı!');
+                }
+                
+                if (paymentMethodField) {
+                    if (payment.payment_method) {
+                        paymentMethodField.value = payment.payment_method;
+                        console.log('✓ Ödeme yöntemi dolduruldu:', payment.payment_method);
+                    } else {
+                        console.warn('Ödeme yöntemi bulunamadı (payment.payment_method boş)');
+                    }
+                } else {
+                    console.error('✗ payment_method elementi bulunamadı!');
+                }
+                
+                if (remainingAmountField) {
+                    const remaining = payment.remaining_amount || 0;
+                    remainingAmountField.value = parseFloat(remaining).toFixed(2);
+                    console.log('✓ Kalan tutar dolduruldu:', remaining);
+                } else {
+                    console.error('✗ remaining_amount_display elementi bulunamadı!');
+                }
+                
+                console.log('Ödeme bilgileri doldurma işlemi tamamlandı');
+            }, 300); // Form alanlarının render olması için gecikme
+        } else {
+            console.warn('Ödeme verisi bulunamadı veya boş!', reservationData.payment);
+        }
+        
+        // Misafir bilgilerini doldur
+        if (reservationData.guests && reservationData.guests.length > 0) {
+            console.log('Misafir verileri:', reservationData.guests);
+            
+            // Önce misafir sayılarını kontrol et ve formları oluştur
+            const adultCount = parseInt(document.getElementById('id_adult_count')?.value) || 0;
+            const childCount = parseInt(document.getElementById('id_child_count')?.value) || 0;
+            
+            console.log('Form\'daki yetişkin sayısı:', adultCount, 'Çocuk sayısı:', childCount);
+            
+            // Misafir formlarını oluştur (eğer fonksiyon varsa)
+            if (typeof updateGuestForms === 'function') {
+                updateGuestForms();
+                console.log('Misafir formları oluşturuldu');
+            } else {
+                console.warn('updateGuestForms fonksiyonu bulunamadı!');
+            }
+            
+            // Form alanları oluşturulana kadar bekle, sonra misafir bilgilerini doldur
+            setTimeout(() => {
+                console.log('Misafir bilgileri dolduruluyor...');
+                let filledCount = 0;
+                
+                reservationData.guests.forEach(guest => {
+                    console.log('Misafir işleniyor:', guest);
+                    if (guest.type === 'adult') {
+                        const order = guest.order || 1;
+                        const firstNameField = document.querySelector(`input[name="adult_guest_${order}_first_name"]`);
+                        const lastNameField = document.querySelector(`input[name="adult_guest_${order}_last_name"]`);
+                        const tcNoField = document.querySelector(`input[name="adult_guest_${order}_tc_no"]`);
+                        const idSerialField = document.querySelector(`input[name="adult_guest_${order}_id_serial_no"]`);
+                        const genderField = document.querySelector(`select[name="adult_guest_${order}_gender"]`);
+                        const passportField = document.querySelector(`input[name="adult_guest_${order}_passport_no"]`);
+                        
+                        if (firstNameField) {
+                            firstNameField.value = guest.first_name || '';
+                            console.log(`Yetişkin ${order} adı dolduruldu:`, guest.first_name);
+                            filledCount++;
+                        } else {
+                            console.warn(`Yetişkin ${order} ad alanı bulunamadı!`);
+                        }
+                        if (lastNameField) lastNameField.value = guest.last_name || '';
+                        if (tcNoField) tcNoField.value = guest.tc_no || '';
+                        if (idSerialField) idSerialField.value = guest.id_serial_no || '';
+                        if (genderField) genderField.value = guest.gender || '';
+                        if (passportField) passportField.value = guest.passport_no || '';
+                    } else if (guest.type === 'child') {
+                        const order = guest.order || 1;
+                        const firstNameField = document.querySelector(`input[name="child_guest_${order}_first_name"]`);
+                        const lastNameField = document.querySelector(`input[name="child_guest_${order}_last_name"]`);
+                        const ageField = document.querySelector(`input[name="child_guest_${order}_age"]`);
+                        const genderField = document.querySelector(`select[name="child_guest_${order}_gender"]`);
+                        const tcNoField = document.querySelector(`input[name="child_guest_${order}_tc_no"]`);
+                        const passportField = document.querySelector(`input[name="child_guest_${order}_passport_no"]`);
+                        const passportSerialField = document.querySelector(`input[name="child_guest_${order}_passport_serial_no"]`);
+                        
+                        if (firstNameField) {
+                            firstNameField.value = guest.first_name || '';
+                            console.log(`Çocuk ${order} adı dolduruldu:`, guest.first_name);
+                            filledCount++;
+                        } else {
+                            console.warn(`Çocuk ${order} ad alanı bulunamadı!`);
+                        }
+                        if (lastNameField) lastNameField.value = guest.last_name || '';
+                        if (ageField) ageField.value = guest.age || '';
+                        if (genderField) genderField.value = guest.gender || '';
+                        if (tcNoField) tcNoField.value = guest.tc_no || '';
+                        if (passportField) passportField.value = guest.passport_no || '';
+                        if (passportSerialField) passportSerialField.value = guest.passport_serial_no || '';
+                    }
+                });
+                
+                console.log(`Toplam ${filledCount} misafir bilgisi dolduruldu`);
+            }, 800); // Daha uzun gecikme (form alanları oluşturulana kadar)
+        } else {
+            console.warn('Misafir verisi bulunamadı veya boş!', reservationData.guests);
+        }
+        
+        // İlk hesaplamaları yap
+        if (typeof calculateNights === 'function') {
+            setTimeout(() => {
+                calculateNights();
+                calculateTotalAmount();
+                updateRemainingAmount();
+            }, 400);
+        }
+    }
+    
+    // Fonksiyonu global olarak erişilebilir yap (AJAX ile yüklendiğinde çağrılabilmesi için)
+    window.loadReservationData = loadReservationData;
+    console.log('loadReservationData fonksiyonu window\'a eklendi');
+    
+    // DOM hazır olduğunda çalıştır
+    // Script modal'a eklendikten sonra çalışmalı
+    // Daha uzun bir gecikme ile çalıştır (form alanları render olana kadar bekle)
+    setTimeout(() => {
+        console.log('=== OTOMATIK loadReservationData ÇAĞRILIYOR ===');
+        console.log('loadReservationData fonksiyonu:', typeof loadReservationData);
+        try {
+            loadReservationData();
+            console.log('✓ loadReservationData başarıyla çağrıldı (otomatik)');
+        } catch (e) {
+            console.error('✗ loadReservationData çağrılırken hata (otomatik):', e);
+        }
+    }, 500);
+})();
+</script>
+{% endif %}
+{% else %}
+<!-- Form context'te yok, placeholder modal göster -->
+<div id="reservationModal" class="vb-modal" style="display: none;">
+    <div class="vb-modal-overlay" onclick="closeReservationModal()"></div>
+    <div class="vb-modal-content">
+        <div class="vb-modal-header">
+            <h3 class="vb-modal-title">Yeni Rezervasyon</h3>
+            <button type="button" class="vb-modal-close" onclick="closeReservationModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="vb-modal-body">
+            <p style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; display: block; margin-bottom: 20px; color: #ff9800;"></i>
+                Form yüklenemedi. Lütfen sayfayı yenileyin.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+

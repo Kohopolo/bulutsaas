@@ -1227,13 +1227,67 @@ def customer_list(request):
 @login_required
 @require_module_permission('customers', 'view')
 def customer_detail(request, pk):
-    """Müşteri detay"""
+    """Müşteri detay (Folyo)"""
     customer = get_object_or_404(Customer, pk=pk)
     
     # Tüm modüllerden rezervasyonları al
     tour_reservations = customer.tour_reservations.all().order_by('-created_at')[:10]
     refund_requests = customer.refund_requests.all().order_by('-created_at')[:10]
     invoices = customer.invoices.all().order_by('-created_at')[:10]
+    
+    # Reception rezervasyonları
+    reception_reservations = None
+    reception_payments = None
+    total_reception_amount = Decimal('0')
+    total_reception_paid = Decimal('0')
+    total_reception_remaining = Decimal('0')
+    
+    try:
+        from apps.tenant_apps.reception.models import Reservation, ReservationPayment
+        reception_reservations = Reservation.objects.filter(
+            customer=customer,
+            is_deleted=False
+        ).order_by('-check_in_date')[:50]
+        
+        reception_payments = ReservationPayment.objects.filter(
+            reservation__customer=customer,
+            is_deleted=False
+        ).order_by('-payment_date')[:50]
+        
+        if reception_reservations:
+            total_reception_amount = sum(r.total_amount for r in reception_reservations)
+            total_reception_paid = sum(r.total_paid for r in reception_reservations)
+            total_reception_remaining = total_reception_amount - total_reception_paid
+    except:
+        pass
+    
+    # Accounting faturaları (reception için)
+    accounting_invoices = None
+    try:
+        from apps.tenant_apps.accounting.models import Invoice
+        if reception_reservations:
+            reservation_ids = [r.pk for r in reception_reservations]
+            accounting_invoices = Invoice.objects.filter(
+                source_module='reception',
+                source_id__in=reservation_ids,
+                is_deleted=False
+            ).order_by('-invoice_date')[:50]
+    except:
+        pass
+    
+    # Finance kasa işlemleri (reception için)
+    finance_transactions = None
+    try:
+        from apps.tenant_apps.finance.models import CashTransaction
+        if reception_reservations:
+            reservation_ids = [r.pk for r in reception_reservations]
+            finance_transactions = CashTransaction.objects.filter(
+                source_module='reception',
+                source_id__in=reservation_ids,
+                is_deleted=False
+            ).order_by('-payment_date')[:50]
+    except:
+        pass
     
     # Sadakat geçmişi
     loyalty_history = CustomerLoyaltyHistory.objects.filter(customer=customer).order_by('-created_at')[:10]
@@ -1244,6 +1298,13 @@ def customer_detail(request, pk):
     context = {
         'customer': customer,
         'tour_reservations': tour_reservations,
+        'reception_reservations': reception_reservations,
+        'reception_payments': reception_payments,
+        'accounting_invoices': accounting_invoices,
+        'finance_transactions': finance_transactions,
+        'total_reception_amount': total_reception_amount,
+        'total_reception_paid': total_reception_paid,
+        'total_reception_remaining': total_reception_remaining,
         'refund_requests': refund_requests,
         'invoices': invoices,
         'loyalty_history': loyalty_history,
