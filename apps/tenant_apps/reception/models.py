@@ -185,6 +185,14 @@ class Reservation(TimeStampedModel, SoftDeleteModel):
         related_name='updated_reservations',
         verbose_name='Güncelleyen Kullanıcı'
     )
+    deleted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='deleted_reservations',
+        verbose_name='Silen Kullanıcı'
+    )
     
     class Meta:
         verbose_name = 'Rezervasyon'
@@ -467,6 +475,7 @@ class ReservationVoucher(TimeStampedModel):
     """
     Rezervasyon Voucher'ları
     Dinamik şablonlarla voucher oluşturma
+    Ödeme entegrasyonu ile online ödeme desteği
     """
     reservation = models.ForeignKey(
         Reservation,
@@ -488,11 +497,54 @@ class ReservationVoucher(TimeStampedModel):
     voucher_data = models.JSONField('Voucher Verileri', default=dict, blank=True,
                                    help_text='Şablon için veri')
     
+    # Token Link (Müşteri erişimi için)
+    access_token = models.CharField('Erişim Token', max_length=64, unique=True, db_index=True,
+                                   null=True, blank=True,
+                                   help_text='Müşteriye gönderilecek token link için')
+    token_expires_at = models.DateTimeField('Token Geçerlilik Tarihi', null=True, blank=True,
+                                           help_text='Token ne zaman geçersiz olacak')
+    
     # Durum
     is_sent = models.BooleanField('Gönderildi mi?', default=False)
     sent_at = models.DateTimeField('Gönderilme Tarihi', null=True, blank=True)
     sent_via = models.CharField('Gönderim Yöntemi', max_length=20, blank=True,
-                               choices=[('email', 'E-posta'), ('whatsapp', 'WhatsApp'), ('sms', 'SMS')])
+                               choices=[('email', 'E-posta'), ('whatsapp', 'WhatsApp'), ('sms', 'SMS'), ('link', 'Link')])
+    
+    # Ödeme Entegrasyonu
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Ödeme Bekliyor'),
+        ('partial', 'Kısmi Ödendi'),
+        ('paid', 'Ödendi'),
+        ('failed', 'Ödeme Başarısız'),
+        ('cancelled', 'İptal Edildi'),
+        ('refunded', 'İade Edildi'),
+    ]
+    payment_status = models.CharField('Ödeme Durumu', max_length=20, choices=PAYMENT_STATUS_CHOICES, 
+                                      default='pending', db_index=True)
+    payment_amount = models.DecimalField('Ödeme Tutarı', max_digits=12, decimal_places=2, default=0,
+                                        help_text='Voucher için ödenecek tutar (0 ise rezervasyon kalan tutarı)')
+    payment_currency = models.CharField('Para Birimi', max_length=3, default='TRY')
+    payment_method = models.CharField('Ödeme Yöntemi', max_length=50, blank=True,
+                                     help_text='Kredi kartı, havale vb.')
+    
+    # Ödeme İşlemi İlişkisi
+    payment_transaction = models.ForeignKey(
+        'payments.PaymentTransaction',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vouchers',
+        verbose_name='Ödeme İşlemi',
+        help_text='Voucher için yapılan ödeme işlemi'
+    )
+    
+    # Ödeme Bilgileri (JSON)
+    payment_info = models.JSONField('Ödeme Bilgileri', default=dict, blank=True,
+                                   help_text='Ödeme detayları, kart bilgileri vb.')
+    
+    # Ödeme Tarihleri
+    payment_date = models.DateTimeField('Ödeme Tarihi', null=True, blank=True)
+    payment_completed_at = models.DateTimeField('Ödeme Tamamlanma Tarihi', null=True, blank=True)
     
     class Meta:
         verbose_name = 'Rezervasyon Voucher'
@@ -501,10 +553,69 @@ class ReservationVoucher(TimeStampedModel):
         indexes = [
             models.Index(fields=['reservation']),
             models.Index(fields=['voucher_code']),
+            models.Index(fields=['access_token']),
+            models.Index(fields=['payment_status']),
         ]
     
     def __str__(self):
         return f"{self.reservation.reservation_code} - {self.voucher_code}"
+    
+    def get_payment_url(self):
+        """Voucher ödeme sayfası URL'i"""
+        from django.urls import reverse
+        return reverse('reception:voucher_payment', kwargs={'token': self.access_token})
+    
+    def get_public_url(self):
+        """Voucher görüntüleme sayfası URL'i (token ile)"""
+        from django.urls import reverse
+        return reverse('reception:voucher_view', kwargs={'token': self.access_token})
+    
+    def get_whatsapp_url(self, phone=None):
+        """WhatsApp gönderme URL'i (wa.me)"""
+        if not phone:
+            customer = self.reservation.customer
+            if customer and customer.phone:
+                phone = customer.phone
+            else:
+                return None
+        
+        # Telefon numarasını temizle (sadece rakamlar)
+        import re
+        phone = re.sub(r'\D', '', phone)
+        if phone.startswith('0'):
+            phone = '90' + phone[1:]
+        elif not phone.startswith('90'):
+            phone = '90' + phone
+        
+        message = f"Rezervasyon Voucher'ınız: {self.get_public_url()}"
+        return f"https://wa.me/{phone}?text={message}"
+    
+    def get_email_subject(self):
+        """Email konu başlığı"""
+        return f"Rezervasyon Voucher - {self.reservation.reservation_code}"
+    
+    def get_email_body(self):
+        """Email içeriği"""
+        return f"""
+        Merhaba,
+        
+        Rezervasyon voucher'ınız hazır!
+        
+        Rezervasyon Kodu: {self.reservation.reservation_code}
+        Voucher Kodu: {self.voucher_code}
+        
+        Voucher'ınızı görüntülemek için: {self.get_public_url()}
+        
+        Ödeme yapmak için: {self.get_payment_url()}
+        
+        İyi günler dileriz.
+        """
+    
+    def calculate_payment_amount(self):
+        """Ödeme tutarını hesapla (rezervasyon kalan tutarı)"""
+        if self.payment_amount and self.payment_amount > 0:
+            return self.payment_amount
+        return self.reservation.get_remaining_amount()
 
 
 # ==================== VOUCHER ŞABLONLARI ====================

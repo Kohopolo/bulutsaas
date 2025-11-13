@@ -36,7 +36,13 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Kat</label>
-                    <p class="text-gray-900">{{ room_number.floor.name|default:room_number.floor.floor_number|default:"-" }}</p>
+                    <p class="text-gray-900">
+                        {% if room_number.floor %}
+                            {{ room_number.floor.name|default:room_number.floor.floor_number|default:"-" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Durum</label>

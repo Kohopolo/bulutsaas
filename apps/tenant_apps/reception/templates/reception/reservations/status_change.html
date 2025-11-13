@@ -1,0 +1,81 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Rezervasyon Durum Değiştirme - {{ reservation.reservation_code }}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-exchange-alt"></i> Rezervasyon Durum Değiştirme: {{ reservation.reservation_code }}
+            <div style="float: right;">
+                <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Rezervasyon Özeti -->
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-info-circle"></i> Rezervasyon Bilgileri
+                </div>
+                <div class="groupbox-body">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <strong>Müşteri:</strong> {{ reservation.customer.get_full_name }}
+                        </div>
+                        <div>
+                            <strong>Mevcut Durum:</strong> 
+                            <span class="badge badge-{{ reservation.status }}">
+                                {{ reservation.get_status_display }}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>Check-in:</strong> {{ reservation.check_in_date|date:"d.m.Y" }}
+                        </div>
+                        <div>
+                            <strong>Check-out:</strong> {{ reservation.check_out_date|date:"d.m.Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Durum Değiştirme Formu -->
+            <form method="post" class="form-groupbox">
+                {% csrf_token %}
+                <div class="groupbox-header">
+                    <i class="fas fa-edit"></i> Yeni Durum
+                </div>
+                <div class="groupbox-body">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Yeni Durum <span class="text-red-500">*</span></label>
+                            <select name="new_status" required class="form-control">
+                                <option value="">Seçiniz...</option>
+                                {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if reservation.status == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Durum Değişiklik Nedeni</label>
+                            <textarea name="status_reason" rows="3" class="form-control" 
+                                      placeholder="Durum değişiklik nedeni (opsiyonel)"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 15px; border-top: 1px solid #d4d4d4; display: flex; justify-content: flex-end; gap: 10px;">
+                    <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-check"></i> Durumu Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

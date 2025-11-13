@@ -9,10 +9,10 @@
         <div class="groupbox-header">
             <i class="fas fa-user-circle"></i> Müşteri Folyosu: {{ customer.get_full_name }}
             <div style="float: right;">
-                <a href="{% url 'core:customer_list' %}" class="vb-button">
+                <a href="{% url 'tenant:customer_list' %}" class="vb-button">
                     <i class="fas fa-arrow-left"></i> Geri
                 </a>
-                <a href="{% url 'core:customer_update' customer.pk %}" class="vb-button">
+                <a href="{% url 'tenant:customer_update' customer.pk %}" class="vb-button">
                     <i class="fas fa-edit"></i> Düzenle
                 </a>
             </div>

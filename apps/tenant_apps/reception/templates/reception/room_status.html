@@ -1,5 +1,6 @@
 {% extends "tenant/base.html" %}
 {% load static %}
+{% load dict_filters %}
 
 {% block title %}Oda Durumu - {{ hotel.name }}{% endblock %}
 
@@ -39,8 +40,8 @@
                         <option value="{{ room_type.id }}" {% if current_room_type == room_type.id|stringformat:"s" %}selected{% endif %}>{{ room_type.name }}</option>
                         {% endfor %}
                     </select>
-                    <button type="submit" class="vb-button secondary">Filtrele</button>
-                    <a href="{% url 'reception:room_status' %}" class="vb-button default">Temizle</a>
+                    <button type="submit" class="vb-button primary">Filtrele</button>
+                    <a href="{% url 'reception:room_status' %}" class="vb-button">Temizle</a>
                 </form>
             </div>
             
@@ -61,119 +62,166 @@
             {% endif %}
             
             <!-- Oda Listesi -->
-            {% if room_numbers %}
-            <table class="vb-datagrid">
-                <thead>
-                    <tr>
-                        <th>Oda No</th>
-                        <th>Oda Tipi</th>
-                        <th>Kat</th>
-                        <th>Blok</th>
-                        <th>Durum</th>
-                        <th>Rezervasyon</th>
-                        <th>Müşteri</th>
-                        <th>Notlar</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for room_number in room_numbers %}
-                    {% for res_id, res in room_reservations.items %}
-                        {% if res_id == room_number.id %}
-                            {% with reservation=res %}
-                        {% endif %}
-                    {% empty %}
-                        {% with reservation=None %}
-                    {% endfor %}
-                    <tr>
-                        <td style="font-weight: bold;">{{ room_number.number }}</td>
-                        <td>{{ room_number.room.name }}</td>
-                        <td>{{ room_number.floor.name|default:"-" }}</td>
-                        <td>{{ room_number.block.name|default:"-" }}</td>
-                        <td>
-                            <span style="
-                                padding: 4px 8px;
-                                border-radius: 3px;
-                                font-size: 12px;
-                                background: {% if room_number.status == 'available' %}#d4edda{% elif room_number.status == 'occupied' %}#f8d7da{% elif room_number.status == 'maintenance' %}#fff3cd{% elif room_number.status == 'cleaning' %}#cfe2ff{% else %}#e2e3e5{% endif %};
-                                color: {% if room_number.status == 'available' %}#155724{% elif room_number.status == 'occupied' %}#721c24{% elif room_number.status == 'maintenance' %}#856404{% elif room_number.status == 'cleaning' %}#004085{% else %}#383d41{% endif %};
-                            ">
-                                {{ room_number.get_status_display }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if reservation %}
-                                <a href="{% url 'reception:reservation_detail' reservation.pk %}">
-                                    {{ reservation.reservation_code }}
-                                </a>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if reservation %}
-                                {{ reservation.customer.get_full_name }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ room_number.notes|truncatewords:5|default:"-" }}</td>
-                        <td>
-                            <select onchange="updateRoomStatus({{ room_number.id }}, this.value)" 
-                                    style="padding: 4px 8px; border: 1px solid #ced4da; border-radius: 3px; font-size: 12px;">
-                                {% for value, label in status_choices %}
-                                <option value="{{ value }}" {% if room_number.status == value %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                    </tr>
-                    {% endwith %}
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p style="text-align: center; color: #999; padding: 40px;">
-                <i class="fas fa-info-circle" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
-                Filtre kriterlerine uygun oda bulunamadı.
-            </p>
-            {% endif %}
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Oda No</th>
+                                <th>Oda Tipi</th>
+                                <th>Kat</th>
+                                <th>Blok</th>
+                                <th>Durum</th>
+                                <th>Rezervasyon</th>
+                                <th>Müşteri</th>
+                                <th>Notlar</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room_number in room_numbers %}
+                            {% with reservation=room_reservations|get_item:room_number.id %}
+                            <tr>
+                                <td><strong>{{ room_number.number }}</strong></td>
+                                <td>{% if room_number.room %}{{ room_number.room.name }}{% else %}Oda Tipi Yok{% endif %}</td>
+                                <td>{% if room_number.floor %}{{ room_number.floor.name }}{% else %}-{% endif %}</td>
+                                <td>{% if room_number.block %}{{ room_number.block.name }}{% else %}-{% endif %}</td>
+                                <td>
+                                    <span class="badge badge-{{ room_number.status }}">
+                                        {{ room_number.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if reservation %}
+                                        <a href="{% url 'reception:reservation_detail' reservation.pk %}">
+                                            {{ reservation.reservation_code }}
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if reservation %}
+                                        {{ reservation.customer.get_full_name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ room_number.notes|truncatewords:5|default:"-" }}</td>
+                                <td>
+                                    <select onchange="updateRoomStatus({{ room_number.id }}, this.value)" 
+                                            class="vb-select small"
+                                            data-room-id="{{ room_number.id }}"
+                                            id="status-select-{{ room_number.id }}">
+                                        {% for value, label in status_choices %}
+                                        <option value="{{ value }}" {% if room_number.status == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
+                                    <i class="fas fa-inbox" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                                    Filtre kriterlerine uygun oda bulunamadı.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 function updateRoomStatus(roomNumberId, newStatus) {
-    if (!confirm('Oda durumunu güncellemek istediğinize emin misiniz?')) {
-        location.reload(); // Select'i eski değere döndür
+    // CSRF token'ı al
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                      document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                      getCookie('csrftoken');
+    
+    if (!csrfToken) {
+        alert('CSRF token bulunamadı. Sayfayı yenileyin.');
         return;
+    }
+    
+    // Select elementini bul (reload için)
+    const selectElement = event?.target || document.querySelector(`select[onchange*="${roomNumberId}"]`);
+    const oldValue = selectElement?.value;
+    
+    // Loading göster
+    if (selectElement) {
+        selectElement.disabled = true;
+        selectElement.style.opacity = '0.5';
     }
     
     fetch('/reception/api/room-status-update/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
         },
+        credentials: 'same-origin',
         body: JSON.stringify({
             room_number_id: roomNumberId,
             status: newStatus
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        // Response tipini kontrol et
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            return response.text().then(text => {
+                console.error('JSON olmayan response:', text);
+                throw new Error('Sunucudan JSON yanıt alınamadı. HTML yanıt alındı.');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            alert('Oda durumu başarıyla güncellendi.');
+            // Başarılı - sayfayı yenile
             location.reload();
         } else {
-            alert('Hata: ' + data.error);
-            location.reload();
+            // Hata - select'i eski değere döndür
+            if (selectElement) {
+                selectElement.value = oldValue;
+                selectElement.disabled = false;
+                selectElement.style.opacity = '1';
+            }
+            alert('Hata: ' + (data.error || 'Bilinmeyen hata'));
         }
     })
     .catch(error => {
-        console.error('Hata:', error);
-        alert('Oda durumu güncellenirken bir hata oluştu.');
-        location.reload();
+        console.error('Oda durumu güncelleme hatası:', error);
+        // Select'i eski değere döndür
+        if (selectElement) {
+            selectElement.value = oldValue;
+            selectElement.disabled = false;
+            selectElement.style.opacity = '1';
+        }
+        alert('Oda durumu güncellenirken bir hata oluştu: ' + error.message);
     });
+}
+
+// CSRF token cookie'den alma fonksiyonu
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 </script>
 {% endblock %}

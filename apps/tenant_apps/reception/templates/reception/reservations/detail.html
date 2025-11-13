@@ -9,6 +9,18 @@
         <div class="groupbox-header">
             <i class="fas fa-calendar-check"></i> Rezervasyon Detayı: {{ reservation.reservation_code }}
             <div style="float: right;">
+                {% if reservation.is_deleted %}
+                <span class="badge badge-danger" style="margin-right: 10px; padding: 8px 15px; font-size: 14px;">
+                    <i class="fas fa-archive"></i> Arşivlenmiş
+                </span>
+                <button id="restoreReservationBtn" 
+                        class="vb-button" 
+                        data-reservation-id="{{ reservation.pk }}"
+                        data-reservation-code="{{ reservation.reservation_code }}"
+                        style="background: #28a745; color: white; border-color: #28a745;">
+                    <i class="fas fa-undo"></i> Geri Al / Aktifleştir
+                </button>
+                {% else %}
                 {% if customer_folio_url %}
                 <a href="{{ customer_folio_url }}" class="vb-button primary" title="Müşteri Folyosu">
                     <i class="fas fa-user-circle"></i> Müşteri Folyosu
@@ -17,7 +29,11 @@
                 <button onclick="openReservationEditModal({{ reservation.pk }})" class="vb-button primary">
                     <i class="fas fa-edit"></i> Düzenle
                 </button>
-                <a href="{% url 'reception:reservation_list' %}" class="vb-button">
+                <button onclick="openDeleteReservationModal({{ reservation.pk }})" class="vb-button danger" style="background: #dc3545; color: white; border-color: #dc3545;">
+                    <i class="fas fa-trash"></i> Sil
+                </button>
+                {% endif %}
+                <a href="{% if reservation.is_deleted %}{% url 'reception:reservation_archived_list' %}{% else %}{% url 'reception:reservation_list' %}{% endif %}" class="vb-button">
                     <i class="fas fa-arrow-left"></i> Geri
                 </a>
             </div>
@@ -444,6 +460,9 @@
 <script>
 // Rezervasyon düzenleme modal'ını aç
 function openReservationEditModal(reservationId) {
+    // Flag'i sıfırla (yeni modal açıldığında veriler tekrar yüklensin)
+    window.loadReservationDataExecuted = false;
+    
     // Önce tüm mevcut modal'ları kapat ve DOM'dan kaldır
     const existingModals = document.querySelectorAll('#reservationModal');
     existingModals.forEach(modal => {
@@ -610,4 +629,561 @@ document.addEventListener('submit', function(e) {
 
 <!-- Rezervasyon Form JavaScript -->
 <script src="{% static 'js/reception_reservation_form.js' %}"></script>
+
+<!-- Rezervasyon Silme Modalı JavaScript -->
+<script>
+let currentDeleteReservationId = null;
+const expectedReservationCode = '{{ reservation.reservation_code }}';
+
+function openDeleteReservationModal(reservationId) {
+    currentDeleteReservationId = reservationId;
+    const modalHtml = `
+        <div id="deleteReservationModal" class="vb-modal" style="display: flex;">
+            <div class="vb-modal-overlay" onclick="closeDeleteModal()"></div>
+            <div class="vb-modal-content" style="max-width: 500px;">
+                <div class="vb-modal-header">
+                    <h3 class="vb-modal-title">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Rezervasyon Sil
+                    </h3>
+                    <button type="button" class="vb-modal-close" onclick="closeDeleteModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="vb-modal-body">
+                    <div id="deleteStep1">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 64px; color: #dc3545; margin-bottom: 20px;"></i>
+                            <h3 style="color: #dc3545; margin-bottom: 15px;">Dikkat!</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Bu rezervasyonu silmek istediğinizden <strong>emin misiniz?</strong>
+                            </p>
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 20px; text-align: left;">
+                                <strong>Rezervasyon Bilgileri:</strong><br>
+                                <strong>Kod:</strong> {{ reservation.reservation_code }}<br>
+                                <strong>Müşteri:</strong> {{ reservation.customer.first_name }} {{ reservation.customer.last_name }}<br>
+                                <strong>Oda:</strong> {{ reservation.room.name }}{% if reservation.room_number %} - {{ reservation.room_number.number }}{% endif %}<br>
+                                <strong>Tarih:</strong> {{ reservation.check_in_date|date:"d.m.Y" }} - {{ reservation.check_out_date|date:"d.m.Y" }}
+                            </div>
+                            <p style="color: #666; font-size: 14px;">
+                                <i class="fas fa-info-circle"></i> Rezervasyon silinecek ve arşive eklenecektir. Bu işlem geri alınamaz.
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="proceedToDeleteStep2()" class="vb-button danger" style="padding: 12px 30px; font-size: 16px;">
+                                <i class="fas fa-check"></i> Evet, Devam Et
+                            </button>
+                            <button onclick="closeDeleteModal()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-times"></i> İptal
+                            </button>
+                        </div>
+                    </div>
+                    <div id="deleteStep2" style="display: none;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-shield-alt" style="font-size: 64px; color: #dc3545; margin-bottom: 20px;"></i>
+                            <h3 style="color: #dc3545; margin-bottom: 15px;">Son Onay</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Silme işlemini tamamlamak için aşağıdaki bilgileri girin:
+                            </p>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; text-align: left;">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Rezervasyon Kodu:
+                                    </label>
+                                    <input type="text" id="deleteReservationCode" 
+                                           placeholder="{{ reservation.reservation_code }}" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #dc3545; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold;"
+                                           autocomplete="off">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Onay Metni (DELETE yazın):
+                                    </label>
+                                    <input type="text" id="deleteConfirmText" 
+                                           placeholder="DELETE" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #dc3545; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold; text-transform: uppercase;"
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                            <p style="color: #dc3545; font-size: 14px; font-weight: bold;">
+                                <i class="fas fa-exclamation-circle"></i> Bu işlem geri alınamaz!
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="confirmDeleteReservation()" id="confirmDeleteBtn" class="vb-button danger" style="padding: 12px 30px; font-size: 16px;" disabled>
+                                <i class="fas fa-trash"></i> Silmeyi Onayla
+                            </button>
+                            <button onclick="backToDeleteStep1()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-arrow-left"></i> Geri
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById('deleteReservationModal');
+    if (oldModal) {
+        oldModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteReservationModal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = '';
+    }
+    currentDeleteReservationId = null;
+}
+
+function proceedToDeleteStep2() {
+    document.getElementById('deleteStep1').style.display = 'none';
+    document.getElementById('deleteStep2').style.display = 'block';
+    
+    setTimeout(() => {
+        document.getElementById('deleteReservationCode').focus();
+    }, 100);
+    
+    const codeInput = document.getElementById('deleteReservationCode');
+    const confirmInput = document.getElementById('deleteConfirmText');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    
+    function checkInputs() {
+        const codeValue = codeInput.value.trim();
+        const confirmValue = confirmInput.value.trim().toUpperCase();
+        const expectedCode = '{{ reservation.reservation_code }}';
+        
+        if (codeValue === expectedCode && confirmValue === 'DELETE') {
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
+        } else {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+        }
+    }
+    
+    codeInput.addEventListener('input', checkInputs);
+    confirmInput.addEventListener('input', checkInputs);
+}
+
+function backToDeleteStep1() {
+    document.getElementById('deleteStep1').style.display = 'block';
+    document.getElementById('deleteStep2').style.display = 'none';
+    document.getElementById('deleteReservationCode').value = '';
+    document.getElementById('deleteConfirmText').value = '';
+    document.getElementById('confirmDeleteBtn').disabled = true;
+}
+
+function confirmDeleteReservation() {
+    if (!currentDeleteReservationId) {
+        alert('Rezervasyon ID bulunamadı.');
+        return;
+    }
+    
+    const codeInput = document.getElementById('deleteReservationCode');
+    const confirmInput = document.getElementById('deleteConfirmText');
+    const codeValue = codeInput.value.trim();
+    const confirmValue = confirmInput.value.trim().toUpperCase();
+    const expectedCode = '{{ reservation.reservation_code }}';
+    
+    if (codeValue !== expectedCode) {
+        alert('Rezervasyon kodu eşleşmiyor!');
+        codeInput.focus();
+        return;
+    }
+    
+    if (confirmValue !== 'DELETE') {
+        alert('Onay metni hatalı! Lütfen "DELETE" yazın.');
+        confirmInput.focus();
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '2');
+    formData.append('reservation_code', codeValue);
+    formData.append('final_confirm', confirmValue);
+    
+    fetch(`/reception/reservations/${currentDeleteReservationId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Rezervasyon başarıyla silindi ve arşivlendi.');
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'Rezervasyon silinirken bir hata oluştu.');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-trash"></i> Silmeyi Onayla';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Rezervasyon silinirken bir hata oluştu.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-trash"></i> Silmeyi Onayla';
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+        closeRestoreModal();
+    }
+});
+
+// Rezervasyon Geri Alma Modalı (Arşivlenmiş rezervasyonlar için)
+let currentRestoreReservationId = null;
+let currentRestoreReservationCode = '{{ reservation.reservation_code }}';
+
+// Modal CSS (eğer yoksa ekle)
+if (!document.getElementById('restoreModalStyles')) {
+    const style = document.createElement('style');
+    style.id = 'restoreModalStyles';
+    style.textContent = `
+        .vb-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .vb-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .vb-modal-content {
+            position: relative;
+            background: white;
+            border: 2px solid #c0d4e0;
+            border-radius: 3px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+        .vb-modal-header {
+            background: #e8f4f8;
+            border-bottom: 1px solid #c0d4e0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .vb-modal-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c5f8d;
+            margin: 0;
+        }
+        .vb-modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        .vb-modal-close:hover {
+            color: #000;
+        }
+        .vb-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function openRestoreReservationModal(reservationId) {
+    console.log('openRestoreReservationModal çağrıldı:', { reservationId });
+    currentRestoreReservationId = reservationId;
+    currentRestoreReservationCode = '{{ reservation.reservation_code }}';
+    const modalHtml = `
+        <div id="restoreReservationModal" class="vb-modal" style="display: flex;">
+            <div class="vb-modal-overlay" onclick="closeRestoreModal()"></div>
+            <div class="vb-modal-content" style="max-width: 500px;">
+                <div class="vb-modal-header">
+                    <h3 class="vb-modal-title">
+                        <i class="fas fa-undo" style="color: #28a745;"></i> Rezervasyonu Geri Al
+                    </h3>
+                    <button type="button" class="vb-modal-close" onclick="closeRestoreModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="vb-modal-body">
+                    <div id="restoreStep1">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-undo" style="font-size: 64px; color: #28a745; margin-bottom: 20px;"></i>
+                            <h3 style="color: #28a745; margin-bottom: 15px;">Rezervasyonu Geri Al</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Bu rezervasyonu <strong>aktifleştirmek</strong> istediğinizden emin misiniz?
+                            </p>
+                            <div style="background: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin-bottom: 20px; text-align: left;">
+                                <strong>Rezervasyon Bilgileri:</strong><br>
+                                <strong>Kod:</strong> {{ reservation.reservation_code }}<br>
+                                <strong>Müşteri:</strong> {{ reservation.customer.first_name }} {{ reservation.customer.last_name }}<br>
+                                <strong>Oda:</strong> {{ reservation.room.name }}{% if reservation.room_number %} - {{ reservation.room_number.number }}{% endif %}<br>
+                                <strong>Tarih:</strong> {{ reservation.check_in_date|date:"d.m.Y" }} - {{ reservation.check_out_date|date:"d.m.Y" }}
+                            </div>
+                            <p style="color: #666; font-size: 14px;">
+                                <i class="fas fa-info-circle"></i> Rezervasyon aktif hale gelecek ve normal rezervasyon listesinde görünecektir.
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="proceedToRestoreStep2()" class="vb-button" style="background: #28a745; color: white; border-color: #28a745; padding: 12px 30px; font-size: 16px;">
+                                <i class="fas fa-check"></i> Evet, Devam Et
+                            </button>
+                            <button onclick="closeRestoreModal()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-times"></i> İptal
+                            </button>
+                        </div>
+                    </div>
+                    <div id="restoreStep2" style="display: none;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-shield-alt" style="font-size: 64px; color: #28a745; margin-bottom: 20px;"></i>
+                            <h3 style="color: #28a745; margin-bottom: 15px;">Son Onay</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Geri alma işlemini tamamlamak için aşağıdaki bilgileri girin:
+                            </p>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; text-align: left;">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Rezervasyon Kodu:
+                                    </label>
+                                    <input type="text" id="restoreReservationCode" 
+                                           placeholder="{{ reservation.reservation_code }}" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #28a745; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold;"
+                                           autocomplete="off">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Onay Metni (RESTORE yazın):
+                                    </label>
+                                    <input type="text" id="restoreConfirmText" 
+                                           placeholder="RESTORE" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #28a745; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold; text-transform: uppercase;"
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="confirmRestoreReservation()" id="confirmRestoreBtn" class="vb-button" style="background: #28a745; color: white; border-color: #28a745; padding: 12px 30px; font-size: 16px;" disabled>
+                                <i class="fas fa-undo"></i> Geri Almayı Onayla
+                            </button>
+                            <button onclick="backToRestoreStep1()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-arrow-left"></i> Geri
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById('restoreReservationModal');
+    if (oldModal) {
+        oldModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+    
+    // Modal'ın görünür olduğundan emin ol
+    const modal = document.getElementById('restoreReservationModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('Modal oluşturuldu ve görünür hale getirildi');
+    } else {
+        console.error('Modal oluşturulamadı!');
+    }
+}
+
+function closeRestoreModal() {
+    const modal = document.getElementById('restoreReservationModal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = '';
+    }
+    currentRestoreReservationId = null;
+    currentRestoreReservationCode = null;
+}
+
+function proceedToRestoreStep2() {
+    document.getElementById('restoreStep1').style.display = 'none';
+    document.getElementById('restoreStep2').style.display = 'block';
+    
+    setTimeout(() => {
+        const codeInput = document.getElementById('restoreReservationCode');
+        if (codeInput) {
+            codeInput.focus();
+        }
+    }, 100);
+    
+    const codeInput = document.getElementById('restoreReservationCode');
+    const confirmInput = document.getElementById('restoreConfirmText');
+    const confirmBtn = document.getElementById('confirmRestoreBtn');
+    
+    if (!codeInput || !confirmInput || !confirmBtn) {
+        console.error('Restore modal elementleri bulunamadı');
+        return;
+    }
+    
+    function checkInputs() {
+        const codeValue = codeInput.value.trim();
+        const confirmValue = confirmInput.value.trim().toUpperCase();
+        const expectedCode = currentRestoreReservationCode || '{{ reservation.reservation_code }}';
+        
+        if (codeValue === expectedCode && confirmValue === 'RESTORE') {
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
+        } else {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+        }
+    }
+    
+    // Eski listener'ları kaldır ve yenilerini ekle
+    codeInput.removeEventListener('input', checkInputs);
+    confirmInput.removeEventListener('input', checkInputs);
+    codeInput.addEventListener('input', checkInputs);
+    confirmInput.addEventListener('input', checkInputs);
+    
+    // İlk kontrolü yap
+    checkInputs();
+}
+
+function backToRestoreStep1() {
+    document.getElementById('restoreStep1').style.display = 'block';
+    document.getElementById('restoreStep2').style.display = 'none';
+    document.getElementById('restoreReservationCode').value = '';
+    document.getElementById('restoreConfirmText').value = '';
+    document.getElementById('confirmRestoreBtn').disabled = true;
+}
+
+function confirmRestoreReservation() {
+    if (!currentRestoreReservationId) {
+        alert('Rezervasyon ID bulunamadı.');
+        console.error('currentRestoreReservationId:', currentRestoreReservationId);
+        return;
+    }
+    
+    const codeInput = document.getElementById('restoreReservationCode');
+    const confirmInput = document.getElementById('restoreConfirmText');
+    
+    if (!codeInput || !confirmInput) {
+        alert('Form elementleri bulunamadı.');
+        console.error('Form elementleri bulunamadı');
+        return;
+    }
+    
+    const codeValue = codeInput.value.trim();
+    const confirmValue = confirmInput.value.trim().toUpperCase();
+    const expectedCode = currentRestoreReservationCode || '{{ reservation.reservation_code }}';
+    
+    if (codeValue !== expectedCode) {
+        alert('Rezervasyon kodu eşleşmiyor!');
+        codeInput.focus();
+        return;
+    }
+    
+    if (confirmValue !== 'RESTORE') {
+        alert('Onay metni hatalı! Lütfen "RESTORE" yazın.');
+        confirmInput.focus();
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmRestoreBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Geri Alınıyor...';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '2');
+    formData.append('reservation_code', codeValue);
+    formData.append('final_confirm', confirmValue);
+    
+    fetch(`/reception/reservations/${currentRestoreReservationId}/restore/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Rezervasyon başarıyla geri alındı ve aktifleştirildi.');
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'Rezervasyon geri alınırken bir hata oluştu.');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-undo"></i> Geri Almayı Onayla';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Rezervasyon geri alınırken bir hata oluştu.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-undo"></i> Geri Almayı Onayla';
+    });
+}
+
+// Geri Al butonu için event listener
+document.addEventListener('DOMContentLoaded', function() {
+    const restoreBtn = document.getElementById('restoreReservationBtn');
+    if (restoreBtn) {
+        restoreBtn.addEventListener('click', function() {
+            const reservationId = parseInt(this.getAttribute('data-reservation-id'));
+            const reservationCode = this.getAttribute('data-reservation-code');
+            
+            console.log('Geri Al butonu tıklandı (detay sayfası):', {
+                reservationId,
+                reservationCode
+            });
+            
+            openRestoreReservationModal(reservationId);
+        });
+    } else {
+        console.log('Geri Al butonu bulunamadı (muhtemelen aktif rezervasyon)');
+    }
+});
+</script>
 {% endblock %}

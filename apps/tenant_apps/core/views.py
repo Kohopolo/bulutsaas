@@ -13,6 +13,7 @@ from django.db import connection
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 import json
+from decimal import Decimal
 from .models import TenantUser, UserType, Role, Permission, UserRole, RolePermission, UserPermission, Customer, CustomerLoyaltyHistory, CustomerNote
 from .forms import (
     TenantUserForm, UserTypeForm, RoleForm, PermissionForm,

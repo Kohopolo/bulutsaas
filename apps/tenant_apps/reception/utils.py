@@ -87,6 +87,12 @@ def generate_voucher_code(reservation_code=None):
     return f'{prefix}{new_number:04d}'
 
 
+def generate_voucher_token():
+    """Voucher erişim token'ı oluştur"""
+    import secrets
+    return secrets.token_urlsafe(32)  # 32 byte = 43 karakter URL-safe token
+
+
 def save_guest_information(reservation, post_data):
     """Rezervasyon misafir bilgilerini kaydet"""
     from .models import ReservationGuest
@@ -184,12 +190,15 @@ def generate_reservation_voucher(reservation, template=None):
         tuple: (voucher_html, voucher_data)
     """
     from .models import ReservationVoucher, VoucherTemplate
+    import logging
+    logger = logging.getLogger(__name__)
     
     # Şablon seç
     if not template:
-        template = VoucherTemplate.objects.filter(is_default=True, is_active=True).first()
+        template = VoucherTemplate.objects.filter(is_default=True, is_active=True, is_deleted=False).first()
         if not template:
-            template = VoucherTemplate.objects.filter(is_active=True).first()
+            template = VoucherTemplate.objects.filter(is_active=True, is_deleted=False).first()
+        logger.info(f'Şablon seçildi: {template.name if template else "Varsayılan"}')
     
     # Voucher verilerini hazırla
     customer = reservation.customer
@@ -224,46 +233,68 @@ def generate_reservation_voucher(reservation, template=None):
     }
     
     # Misafir bilgilerini ekle
-    guests = reservation.guests.all().order_by('guest_type', 'guest_order')
-    voucher_data['guests'] = [
-        {
-            'name': f"{g.first_name} {g.last_name}",
-            'type': g.get_guest_type_display(),
-            'age': g.age if g.age else '',
-            'gender': g.get_gender_display() if g.gender else '',
-        }
-        for g in guests
-    ]
+    try:
+        guests = reservation.guests.all().order_by('guest_type', 'guest_order')
+        voucher_data['guests'] = [
+            {
+                'name': f"{g.first_name} {g.last_name}",
+                'type': g.get_guest_type_display(),
+                'age': g.age if g.age else '',
+                'gender': g.get_gender_display() if g.gender else '',
+            }
+            for g in guests
+        ]
+    except Exception as e:
+        logger.warning(f'Misafir bilgileri yüklenirken hata: {str(e)}')
+        voucher_data['guests'] = []
     
     # Şablon varsa render et
-    if template:
-        voucher_html = template.template_html
-        
-        # Template değişkenlerini değiştir
-        for key, value in voucher_data.items():
-            if isinstance(value, list):
-                # Liste için özel işleme
-                if key == 'guests':
-                    guests_html = ''
-                    for guest in value:
-                        guests_html += f"<tr><td>{guest['name']}</td><td>{guest['type']}</td><td>{guest.get('age', '')}</td></tr>"
-                    voucher_html = voucher_html.replace('{{guests}}', guests_html)
-                    voucher_html = voucher_html.replace('{{guests_list}}', guests_html)
-            else:
-                # Normal değişkenler
-                placeholder = f'{{{{{key}}}}}'
-                voucher_html = voucher_html.replace(placeholder, str(value))
-        
-        # CSS ekle
-        if template.template_css:
-            voucher_html = f'<style>{template.template_css}</style>\n{voucher_html}'
-    else:
-        # Varsayılan voucher şablonu
-        context = {
-            'reservation': reservation,
-            'voucher_data': voucher_data,
-        }
-        voucher_html = render_to_string('reception/vouchers/default.html', context)
+    try:
+        if template:
+            if not template.template_html:
+                raise ValueError(f'Voucher şablonu ({template.name}) HTML içeriği boş.')
+            
+            voucher_html = template.template_html
+            
+            # Template değişkenlerini değiştir
+            for key, value in voucher_data.items():
+                if isinstance(value, list):
+                    # Liste için özel işleme
+                    if key == 'guests':
+                        guests_html = ''
+                        for guest in value:
+                            guests_html += f"<tr><td>{guest['name']}</td><td>{guest['type']}</td><td>{guest.get('age', '')}</td></tr>"
+                        voucher_html = voucher_html.replace('{{guests}}', guests_html)
+                        voucher_html = voucher_html.replace('{{guests_list}}', guests_html)
+                else:
+                    # Normal değişkenler
+                    placeholder = f'{{{{{key}}}}}'
+                    voucher_html = voucher_html.replace(placeholder, str(value or ''))
+            
+            # CSS ekle
+            if template.template_css:
+                voucher_html = f'<style>{template.template_css}</style>\n{voucher_html}'
+        else:
+            # Varsayılan voucher şablonu
+            context = {
+                'reservation': reservation,
+                'voucher_data': voucher_data,
+            }
+            voucher_html = render_to_string('reception/vouchers/default.html', context)
+    except Exception as e:
+        logger.error(f'Voucher HTML oluşturulurken hata: {str(e)}', exc_info=True)
+        # Hata durumunda basit bir HTML döndür
+        voucher_html = f"""
+        <html>
+        <head><title>Voucher - {reservation.reservation_code}</title></head>
+        <body>
+            <h1>Rezervasyon Voucher</h1>
+            <p>Rezervasyon Kodu: {reservation.reservation_code}</p>
+            <p>Müşteri: {voucher_data.get('customer_name', 'N/A')}</p>
+            <p>Hata: Voucher şablonu render edilemedi. {str(e)}</p>
+        </body>
+        </html>
+        """
     
     return voucher_html, voucher_data
 
@@ -281,22 +312,46 @@ def create_reservation_voucher(reservation, template=None, save=True):
         ReservationVoucher objesi veya HTML string
     """
     from .models import ReservationVoucher
+    import logging
+    logger = logging.getLogger(__name__)
     
-    # Voucher HTML ve verilerini oluştur
-    voucher_html, voucher_data = generate_reservation_voucher(reservation, template)
-    
-    if not save:
-        return voucher_html
-    
-    # Voucher kaydı oluştur
-    voucher = ReservationVoucher.objects.create(
-        reservation=reservation,
-        voucher_template=template,
-        voucher_code=generate_voucher_code(reservation.reservation_code),
-        voucher_data=voucher_data,
-    )
-    
-    return voucher
+    try:
+        # Voucher HTML ve verilerini oluştur
+        logger.info(f'Voucher HTML ve verileri oluşturuluyor - Rezervasyon: {reservation.reservation_code}')
+        voucher_html, voucher_data = generate_reservation_voucher(reservation, template)
+        
+        if not save:
+            return voucher_html
+        
+        # Voucher kodu oluştur
+        voucher_code = generate_voucher_code(reservation.reservation_code)
+        logger.info(f'Voucher kodu oluşturuldu: {voucher_code}')
+        
+        # Token oluştur
+        access_token = generate_voucher_token()
+        logger.info(f'Voucher token oluşturuldu: {access_token[:10]}...')
+        
+        # Ödeme tutarını hesapla (rezervasyon kalan tutarı)
+        payment_amount = reservation.get_remaining_amount()
+        
+        # Voucher kaydı oluştur
+        voucher = ReservationVoucher.objects.create(
+            reservation=reservation,
+            voucher_template=template,
+            voucher_code=voucher_code,
+            voucher_data=voucher_data,
+            access_token=access_token,
+            payment_amount=payment_amount,
+            payment_currency=reservation.currency,
+            payment_status='pending',
+        )
+        
+        logger.info(f'Voucher kaydı oluşturuldu - ID: {voucher.pk}, Kod: {voucher.voucher_code}, Token: {access_token[:10]}...')
+        return voucher
+        
+    except Exception as e:
+        logger.error(f'create_reservation_voucher hatası: {str(e)}', exc_info=True)
+        raise
 
 
 def calculate_room_price_with_utility(

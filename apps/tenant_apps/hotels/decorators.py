@@ -9,6 +9,26 @@ from .models import HotelUserPermission
 from apps.tenant_apps.core.models import TenantUser
 
 
+PERMISSION_LEVELS = ['view', 'manage', 'admin']
+
+
+PERMISSION_ALIASES = {
+    'view': 'view',
+    'list': 'view',
+    'detail': 'view',
+    'add': 'manage',
+    'create': 'manage',
+    'edit': 'manage',
+    'update': 'manage',
+    'delete': 'manage',
+    'checkin': 'manage',
+    'checkout': 'manage',
+    'change': 'manage',
+    'manage': 'manage',
+    'admin': 'admin',
+}
+
+
 def require_hotel_permission(permission_level='view'):
     """
     Otel bazlı yetki kontrolü decorator'ı
@@ -22,6 +42,10 @@ def require_hotel_permission(permission_level='view'):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.is_authenticated:
+                # AJAX isteği ise JSON döndür
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    from django.http import JsonResponse
+                    return JsonResponse({'error': 'Giriş yapmanız gerekiyor.'}, status=401)
                 return redirect('tenant:login')
             
             # Aktif otel yoksa
@@ -35,6 +59,17 @@ def require_hotel_permission(permission_level='view'):
             
             hotel = request.active_hotel
             
+            # Permission level'ı normalize et (alias mapping)
+            normalized_level = PERMISSION_ALIASES.get(permission_level, permission_level)
+
+            if normalized_level not in PERMISSION_LEVELS:
+                # AJAX isteği ise JSON döndür
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    from django.http import JsonResponse
+                    return JsonResponse({'error': 'Tanımlanmamış bir yetki kontrolü istendi.'}, status=400)
+                messages.error(request, 'Tanımlanmamış bir yetki kontrolü istendi.')
+                return redirect('tenant:dashboard')
+
             try:
                 tenant_user = TenantUser.objects.get(user=request.user, is_active=True)
                 
@@ -52,6 +87,7 @@ def require_hotel_permission(permission_level='view'):
                     logger = logging.getLogger(__name__)
                     logger.error(f'Admin permission kontrolü hatası: {str(e)}', exc_info=True)
                     # Hata durumunda devam et (normal yetki kontrolüne geç)
+                    pass
                 
                 # Otel yetkisini kontrol et
                 try:
@@ -87,7 +123,7 @@ def require_hotel_permission(permission_level='view'):
                     
                     if has_view_permission:
                         # View seviyesinde izin ver
-                        if permission_level == 'view':
+                        if normalized_level == 'view':
                             return view_func(request, *args, **kwargs)
                         else:
                             # AJAX isteği ise JSON döndür
@@ -105,28 +141,6 @@ def require_hotel_permission(permission_level='view'):
                         return redirect('hotels:select_hotel')
                 
                 # Yetki seviyesi kontrolü
-                permission_levels = ['view', 'manage', 'admin']
-                
-                # Permission level mapping (reception modülü için)
-                permission_mapping = {
-                    'view': 'view',
-                    'add': 'manage',
-                    'edit': 'manage',
-                    'delete': 'admin',
-                    'checkin': 'manage',
-                    'checkout': 'manage',
-                    'change': 'manage',
-                }
-                
-                # Permission level'ı map et
-                mapped_permission = permission_mapping.get(permission_level, permission_level)
-                
-                # Eğer mapped permission permission_levels'da yoksa, view olarak kabul et
-                if mapped_permission not in permission_levels:
-                    mapped_permission = 'view'
-                
-                # hotel_permission burada None olamaz (yukarıda kontrol edildi)
-                # Ama permission_level None olabilir, kontrol edelim
                 try:
                     permission_level_value = getattr(hotel_permission, 'permission_level', None)
                 except AttributeError:
@@ -134,7 +148,7 @@ def require_hotel_permission(permission_level='view'):
                 
                 if not permission_level_value:
                     # Permission level yoksa, view seviyesinde izin ver
-                    if permission_level == 'view':
+                    if normalized_level == 'view':
                         return view_func(request, *args, **kwargs)
                     else:
                         # AJAX isteği ise JSON döndür
@@ -145,8 +159,8 @@ def require_hotel_permission(permission_level='view'):
                         return redirect('hotels:select_hotel')
                 
                 try:
-                    user_level = permission_levels.index(permission_level_value)
-                    required_level = permission_levels.index(mapped_permission)
+                    user_level = PERMISSION_LEVELS.index(permission_level_value)
+                    required_level = PERMISSION_LEVELS.index(normalized_level)
                     
                     if user_level >= required_level:
                         return view_func(request, *args, **kwargs)
@@ -166,7 +180,7 @@ def require_hotel_permission(permission_level='view'):
                     except:
                         perm_level = None
                     logger.warning(f'Geçersiz permission level: {perm_level}, Hata: {str(e)}')
-                    if permission_level == 'view':
+                    if normalized_level == 'view':
                         return view_func(request, *args, **kwargs)
                     else:
                         # AJAX isteği ise JSON döndür
@@ -196,4 +210,3 @@ def require_hotel_permission(permission_level='view'):
         
         return _wrapped_view
     return decorator
-

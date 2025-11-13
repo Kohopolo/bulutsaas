@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ödeme - {{ voucher.voucher_code }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+        .header h1 {
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .amount-box {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .amount-box .amount {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #218838;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ödeme Yap</h1>
+            <p>Voucher: <strong>{{ voucher.voucher_code }}</strong></p>
+            <p>Rezervasyon: <strong>{{ reservation.reservation_code }}</strong></p>
+        </div>
+        
+        <div class="amount-box">
+            <div>Ödenecek Tutar</div>
+            <div class="amount">{{ payment_amount|floatformat:2 }} {{ voucher.payment_currency }}</div>
+        </div>
+        
+        <form method="POST" id="paymentForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Ödeme Gateway'i</label>
+                <select name="gateway" id="gateway" required>
+                    <option value="">Seçiniz...</option>
+                    {% for gateway in active_gateways %}
+                    <option value="{{ gateway.code }}">{{ gateway.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Ödeme Yöntemi</label>
+                <select name="payment_method" id="payment_method" required>
+                    <option value="credit_card">Kredi Kartı</option>
+                    <option value="debit_card">Banka Kartı</option>
+                </select>
+            </div>
+            
+            <div class="info">
+                <strong>Bilgi:</strong> Ödeme işlemi 3D Secure ile güvenli bir şekilde yapılacaktır.
+            </div>
+            
+            <button type="submit" class="btn" id="submitBtn">
+                Ödemeye Devam Et
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{% url 'reception:voucher_view' voucher.access_token %}" style="color: #007bff; text-decoration: none;">
+                ← Voucher'a Dön
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'İşleniyor...';
+        });
+    </script>
+</body>
+</html>
+

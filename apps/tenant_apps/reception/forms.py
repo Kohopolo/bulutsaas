@@ -260,6 +260,12 @@ class ReservationGuestForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # nationality alanını opsiyonel yap (default değer varsa)
+        self.fields['nationality'].required = False
+        self.fields['nationality'].initial = 'Türkiye'  # Varsayılan değer
 
 
 # Formset Factory
@@ -321,18 +327,28 @@ class VoucherTemplateForm(forms.ModelForm):
             'is_active', 'is_default'
         ]
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'code': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 3px; font-size: 13px;'
+            }),
+            'code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'style': 'width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 3px; font-size: 13px;'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'style': 'width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 3px; font-size: 13px; resize: vertical;'
+            }),
             'template_html': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 20,
-                'style': 'font-family: monospace;'
+                'style': 'width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 3px; font-size: 13px; font-family: monospace; resize: vertical;'
             }),
             'template_css': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 10,
-                'style': 'font-family: monospace;'
+                'style': 'width: 100%; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 3px; font-size: 13px; font-family: monospace; resize: vertical;'
             }),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_default': forms.CheckboxInput(attrs={'class': 'form-check-input'}),

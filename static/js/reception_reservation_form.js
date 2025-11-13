@@ -6,6 +6,9 @@
 // Modal Açma/Kapama
 function openReservationModal(reservationId = null) {
     console.log('openReservationModal çağrıldı, reservationId:', reservationId);
+    // Flag'i sıfırla (yeni modal açıldığında veriler tekrar yüklensin)
+    window.loadReservationDataExecuted = false;
+    
     // Önce düzenleme modal container'ını temizle
     const editContainer = document.getElementById('reservationEditModalContainer');
     if (editContainer) {
@@ -57,6 +60,9 @@ function openReservationModal(reservationId = null) {
 }
 
 function closeReservationModal() {
+    // Flag'i sıfırla (modal kapatıldığında)
+    window.loadReservationDataExecuted = false;
+    
     // Tüm modal'ları kapat
     const modals = document.querySelectorAll('#reservationModal');
     modals.forEach(modal => {

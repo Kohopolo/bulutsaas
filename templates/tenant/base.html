@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Kiracı Üye Paneli{% endblock %}</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -200,6 +204,14 @@
                         <a href="{% url 'reception:room_status' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
                             <i class="fas fa-list w-4"></i>
                             <span class="ml-3">Oda Durumu</span>
+                        </a>
+                        <a href="{% url 'reception:room_status_dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-chart-line w-4"></i>
+                            <span class="ml-3">Oda Durum Panosu</span>
+                        </a>
+                        <a href="{% url 'reception:room_calendar' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-calendar-alt w-4"></i>
+                            <span class="ml-3">Takvim Görünümü</span>
                         </a>
                         <a href="{% url 'reception:voucher_template_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
                             <i class="fas fa-file-invoice w-4"></i>
