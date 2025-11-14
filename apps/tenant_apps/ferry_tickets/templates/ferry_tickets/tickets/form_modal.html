@@ -1,0 +1,867 @@
+{% load static %}
+<!-- Feribot Bileti Ekleme/Düzenleme Modal Form İçeriği -->
+{% if form %}
+<form id="ticketForm" method="post" action="{% if ticket %}{% url 'ferry_tickets:ticket_update' ticket.pk %}{% else %}{% url 'ferry_tickets:ticket_create' %}{% endif %}">
+    {% csrf_token %}
+    
+    <div style="padding: 20px;">
+                <div class="ticket-form-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 15px;">
+                    
+                    <!-- GRID 1: Sefer Seçimi -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-calendar-alt"></i> Sefer Seçimi
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Sefer <span class="text-red-500">*</span></label>
+                                {{ form.schedule }}
+                                {{ form.schedule.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Rota</label>
+                                <input type="text" id="route_display" class="form-control" readonly value="-">
+                            </div>
+                            <div class="form-group">
+                                <label>Kalkış</label>
+                                <input type="text" id="departure_display" class="form-control" readonly value="-">
+                            </div>
+                            <div class="form-group">
+                                <label>Varış</label>
+                                <input type="text" id="arrival_display" class="form-control" readonly value="-">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 2: Yolcu Bilgileri -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-users"></i> Yolcu Bilgileri
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Yetişkin Sayısı <span class="text-red-500">*</span></label>
+                                {{ form.adult_count }}
+                                {{ form.adult_count.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Çocuk Sayısı</label>
+                                {{ form.child_count }}
+                                {{ form.child_count.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Bebek Sayısı</label>
+                                {{ form.infant_count }}
+                                {{ form.infant_count.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Toplam Yolcu</label>
+                                <input type="text" id="total_passengers_display" class="form-control" readonly value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 3: Araç Bilgileri -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-car"></i> Araç Bilgileri
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Araç Tipi</label>
+                                {{ form.vehicle_type }}
+                            </div>
+                            <div class="form-group">
+                                <label>Araç Plakası</label>
+                                {{ form.vehicle_plate }}
+                            </div>
+                            <div class="form-group">
+                                <label>Araç Markası</label>
+                                {{ form.vehicle_brand }}
+                            </div>
+                            <div class="form-group">
+                                <label>Araç Modeli</label>
+                                {{ form.vehicle_model }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 4: Müşteri Bilgileri -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-user"></i> Müşteri Bilgileri
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group" style="grid-column: span 4;">
+                                <label>Müşteri Ara (TC No, Email, Telefon)</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="text" id="customer_search" class="form-control" placeholder="TC No, Email veya Telefon ile ara...">
+                                    <button type="button" id="searchCustomerBtn" class="vb-button primary">
+                                        <i class="fas fa-search"></i> Ara
+                                    </button>
+                                </div>
+                                <div id="customer_search_results" style="margin-top: 10px;"></div>
+                            </div>
+                            {{ form.customer }}
+                            <div class="form-group">
+                                <label>Ad <span class="text-red-500">*</span></label>
+                                <input type="text" id="customer_first_name" class="form-control" name="customer_first_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Soyad <span class="text-red-500">*</span></label>
+                                <input type="text" id="customer_last_name" class="form-control" name="customer_last_name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Telefon <span class="text-red-500">*</span></label>
+                                <input type="text" id="customer_phone" class="form-control" name="customer_phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label>E-posta</label>
+                                <input type="email" id="customer_email" class="form-control" name="customer_email">
+                            </div>
+                            <div class="form-group">
+                                <label>Adres</label>
+                                <textarea id="customer_address" class="form-control" name="customer_address" rows="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>TC Kimlik No</label>
+                                <input type="text" id="customer_tc_no" class="form-control" name="customer_tc_no" maxlength="11">
+                            </div>
+                            <div class="form-group">
+                                <label>Vatandaşlık</label>
+                                <input type="text" id="customer_nationality" class="form-control" name="customer_nationality" value="Türkiye">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 5: Yolcu Detayları (Formset) -->
+                    <div class="form-groupbox" style="grid-column: span 3;" id="guests_section">
+                        <div class="groupbox-header">
+                            <i class="fas fa-id-card"></i> Yolcu Detayları
+                        </div>
+                        <div class="groupbox-body" id="guests_container">
+                            {% if ticket and guest_formset %}
+                            {{ guest_formset.management_form }}
+                            {% for form in guest_formset %}
+                            <div class="guest-form-item" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 3px;">
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                                    <div class="form-group">
+                                        <label>Bilet Tipi</label>
+                                        {{ form.ticket_type }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Ad <span class="text-red-500">*</span></label>
+                                        {{ form.first_name }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Soyad <span class="text-red-500">*</span></label>
+                                        {{ form.last_name }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Cinsiyet</label>
+                                        {{ form.gender }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Doğum Tarihi</label>
+                                        {{ form.birth_date }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Yaş</label>
+                                        {{ form.age }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>TC Kimlik No</label>
+                                        {{ form.tc_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Pasaport No</label>
+                                        {{ form.passport_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Pasaport Seri No</label>
+                                        {{ form.passport_serial_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Kimlik Seri No</label>
+                                        {{ form.id_serial_no }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Uyruk</label>
+                                        {{ form.nationality }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Telefon</label>
+                                        {{ form.phone }}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>E-posta</label>
+                                        {{ form.email }}
+                                    </div>
+                                    {% if form.DELETE %}
+                                    <div class="form-group">
+                                        <label>
+                                            {{ form.DELETE }} Sil
+                                        </label>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p style="color: #999; font-size: 12px; padding: 10px;">Yolcu bilgileri sefer seçildikten sonra otomatik oluşturulacak.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 6: Fiyatlandırma -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-lira-sign"></i> Fiyatlandırma
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Yetişkin Birim Fiyatı</label>
+                                {{ form.adult_unit_price }}
+                            </div>
+                            <div class="form-group">
+                                <label>Çocuk Birim Fiyatı</label>
+                                {{ form.child_unit_price }}
+                            </div>
+                            <div class="form-group">
+                                <label>Bebek Birim Fiyatı</label>
+                                {{ form.infant_unit_price }}
+                            </div>
+                            <div class="form-group">
+                                <label>Araç Fiyatı</label>
+                                {{ form.vehicle_price }}
+                            </div>
+                            <div class="form-group">
+                                <label>İndirim Tipi</label>
+                                {{ form.discount_type }}
+                            </div>
+                            <div class="form-group">
+                                <label>İndirim Yüzdesi (%)</label>
+                                {{ form.discount_percentage }}
+                            </div>
+                            <div class="form-group">
+                                <label>İndirim Tutarı</label>
+                                {{ form.discount_amount }}
+                            </div>
+                            <div class="form-group">
+                                <label>Vergi Tutarı</label>
+                                {{ form.tax_amount }}
+                            </div>
+                            <div class="form-group">
+                                <label>Para Birimi</label>
+                                {{ form.currency }}
+                            </div>
+                            <div class="form-group">
+                                <label>Toplam Tutar</label>
+                                <input type="text" id="total_amount_display" class="form-control" readonly value="0.00" style="font-weight: bold; font-size: 16px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 7: Rezervasyon Bilgileri -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-info-circle"></i> Rezervasyon Bilgileri
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Durum <span class="text-red-500">*</span></label>
+                                {{ form.status }}
+                                {{ form.status.errors }}
+                            </div>
+                            <div class="form-group">
+                                <label>Kaynak</label>
+                                {{ form.source }}
+                            </div>
+                            <div class="form-group">
+                                <label>Rezervasyon Acentesi</label>
+                                {{ form.reservation_agent }}
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    {{ form.is_comp }}
+                                    {{ form.is_comp.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 8: Ödeme Bilgileri -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-money-bill-wave"></i> Ödeme Bilgileri
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                            <div class="form-group">
+                                <label>Ödeme Yöntemi</label>
+                                {{ form.payment_method }}
+                            </div>
+                            <div class="form-group">
+                                <label>Ön Ödeme</label>
+                                {{ form.advance_payment }}
+                            </div>
+                            <div class="form-group">
+                                <label>Kalan Tutar</label>
+                                <input type="text" id="remaining_amount_display" class="form-control" readonly value="0.00" style="font-weight: bold;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GRID 9: Notlar -->
+                    <div class="form-groupbox" style="grid-column: span 3;">
+                        <div class="groupbox-header">
+                            <i class="fas fa-sticky-note"></i> Notlar
+                        </div>
+                        <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                            <div class="form-group" style="grid-column: span 1;">
+                                <label>Özel İstekler</label>
+                                {{ form.special_requests }}
+                            </div>
+                            <div class="form-group" style="grid-column: span 1;">
+                                <label>İç Notlar</label>
+                                {{ form.internal_notes }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+    </div>
+    
+    <div class="vb-modal-footer" style="padding: 15px 20px; border-top: 1px solid #e0e0e0; background-color: #f8f9fa; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="vb-button" onclick="closeTicketModal()">İptal</button>
+        <button type="submit" class="vb-button primary">
+            <i class="fas fa-save"></i> Kaydet
+        </button>
+    </div>
+</form>
+
+<!-- Form CSS -->
+<style>
+
+.form-groupbox {
+    background: #f8f9fa;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    padding: 0;
+}
+
+.groupbox-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c5f8d;
+}
+
+.groupbox-body {
+    padding: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.form-control {
+    padding: 6px 10px;
+    border: 1px solid #6c757d;
+    border-radius: 3px;
+    font-size: 13px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 32px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #0078d4;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.vb-button {
+    padding: 6px 12px;
+    border: 1px solid #c0d4e0;
+    border-radius: 3px;
+    background: #e8f4f8;
+    color: #2c5f8d;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.vb-button.primary {
+    background: #0078d4;
+    color: white;
+    border-color: #0063b1;
+}
+
+.vb-button:hover {
+    background: #d4e8f0;
+}
+
+.vb-button.primary:hover {
+    background: #0063b1;
+}
+</style>
+
+<!-- JavaScript -->
+<script>
+// Form yüklendikten sonra çalışacak init fonksiyonu
+function initTicketForm() {
+    console.log('Ticket form init başlatılıyor...');
+    
+    // Müşteri arama - Reception modülü gibi otomatik doldurma
+    let customerSearchTimeout;
+    const customerSearchInput = document.getElementById('customer_search');
+    if (customerSearchInput) {
+        customerSearchInput.addEventListener('input', function() {
+            const searchQuery = this.value.trim();
+            
+            // Timeout ile debounce
+            clearTimeout(customerSearchTimeout);
+            
+            if (searchQuery.length < 2) {
+                const resultsDiv = document.getElementById('customer_search_results');
+                if (resultsDiv) resultsDiv.innerHTML = '';
+                return;
+            }
+            
+            customerSearchTimeout = setTimeout(function() {
+                searchCustomer(searchQuery);
+            }, 300);
+        });
+    }
+
+    const searchCustomerBtn = document.getElementById('searchCustomerBtn');
+    if (searchCustomerBtn) {
+        searchCustomerBtn.addEventListener('click', function() {
+            const searchQuery = document.getElementById('customer_search')?.value.trim();
+            if (!searchQuery || searchQuery.length < 2) {
+                alert('Lütfen en az 2 karakter girin.');
+                return;
+            }
+            searchCustomer(searchQuery);
+        });
+    }
+}
+
+// Müşteri arama fonksiyonu (global)
+function searchCustomer(searchQuery) {
+    fetch(`{% url 'ferry_tickets:api_search_customer' %}?q=${encodeURIComponent(searchQuery)}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultsDiv = document.getElementById('customer_search_results');
+        
+        // Eğer tam eşleşme bulunduysa otomatik doldur
+        if (data.customer) {
+            selectCustomer(
+                data.customer.id,
+                data.customer.first_name,
+                data.customer.last_name,
+                data.customer.phone,
+                data.customer.email,
+                data.customer.tc_no,
+                data.customer.address,
+                data.customer.nationality
+            );
+            resultsDiv.innerHTML = '<p style="color: green; padding: 10px;"><i class="fas fa-check-circle"></i> Müşteri bulundu ve otomatik dolduruldu.</p>';
+            return;
+        }
+        
+        // Benzer müşterileri listele
+        if (data.results && data.results.length > 0) {
+            let html = '<div style="border: 1px solid #ddd; border-radius: 3px; padding: 10px; background: white; max-height: 200px; overflow-y: auto;">';
+            data.results.forEach(customer => {
+                const displayText = customer.text || `${customer.first_name} ${customer.last_name} (${customer.phone || customer.email || customer.tc_no || ''})`;
+                html += `<div style="padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s;" 
+                    onmouseover="this.style.background='#f0f0f0'" 
+                    onmouseout="this.style.background='white'"
+                    onclick="selectCustomer(${customer.id}, '${(customer.first_name || '').replace(/'/g, "\\'")}', '${(customer.last_name || '').replace(/'/g, "\\'")}', '${(customer.phone || '').replace(/'/g, "\\'")}', '${(customer.email || '').replace(/'/g, "\\'")}', '${(customer.tc_no || '').replace(/'/g, "\\'")}', '${(customer.address || '').replace(/'/g, "\\'")}', '${(customer.nationality || 'Türkiye').replace(/'/g, "\\'")}')">
+                    <strong>${displayText}</strong>
+                </div>`;
+            });
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = '<p style="color: #999; padding: 10px;">Müşteri bulunamadı.</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Müşteri arama hatası:', error);
+        document.getElementById('customer_search_results').innerHTML = '<p style="color: red; padding: 10px;">Arama sırasında bir hata oluştu.</p>';
+    });
+}
+
+// Müşteri seçme fonksiyonu (global)
+function selectCustomer(id, firstName, lastName, phone, email, tcNo, address, nationality) {
+    const customerInput = document.querySelector('input[name="customer"]');
+    if (customerInput) {
+        customerInput.value = id;
+    }
+    
+    if (document.getElementById('customer_first_name')) {
+        document.getElementById('customer_first_name').value = firstName || '';
+    }
+    if (document.getElementById('customer_last_name')) {
+        document.getElementById('customer_last_name').value = lastName || '';
+    }
+    if (document.getElementById('customer_phone')) {
+        document.getElementById('customer_phone').value = phone || '';
+    }
+    if (document.getElementById('customer_email')) {
+        document.getElementById('customer_email').value = email || '';
+    }
+    if (document.getElementById('customer_tc_no')) {
+        document.getElementById('customer_tc_no').value = tcNo || '';
+    }
+    if (document.getElementById('customer_address')) {
+        document.getElementById('customer_address').value = address || '';
+    }
+    if (document.getElementById('customer_nationality')) {
+        document.getElementById('customer_nationality').value = nationality || 'Türkiye';
+    }
+    
+    document.getElementById('customer_search_results').innerHTML = '';
+    document.getElementById('customer_search').value = `${firstName} ${lastName}`;
+}
+
+// Sefer seçildiğinde tüm bilgileri çek ve otomatik doldur (initTicketForm içinde kullanılacak)
+// Sefer bilgilerini yükle (hem change event'inde hem de init'te kullanılabilir)
+function loadScheduleInfo(scheduleId) {
+    if (!scheduleId) {
+        // Sefer seçilmediyse alanları temizle
+        const routeDisplay = document.getElementById('route_display');
+        const departureDisplay = document.getElementById('departure_display');
+        const arrivalDisplay = document.getElementById('arrival_display');
+        if (routeDisplay) routeDisplay.value = '-';
+        if (departureDisplay) departureDisplay.value = '-';
+        if (arrivalDisplay) arrivalDisplay.value = '-';
+        
+        const adultPriceInput = document.getElementById('id_adult_unit_price');
+        const childPriceInput = document.getElementById('id_child_unit_price');
+        const infantPriceInput = document.getElementById('id_infant_unit_price');
+        const vehiclePriceInput = document.getElementById('id_vehicle_price');
+        if (adultPriceInput) adultPriceInput.value = '0';
+        if (childPriceInput) childPriceInput.value = '0';
+        if (infantPriceInput) infantPriceInput.value = '0';
+        if (vehiclePriceInput) vehiclePriceInput.value = '0';
+        
+        calculateTotalAmount();
+        return Promise.resolve();
+    }
+    
+    // Sefer bilgilerini çek ve göster
+    return fetch(`{% url 'ferry_tickets:api_schedules' %}?schedule_id=${scheduleId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Sefer bilgileri alınamadı');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.results && data.results.length > 0) {
+            const schedule = data.results[0];
+            
+            // Rota bilgilerini göster
+            const routeText = schedule.route || `${schedule.route_origin || ''} - ${schedule.route_destination || ''}`;
+            const routeDisplay = document.getElementById('route_display');
+            if (routeDisplay) routeDisplay.value = routeText;
+            
+            // Kalkış bilgilerini göster
+            const departureDate = schedule.departure_date ? new Date(schedule.departure_date).toLocaleDateString('tr-TR') : '';
+            const departureDisplay = document.getElementById('departure_display');
+            if (departureDisplay) departureDisplay.value = `${departureDate} ${schedule.departure_time || ''}`;
+            
+            // Varış bilgilerini göster
+            const arrivalDate = schedule.arrival_date ? new Date(schedule.arrival_date).toLocaleDateString('tr-TR') : '';
+            const arrivalDisplay = document.getElementById('arrival_display');
+            if (arrivalDisplay) arrivalDisplay.value = `${arrivalDate} ${schedule.arrival_time || ''}`;
+            
+            // Fiyatları otomatik doldur (sadece boşsa, düzenleme modunda mevcut değerleri korumak için)
+            const adultPriceInput = document.getElementById('id_adult_unit_price');
+            const childPriceInput = document.getElementById('id_child_unit_price');
+            const infantPriceInput = document.getElementById('id_infant_unit_price');
+            if (adultPriceInput && (!adultPriceInput.value || adultPriceInput.value === '0')) {
+                adultPriceInput.value = schedule.adult_price || '0';
+            }
+            if (childPriceInput && (!childPriceInput.value || childPriceInput.value === '0')) {
+                childPriceInput.value = schedule.child_price || '0';
+            }
+            if (infantPriceInput && (!infantPriceInput.value || infantPriceInput.value === '0')) {
+                infantPriceInput.value = schedule.infant_price || '0';
+            }
+            
+            // Araç fiyatlarını güncelle (araç tipi değiştiğinde kullanılacak)
+            window.scheduleVehiclePrices = {
+                'car': schedule.car_price || '0',
+                'motorcycle': schedule.motorcycle_price || '0',
+                'van': schedule.van_price || '0',
+                'truck': schedule.truck_price || '0',
+                'bus': schedule.bus_price || '0',
+                'caravan': schedule.caravan_price || '0',
+            };
+            
+            // Araç fiyatını güncelle (eğer araç tipi seçiliyse)
+            const vehicleTypeSelect = document.getElementById('id_vehicle_type');
+            const vehiclePriceInput = document.getElementById('id_vehicle_price');
+            if (vehicleTypeSelect && vehicleTypeSelect.value && vehicleTypeSelect.value !== 'none' && vehiclePriceInput) {
+                const vehicleType = vehicleTypeSelect.value;
+                if (window.scheduleVehiclePrices[vehicleType]) {
+                    vehiclePriceInput.value = window.scheduleVehiclePrices[vehicleType];
+                }
+            }
+            
+            // Toplam tutarı otomatik hesapla
+            calculateTotalAmount();
+        } else {
+            console.error('Sefer bilgileri bulunamadı');
+            alert('Sefer bilgileri yüklenemedi. Lütfen tekrar deneyin.');
+        }
+    })
+    .catch(error => {
+        console.error('Sefer bilgileri yüklenirken hata:', error);
+        alert('Sefer bilgileri yüklenirken bir hata oluştu: ' + error.message);
+    });
+}
+
+function setupScheduleChangeListener() {
+    const scheduleSelect = document.getElementById('id_schedule');
+    if (scheduleSelect) {
+        scheduleSelect.addEventListener('change', function() {
+            loadScheduleInfo(this.value);
+        });
+    }
+}
+
+// Yolcu sayıları değiştiğinde toplam yolcuyu güncelle ve fiyatı hesapla (initTicketForm içinde kullanılacak)
+function setupPassengerCountListeners() {
+    ['id_adult_count', 'id_child_count', 'id_infant_count'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', function() {
+                const adultCount = parseInt(document.getElementById('id_adult_count')?.value) || 0;
+                const childCount = parseInt(document.getElementById('id_child_count')?.value) || 0;
+                const infantCount = parseInt(document.getElementById('id_infant_count')?.value) || 0;
+                const totalPassengersDisplay = document.getElementById('total_passengers_display');
+                if (totalPassengersDisplay) {
+                    totalPassengersDisplay.value = adultCount + childCount + infantCount;
+                }
+                calculateTotalAmount();
+            });
+            element.addEventListener('change', function() {
+                calculateTotalAmount();
+            });
+        }
+    });
+}
+
+// İndirim ve vergi alanları değiştiğinde fiyatı otomatik hesapla (initTicketForm içinde kullanılacak)
+function setupDiscountTaxListeners() {
+    ['id_discount_type', 'id_discount_percentage', 'id_discount_amount', 'id_tax_amount'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', function() {
+                calculateTotalAmount();
+            });
+            element.addEventListener('change', function() {
+                calculateTotalAmount();
+            });
+        }
+    });
+}
+
+// Araç tipi değiştiğinde fiyatı güncelle (initTicketForm içinde kullanılacak)
+function setupVehicleTypeListener() {
+    const vehicleTypeSelect = document.getElementById('id_vehicle_type');
+    if (vehicleTypeSelect) {
+        vehicleTypeSelect.addEventListener('change', function() {
+            const vehicleType = this.value;
+            const vehiclePriceInput = document.getElementById('id_vehicle_price');
+            
+            // Sefer bilgilerinden araç fiyatını al
+            if (window.scheduleVehiclePrices && vehiclePriceInput) {
+                const price = window.scheduleVehiclePrices[vehicleType] || '0';
+                vehiclePriceInput.value = price;
+            }
+            
+            calculateTotalAmount();
+        });
+    }
+}
+
+// Ön ödeme değiştiğinde kalan tutarı güncelle (initTicketForm içinde kullanılacak)
+function setupAdvancePaymentListener() {
+    const advancePaymentInput = document.getElementById('advance_payment');
+    if (advancePaymentInput) {
+        advancePaymentInput.addEventListener('input', function() {
+            calculateTotalAmount();
+        });
+    }
+}
+
+// Form yüklendikten sonra çalışacak init fonksiyonu
+function initTicketForm() {
+    console.log('Ticket form init başlatılıyor...');
+    
+    // Müşteri arama - Reception modülü gibi otomatik doldurma
+    let customerSearchTimeout;
+    const customerSearchInput = document.getElementById('customer_search');
+    if (customerSearchInput) {
+        customerSearchInput.addEventListener('input', function() {
+            const searchQuery = this.value.trim();
+            
+            // Timeout ile debounce
+            clearTimeout(customerSearchTimeout);
+            
+            if (searchQuery.length < 2) {
+                const resultsDiv = document.getElementById('customer_search_results');
+                if (resultsDiv) resultsDiv.innerHTML = '';
+                return;
+            }
+            
+            customerSearchTimeout = setTimeout(function() {
+                searchCustomer(searchQuery);
+            }, 300);
+        });
+    }
+
+    const searchCustomerBtn = document.getElementById('searchCustomerBtn');
+    if (searchCustomerBtn) {
+        searchCustomerBtn.addEventListener('click', function() {
+            const searchQuery = document.getElementById('customer_search')?.value.trim();
+            if (!searchQuery || searchQuery.length < 2) {
+                alert('Lütfen en az 2 karakter girin.');
+                return;
+            }
+            searchCustomer(searchQuery);
+        });
+    }
+    
+    // Tüm event listener'ları kur
+    setupScheduleChangeListener();
+    setupPassengerCountListeners();
+    setupDiscountTaxListeners();
+    setupVehicleTypeListener();
+    setupAdvancePaymentListener();
+    
+    // Düzenleme modunda: Sefer seçiliyse otomatik bilgileri yükle
+    const scheduleSelect = document.getElementById('id_schedule');
+    if (scheduleSelect && scheduleSelect.value) {
+        console.log('Düzenleme modu: Sefer bilgileri yükleniyor...', scheduleSelect.value);
+        // Sefer bilgilerini direkt yükle
+        setTimeout(function() {
+            loadScheduleInfo(scheduleSelect.value);
+        }, 100);
+    }
+    
+    // Düzenleme modunda: Müşteri bilgileri varsa otomatik doldur
+    {% if ticket and ticket.customer %}
+    const customerId = {{ ticket.customer.pk }};
+    const customerFirstName = '{{ ticket.customer.first_name|escapejs }}';
+    const customerLastName = '{{ ticket.customer.last_name|escapejs }}';
+    const customerPhone = '{{ ticket.customer.phone|default:""|escapejs }}';
+    const customerEmail = '{{ ticket.customer.email|default:""|escapejs }}';
+    const customerTcNo = '{{ ticket.customer.tc_no|default:""|escapejs }}';
+    const customerAddress = '{{ ticket.customer.address|default:""|escapejs }}';
+    const customerNationality = '{{ ticket.customer.nationality|default:"Türkiye"|escapejs }}';
+    
+    // Müşteri bilgilerini doldur
+    setTimeout(function() {
+        selectCustomer(
+            customerId,
+            customerFirstName,
+            customerLastName,
+            customerPhone,
+            customerEmail,
+            customerTcNo,
+            customerAddress,
+            customerNationality
+        );
+        console.log('✓ Müşteri bilgileri otomatik dolduruldu');
+    }, 200);
+    {% endif %}
+    
+    // İlk hesaplamayı yap
+    setTimeout(function() {
+        calculateTotalAmount();
+    }, 300);
+    
+    console.log('✓ Ticket form init tamamlandı');
+}
+
+// Toplam tutarı otomatik hesapla (global fonksiyon - init dışında da kullanılabilir)
+function calculateTotalAmount() {
+    const adultCount = parseInt(document.getElementById('id_adult_count')?.value) || 0;
+    const childCount = parseInt(document.getElementById('id_child_count')?.value) || 0;
+    const infantCount = parseInt(document.getElementById('id_infant_count')?.value) || 0;
+    const adultPrice = parseFloat(document.getElementById('id_adult_unit_price')?.value) || 0;
+    const childPrice = parseFloat(document.getElementById('id_child_unit_price')?.value) || 0;
+    const infantPrice = parseFloat(document.getElementById('id_infant_unit_price')?.value) || 0;
+    const vehiclePriceInput = document.getElementById('id_vehicle_price');
+    const vehiclePrice = vehiclePriceInput ? parseFloat(vehiclePriceInput.value) || 0 : 0;
+    const vehicleType = document.getElementById('id_vehicle_type')?.value || 'none';
+    
+    // Yolcu fiyatlarını hesapla
+    let total = (adultCount * adultPrice) + (childCount * childPrice) + (infantCount * infantPrice);
+    
+    // Araç fiyatını ekle
+    if (vehicleType !== 'none' && vehiclePrice > 0) {
+        total += vehiclePrice;
+    }
+    
+    // İndirim hesapla
+    const discountType = document.getElementById('id_discount_type')?.value || '';
+    const discountPercentage = parseFloat(document.getElementById('id_discount_percentage')?.value) || 0;
+    const discountAmount = parseFloat(document.getElementById('id_discount_amount')?.value) || 0;
+    
+    if (discountType === 'percentage' && discountPercentage > 0) {
+        total -= (total * discountPercentage / 100);
+    } else if (discountType === 'fixed' && discountAmount > 0) {
+        total -= discountAmount;
+    }
+    
+    // Vergi ekle
+    const taxAmount = parseFloat(document.getElementById('id_tax_amount')?.value) || 0;
+    total += taxAmount;
+    
+    // Toplam tutarı göster
+    const totalDisplay = document.getElementById('total_amount_display');
+    if (totalDisplay) {
+        totalDisplay.value = total.toFixed(2);
+    }
+    
+    // Kalan tutarı güncelle
+    const advancePaymentInput = document.getElementById('advance_payment');
+    const remainingDisplay = document.getElementById('remaining_amount_display');
+    if (advancePaymentInput && remainingDisplay) {
+        const advancePayment = parseFloat(advancePaymentInput.value) || 0;
+        remainingDisplay.value = Math.max(0, total - advancePayment).toFixed(2);
+    }
+}
+
+// Form yüklendikten sonra init fonksiyonunu çağır
+// Not: Bu script innerHTML ile yüklendiğinde otomatik çalışmaz
+// list.html'deki kod bu script'i çalıştıracak ve initTicketForm'u çağıracak
+// Burada sadece fonksiyonları tanımlıyoruz, çağrı list.html'de yapılacak
+</script>
+{% endif %}
+

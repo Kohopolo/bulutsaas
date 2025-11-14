@@ -1,0 +1,196 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bungalov Dashboard{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-home"></i> Bungalov Dashboard - {{ today|date:"d.m.Y" }}
+            <div style="float: right;">
+                <button onclick="openReservationModal()" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Yeni Rezervasyon
+                </button>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- İstatistikler -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-list"></i> Toplam Rezervasyon
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #2c5f8d;">{{ total_reservations }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-lira-sign"></i> Bu Ay Gelir
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 28px; font-weight: bold; color: green;">{{ total_revenue|floatformat:2 }} ₺</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-check-circle"></i> Ödenen Tutar
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 28px; font-weight: bold; color: #2c5f8d;">{{ total_paid|floatformat:2 }} ₺</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-home"></i> Müsait Bungalovlar
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: green;">
+                            {% for status in bungalov_statuses %}
+                                {% if status.status == 'available' %}{{ status.count }}{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grid Layout: 2 Sütun -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <!-- Bekleyen Check-in'ler -->
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-sign-in-alt"></i> Bekleyen Check-in'ler ({{ pending_checkins|length }})
+                    </div>
+                    <div class="groupbox-body">
+                        {% if pending_checkins %}
+                        <table class="vb-datagrid">
+                            <thead>
+                                <tr>
+                                    <th>Rezervasyon</th>
+                                    <th>Müşteri</th>
+                                    <th>Bungalov</th>
+                                    <th>Check-in</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reservation in pending_checkins %}
+                                <tr>
+                                    <td>{{ reservation.reservation_code }}</td>
+                                    <td>{{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</td>
+                                    <td>{{ reservation.bungalov.code }}</td>
+                                    <td>{{ reservation.check_in_time|time:"H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'bungalovs:reservation_detail' reservation.pk %}" class="vb-button small">
+                                            <i class="fas fa-eye"></i> Detay
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p style="text-align: center; padding: 20px; color: #666;">Bugün check-in bekleyen rezervasyon yok.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Bekleyen Check-out'lar -->
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-sign-out-alt"></i> Bekleyen Check-out'lar ({{ pending_checkouts|length }})
+                    </div>
+                    <div class="groupbox-body">
+                        {% if pending_checkouts %}
+                        <table class="vb-datagrid">
+                            <thead>
+                                <tr>
+                                    <th>Rezervasyon</th>
+                                    <th>Müşteri</th>
+                                    <th>Bungalov</th>
+                                    <th>Check-out</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reservation in pending_checkouts %}
+                                <tr>
+                                    <td>{{ reservation.reservation_code }}</td>
+                                    <td>{{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</td>
+                                    <td>{{ reservation.bungalov.code }}</td>
+                                    <td>{{ reservation.check_out_time|time:"H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'bungalovs:reservation_detail' reservation.pk %}" class="vb-button small">
+                                            <i class="fas fa-eye"></i> Detay
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p style="text-align: center; padding: 20px; color: #666;">Bugün check-out bekleyen rezervasyon yok.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bugünkü Rezervasyonlar -->
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-calendar-day"></i> Bugünkü Rezervasyonlar ({{ today_reservations|length }})
+                </div>
+                <div class="groupbox-body">
+                    {% if today_reservations %}
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Rezervasyon Kodu</th>
+                                <th>Müşteri</th>
+                                <th>Bungalov</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reservation in today_reservations %}
+                            <tr>
+                                <td><strong>{{ reservation.reservation_code }}</strong></td>
+                                <td>{{ reservation.customer.first_name }} {{ reservation.customer.last_name }}</td>
+                                <td>{{ reservation.bungalov.code }} - {{ reservation.bungalov.name }}</td>
+                                <td>{{ reservation.check_in_date|date:"d.m.Y" }} {{ reservation.check_in_time|time:"H:i" }}</td>
+                                <td>{{ reservation.check_out_date|date:"d.m.Y" }} {{ reservation.check_out_time|time:"H:i" }}</td>
+                                <td>
+                                    <span class="badge badge-{% if reservation.status == 'checked_in' %}success{% elif reservation.status == 'confirmed' %}info{% else %}warning{% endif %}">
+                                        {{ reservation.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'bungalovs:reservation_detail' reservation.pk %}" class="vb-button small">
+                                        <i class="fas fa-eye"></i> Detay
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="text-align: center; padding: 20px; color: #666;">Bugün aktif rezervasyon yok.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openReservationModal() {
+    // Rezervasyon modal'ını aç
+    window.location.href = "{% url 'bungalovs:reservation_create' %}";
+}
+</script>
+{% endblock %}
+

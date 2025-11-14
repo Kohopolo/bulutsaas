@@ -1,0 +1,937 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bilet Detayı - {{ ticket.ticket_code }}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-ticket-alt"></i> Bilet Detayı: {{ ticket.ticket_code }}
+            <div style="float: right;">
+                {% if ticket.is_deleted %}
+                <span class="badge badge-danger" style="margin-right: 10px; padding: 8px 15px; font-size: 14px;">
+                    <i class="fas fa-archive"></i> Arşivlenmiş
+                </span>
+                <button id="restoreTicketBtn" class="vb-button" 
+                        data-ticket-id="{{ ticket.pk }}"
+                        data-ticket-code="{{ ticket.ticket_code }}"
+                        style="background: #28a745; color: white; border-color: #28a745;">
+                    <i class="fas fa-undo"></i> Geri Al
+                </button>
+                {% else %}
+                <button onclick="changeTicketStatus({{ ticket.pk }})" class="vb-button" style="background: #6c757d; color: white; border-color: #6c757d;">
+                    <i class="fas fa-exchange-alt"></i> Durum Değiştir
+                </button>
+                <a href="{% url 'ferry_tickets:ticket_voucher_create' ticket.pk %}" class="vb-button" style="background: #17a2b8; color: white; border-color: #17a2b8;">
+                    <i class="fas fa-ticket-alt"></i> Voucher Oluştur
+                </a>
+                {% if ticket.total_paid > 0 %}
+                <a href="{% url 'ferry_tickets:ticket_refund' ticket.pk %}" class="vb-button" style="background: #ffc107; color: #000; border-color: #ffc107;">
+                    <i class="fas fa-undo"></i> İade
+                </a>
+                {% endif %}
+                {% if ticket.status != 'cancelled' %}
+                <a href="{% url 'ferry_tickets:ticket_cancel' ticket.pk %}" class="vb-button" style="background: #ff9800; color: white; border-color: #ff9800;">
+                    <i class="fas fa-ban"></i> İptal Et
+                </a>
+                {% endif %}
+                <button onclick="openTicketEditModal({{ ticket.pk }})" class="vb-button primary">
+                    <i class="fas fa-edit"></i> Düzenle
+                </button>
+                <button onclick="openDeleteTicketModal({{ ticket.pk }})" class="vb-button danger" style="background: #dc3545; color: white; border-color: #dc3545;">
+                    <i class="fas fa-trash"></i> Sil
+                </button>
+                {% endif %}
+                <a href="{% url 'ferry_tickets:ticket_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Bilet Bilgileri -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Bilet Kodu:</span>
+                            <span class="voucher-value">{{ ticket.ticket_code }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Durum:</span>
+                            <span class="voucher-value">{{ ticket.get_status_display }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Kaynak:</span>
+                            <span class="voucher-value">{{ ticket.get_source_display }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Rota:</span>
+                            <span class="voucher-value">
+                                {% if ticket.schedule and ticket.schedule.route %}
+                                    {{ ticket.schedule.route }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Feribot:</span>
+                            <span class="voucher-value">
+                                {% if ticket.schedule and ticket.schedule.ferry %}
+                                    {{ ticket.schedule.ferry.name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-calendar"></i> Sefer Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Kalkış:</span>
+                            <span class="voucher-value">
+                                {% if ticket.schedule %}
+                                    {{ ticket.schedule.departure_date|date:"d.m.Y" }} {{ ticket.schedule.departure_time|time:"H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Varış:</span>
+                            <span class="voucher-value">
+                                {% if ticket.schedule %}
+                                    {{ ticket.schedule.arrival_date|date:"d.m.Y" }} {{ ticket.schedule.arrival_time|time:"H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Yetişkin:</span>
+                            <span class="voucher-value">{{ ticket.adult_count }} kişi</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Çocuk:</span>
+                            <span class="voucher-value">{{ ticket.child_count }} kişi</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Bebek:</span>
+                            <span class="voucher-value">{{ ticket.infant_count }} kişi</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-lira-sign"></i> Fiyat Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Toplam Tutar:</span>
+                            <span class="voucher-value">{{ ticket.total_amount }} {{ ticket.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ödenen:</span>
+                            <span class="voucher-value">{{ ticket.total_paid }} {{ ticket.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Kalan:</span>
+                            <span class="voucher-value {% if ticket.get_remaining_amount > 0 %}text-red-600 font-bold{% endif %}">
+                                {{ ticket.get_remaining_amount }} {{ ticket.currency }}
+                            </span>
+                        </div>
+                        {% if ticket.discount_amount > 0 %}
+                        <div class="voucher-row">
+                            <span class="voucher-label">İndirim:</span>
+                            <span class="voucher-value">{{ ticket.discount_amount }} {{ ticket.currency }}</span>
+                        </div>
+                        {% endif %}
+                        {% if ticket.tax_amount > 0 %}
+                        <div class="voucher-row">
+                            <span class="voucher-label">Vergi:</span>
+                            <span class="voucher-value">{{ ticket.tax_amount }} {{ ticket.currency }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Müşteri Bilgileri -->
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-user"></i> Müşteri Bilgileri
+                </div>
+                <div class="groupbox-body">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ad Soyad:</span>
+                            <span class="voucher-value">
+                                {% if ticket.customer %}
+                                    {{ ticket.customer.get_full_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Telefon:</span>
+                            <span class="voucher-value">
+                                {% if ticket.customer %}
+                                    {{ ticket.customer.phone|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">E-posta:</span>
+                            <span class="voucher-value">
+                                {% if ticket.customer %}
+                                    {{ ticket.customer.email|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">TC Kimlik No:</span>
+                            <span class="voucher-value">
+                                {% if ticket.customer %}
+                                    {{ ticket.customer.tc_no|default:"-" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Yolcu Bilgileri -->
+            {% if guests %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-users"></i> Yolcu Bilgileri
+                </div>
+                <div class="groupbox-body">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sıra</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bilet Tipi</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ad</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Soyad</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cinsiyet</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">TC/Pasaport</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uyruk</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for guest in guests %}
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ guest.guest_order }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ guest.get_ticket_type_display }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ guest.first_name }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ guest.last_name }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ guest.get_gender_display|default:"-" }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {% if guest.tc_no %}{{ guest.tc_no }}{% elif guest.passport_no %}{{ guest.passport_no }}{% else %}-{% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ guest.nationality|default:"Türkiye" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Ödemeler -->
+            {% if payments %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-money-bill-wave"></i> Ödemeler
+                </div>
+                <div class="groupbox-body">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tutar</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yöntem</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tip</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Referans</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for payment in payments %}
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ payment.payment_date|date:"d.m.Y" }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ payment.payment_amount }} {{ payment.currency }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ payment.get_payment_method_display }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ payment.get_payment_type_display }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ payment.payment_reference|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Voucher'lar -->
+            {% if vouchers %}
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-file-invoice"></i> Voucher'lar
+                </div>
+                <div class="groupbox-body">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Voucher Kodu</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gönderim</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for voucher in vouchers %}
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ voucher.voucher_code }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs rounded-full 
+                                            {% if voucher.payment_status == 'paid' %}bg-green-100 text-green-800
+                                            {% elif voucher.payment_status == 'pending' %}bg-yellow-100 text-yellow-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ voucher.get_payment_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        {% if voucher.is_sent %}
+                                        <span class="text-green-600">
+                                            <i class="fas fa-check"></i> {{ voucher.get_sent_via_display }} - {{ voucher.sent_at|date:"d.m.Y H:i" }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-gray-500">Gönderilmedi</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="flex gap-1">
+                                            <a href="{% url 'ferry_tickets:ticket_voucher_detail' voucher.pk %}" class="vb-button small" title="Görüntüle" style="padding: 4px 8px; font-size: 11px;">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'ferry_tickets:ticket_voucher_pdf' voucher.pk %}" class="vb-button small" title="PDF İndir" style="padding: 4px 8px; font-size: 11px; background: #dc3545; color: white; border-color: #dc3545;">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            {% if ticket.customer and ticket.customer.phone %}
+                                            <button onclick="sendVoucherWhatsApp({{ voucher.pk }})" class="vb-button small" title="WhatsApp Gönder" style="padding: 4px 8px; font-size: 11px; background: #25D366; color: white; border-color: #25D366;">
+                                                <i class="fab fa-whatsapp"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% if ticket.customer and ticket.customer.email %}
+                                            <button onclick="sendVoucherEmail({{ voucher.pk }})" class="vb-button small" title="Email Gönder" style="padding: 4px 8px; font-size: 11px; background: #007bff; color: white; border-color: #007bff;">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Bilet Form Modal -->
+<div id="ticketModal" class="vb-modal" style="display: none;">
+    <div class="vb-modal-overlay" onclick="closeTicketModal()"></div>
+    <div class="vb-modal-content" style="max-width: 95vw; max-height: 95vh; width: 1400px;">
+        <div class="vb-modal-header">
+            <h3 class="vb-modal-title" id="ticketModalTitle">
+                <i class="fas fa-ticket-alt"></i> Yeni Bilet
+            </h3>
+            <button type="button" class="vb-modal-close" onclick="closeTicketModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="vb-modal-body" id="ticketModalBody" style="overflow-y: auto; max-height: calc(95vh - 120px);">
+            <!-- Form buraya yüklenecek -->
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal CSS */
+.vb-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    align-items: center;
+    justify-content: center;
+}
+
+.vb-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.vb-modal-content {
+    position: relative;
+    background: white;
+    border: 2px solid #c0d4e0;
+    border-radius: 3px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.vb-modal-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vb-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c5f8d;
+}
+
+.vb-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vb-modal-close:hover {
+    color: #000;
+}
+
+.vb-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.voucher-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.voucher-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.voucher-value {
+    color: #666;
+}
+
+.form-groupbox {
+    background: #f8f9fa;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    padding: 0;
+}
+
+.groupbox-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c5f8d;
+}
+
+.groupbox-body {
+    padding: 12px;
+}
+</style>
+
+<script>
+function openTicketEditModal(ticketId) {
+    // Modal başlığını güncelle
+    const modalTitle = document.getElementById('ticketModalTitle');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-edit"></i> Bilet Düzenle';
+    }
+    
+    fetch(`{% url 'ferry_tickets:ticket_update' 0 %}`.replace('0', ticketId), {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.html) {
+            // innerHTML ile yükle
+            const modalBody = document.getElementById('ticketModalBody');
+            modalBody.innerHTML = data.html;
+            
+            // Script tag'lerini bul ve çalıştır
+            const scripts = modalBody.querySelectorAll('script');
+            
+            scripts.forEach(function(oldScript) {
+                try {
+                    // Script içeriğini al
+                    const scriptContent = oldScript.innerHTML;
+                    
+                    if (scriptContent && scriptContent.trim()) {
+                        // Script'i DOM'a ekleyerek çalıştır
+                        const newScript = document.createElement('script');
+                        newScript.textContent = scriptContent;
+                        document.head.appendChild(newScript);
+                    }
+                    
+                    // Eski script tag'ini kaldır
+                    oldScript.parentNode.removeChild(oldScript);
+                } catch (error) {
+                    console.error('Script çalıştırılırken hata:', error);
+                }
+            });
+            
+            // Script'lerin çalışması için bekle ve initTicketForm'u çağır
+            let retryCount = 0;
+            const maxRetries = 10;
+            
+            function tryInitTicketForm() {
+                if (typeof initTicketForm === 'function') {
+                    try {
+                        initTicketForm();
+                        console.log('✓ initTicketForm başarıyla çağrıldı (düzenleme - detail)');
+                    } catch (error) {
+                        console.error('✗ initTicketForm çağrılırken hata:', error);
+                    }
+                } else {
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        setTimeout(tryInitTicketForm, 50);
+                    } else {
+                        console.error('✗ initTicketForm fonksiyonu ' + maxRetries + ' deneme sonrası bulunamadı');
+                    }
+                }
+            }
+            
+            // İlk denemeyi başlat
+            setTimeout(tryInitTicketForm, 100);
+            
+            document.getElementById('ticketModal').style.display = 'flex';
+            
+            // Form submit handler'ı ekle
+            const form = document.getElementById('ticketForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitTicketForm(form);
+                });
+            }
+        } else {
+            console.error('Modal HTML bulunamadı:', data);
+            alert('Form yüklenirken bir hata oluştu.');
+        }
+    })
+    .catch(error => {
+        console.error('Modal açılırken hata:', error);
+        alert('Modal açılırken bir hata oluştu: ' + error.message);
+    });
+}
+
+function closeTicketModal() {
+    const modal = document.getElementById('ticketModal');
+    if (modal) {
+        modal.style.display = 'none';
+        const modalBody = document.getElementById('ticketModalBody');
+        if (modalBody) {
+            modalBody.innerHTML = '';
+        }
+    }
+}
+
+function submitTicketForm(form) {
+    const formData = new FormData(form);
+    formData.append('X-Requested-With', 'XMLHttpRequest');
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeTicketModal();
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            // Hata mesajlarını göster
+            if (data.errors) {
+                console.error('Form hataları:', data.errors);
+                alert('Form gönderilirken hatalar oluştu. Lütfen kontrol edin.');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Form gönderme hatası:', error);
+        alert('Form gönderilirken bir hata oluştu.');
+    });
+}
+
+// Bilet silme modal'ı (reception modülündeki gibi iki adımlı)
+let currentDeleteTicketId = null;
+let currentDeleteTicketCode = '{{ ticket.ticket_code }}';
+
+function openDeleteTicketModal(ticketId) {
+    currentDeleteTicketId = ticketId;
+    currentDeleteTicketCode = '{{ ticket.ticket_code }}';
+    
+    const modalHtml = `
+        <div id="deleteTicketModal" class="vb-modal" style="display: flex;">
+            <div class="vb-modal-overlay" onclick="closeDeleteTicketModal()"></div>
+            <div class="vb-modal-content" style="max-width: 500px;">
+                <div class="vb-modal-header">
+                    <h3 class="vb-modal-title">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Bilet Sil
+                    </h3>
+                    <button type="button" class="vb-modal-close" onclick="closeDeleteTicketModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="vb-modal-body">
+                    <div id="deleteTicketStep1">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 64px; color: #dc3545; margin-bottom: 20px;"></i>
+                            <h3 style="color: #dc3545; margin-bottom: 15px;">Dikkat!</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Bu bileti silmek istediğinizden <strong>emin misiniz?</strong>
+                            </p>
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 20px; text-align: left;">
+                                <strong>Bilet Bilgileri:</strong><br>
+                                <strong>Kod:</strong> {{ ticket.ticket_code }}<br>
+                                <strong>Müşteri:</strong> {{ ticket.customer.get_full_name|default:"-" }}<br>
+                                <strong>Rota:</strong> {% if ticket.schedule and ticket.schedule.route %}{{ ticket.schedule.route }}{% else %}-{% endif %}<br>
+                                <strong>Tarih:</strong> {% if ticket.schedule %}{{ ticket.schedule.departure_date|date:"d.m.Y" }}{% else %}-{% endif %}
+                            </div>
+                            <p style="color: #666; font-size: 14px;">
+                                <i class="fas fa-info-circle"></i> Bilet silinecek ve arşive eklenecektir. Bu işlem geri alınamaz.
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="proceedToDeleteTicketStep2()" class="vb-button danger" style="padding: 12px 30px; font-size: 16px;">
+                                <i class="fas fa-check"></i> Evet, Devam Et
+                            </button>
+                            <button onclick="closeDeleteTicketModal()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-times"></i> İptal
+                            </button>
+                        </div>
+                    </div>
+                    <div id="deleteTicketStep2" style="display: none;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-shield-alt" style="font-size: 64px; color: #dc3545; margin-bottom: 20px;"></i>
+                            <h3 style="color: #dc3545; margin-bottom: 15px;">Son Onay</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Silme işlemini tamamlamak için aşağıdaki bilgileri girin:
+                            </p>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; text-align: left;">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Bilet Kodu:
+                                    </label>
+                                    <input type="text" id="deleteTicketCode" 
+                                           placeholder="{{ ticket.ticket_code }}" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #dc3545; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold;"
+                                           autocomplete="off">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Onay Metni (DELETE yazın):
+                                    </label>
+                                    <input type="text" id="deleteTicketConfirmText" 
+                                           placeholder="DELETE" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #dc3545; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold; text-transform: uppercase;"
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                            <p style="color: #dc3545; font-size: 14px; font-weight: bold;">
+                                <i class="fas fa-exclamation-circle"></i> Bu işlem geri alınamaz!
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="confirmDeleteTicket()" id="confirmDeleteTicketBtn" class="vb-button danger" style="padding: 12px 30px; font-size: 16px;" disabled>
+                                <i class="fas fa-trash"></i> Silmeyi Onayla
+                            </button>
+                            <button onclick="backToDeleteTicketStep1()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-arrow-left"></i> Geri
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById('deleteTicketModal');
+    if (oldModal) {
+        oldModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteTicketModal() {
+    const modal = document.getElementById('deleteTicketModal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = '';
+    }
+    currentDeleteTicketId = null;
+}
+
+function proceedToDeleteTicketStep2() {
+    // İlk adımı backend'e gönder
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '1');
+    
+    fetch(`/ferry-tickets/tickets/${currentDeleteTicketId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // İlk adım başarılı, ikinci adıma geç
+            document.getElementById('deleteTicketStep1').style.display = 'none';
+            document.getElementById('deleteTicketStep2').style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('deleteTicketCode').focus();
+            }, 100);
+            
+            const codeInput = document.getElementById('deleteTicketCode');
+            const confirmInput = document.getElementById('deleteTicketConfirmText');
+            const confirmBtn = document.getElementById('confirmDeleteTicketBtn');
+            
+            function checkInputs() {
+                const codeValue = codeInput.value.trim();
+                const confirmValue = confirmInput.value.trim().toUpperCase();
+                const expectedCode = currentDeleteTicketCode;
+                
+                if (codeValue === expectedCode && confirmValue === 'DELETE') {
+                    confirmBtn.disabled = false;
+                    confirmBtn.style.opacity = '1';
+                } else {
+                    confirmBtn.disabled = true;
+                    confirmBtn.style.opacity = '0.5';
+                }
+            }
+            
+            codeInput.addEventListener('input', checkInputs);
+            confirmInput.addEventListener('input', checkInputs);
+        } else {
+            // Hata durumu - ödeme/iade kontrolü
+            let errorMsg = data.error || 'Silme işlemi başlatılamadı.';
+            
+            if (data.has_payment && data.can_start_refund) {
+                // İade başlatma seçeneği göster
+                if (confirm('Bu bilete ödeme yapılmış. Silmeden önce iade işlemini başlatmak ister misiniz?')) {
+                    startRefundForTicket(currentDeleteTicketId);
+                }
+            } else if (data.refund_status === 'pending' || data.refund_status === 'processing') {
+                errorMsg += ' İade işlemi devam ediyor. İade tamamlandıktan sonra silme işlemini yapabilirsiniz.';
+            }
+            
+            alert(errorMsg);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Silme işlemi başlatılırken bir hata oluştu.');
+    });
+}
+
+// İade başlatma fonksiyonu
+function startRefundForTicket(ticketId) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '1');
+    formData.append('start_refund', '1');
+    
+    fetch(`/ferry-tickets/tickets/${ticketId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.refund_started) {
+            alert(data.message);
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                closeDeleteTicketModal();
+            }
+        } else {
+            alert(data.error || 'İade süreci başlatılamadı.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('İade süreci başlatılırken bir hata oluştu.');
+    });
+}
+
+function backToDeleteTicketStep1() {
+    document.getElementById('deleteTicketStep1').style.display = 'block';
+    document.getElementById('deleteTicketStep2').style.display = 'none';
+    document.getElementById('deleteTicketCode').value = '';
+    document.getElementById('deleteTicketConfirmText').value = '';
+    document.getElementById('confirmDeleteTicketBtn').disabled = true;
+}
+
+function confirmDeleteTicket() {
+    if (!currentDeleteTicketId) {
+        alert('Bilet ID bulunamadı.');
+        return;
+    }
+    
+    const codeInput = document.getElementById('deleteTicketCode');
+    const confirmInput = document.getElementById('deleteTicketConfirmText');
+    const codeValue = codeInput.value.trim();
+    const confirmValue = confirmInput.value.trim().toUpperCase();
+    const expectedCode = currentDeleteTicketCode;
+    
+    if (codeValue !== expectedCode) {
+        alert('Bilet kodu eşleşmiyor!');
+        codeInput.focus();
+        return;
+    }
+    
+    if (confirmValue !== 'DELETE') {
+        alert('Onay metni hatalı! Lütfen "DELETE" yazın.');
+        confirmInput.focus();
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmDeleteTicketBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '2');
+    formData.append('ticket_code', codeValue);
+    formData.append('final_confirm', confirmValue);
+    
+    fetch(`/ferry-tickets/tickets/${currentDeleteTicketId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Bilet başarıyla silindi ve arşivlendi.');
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'Bilet silinirken bir hata oluştu.');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-trash"></i> Silmeyi Onayla';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bilet silinirken bir hata oluştu.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-trash"></i> Silmeyi Onayla';
+    });
+}
+
+// ESC tuşu ile modal'ları kapat
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteTicketModal();
+    }
+});
+</script>
+{% endblock %}
+

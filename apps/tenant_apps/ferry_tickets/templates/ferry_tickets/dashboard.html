@@ -1,0 +1,199 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Feribot Bileti Dashboard{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-ship mr-2"></i>Feribot Bileti Dashboard
+        </h1>
+    </div>
+    
+    <!-- İstatistikler -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Toplam Bilet</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.total_tickets }}</p>
+                </div>
+                <i class="fas fa-ticket-alt text-3xl text-blue-500"></i>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Onaylanmış Biletler</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.confirmed_tickets }}</p>
+                </div>
+                <i class="fas fa-check-circle text-3xl text-green-500"></i>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Bugünkü Gelir</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.today_revenue|floatformat:2 }} ₺</p>
+                </div>
+                <i class="fas fa-lira-sign text-3xl text-yellow-500"></i>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Ödeme Bekleyen</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ stats.pending_payments_count }}</p>
+                </div>
+                <i class="fas fa-clock text-3xl text-orange-500"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bugünkü Biletler -->
+    <div class="bg-white rounded-lg shadow mb-6">
+        <div class="p-4 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-calendar-day mr-2"></i>Bugünkü Biletler
+            </h2>
+        </div>
+        <div class="p-4">
+            {% if today_tickets %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bilet Kodu</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rota</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kalkış</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tutar</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for ticket in today_tickets %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="text-blue-600 hover:underline">
+                                    {{ ticket.ticket_code }}
+                                </a>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.route }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.departure_time|time:"H:i" }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.customer.get_full_name }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                                    {{ ticket.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.total_amount }} {{ ticket.currency }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Bugün için bilet bulunmamaktadır.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Yaklaşan Biletler -->
+    <div class="bg-white rounded-lg shadow mb-6">
+        <div class="p-4 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-calendar-week mr-2"></i>Yaklaşan Biletler (7 Gün)
+            </h2>
+        </div>
+        <div class="p-4">
+            {% if upcoming_tickets %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bilet Kodu</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rota</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for ticket in upcoming_tickets %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="text-blue-600 hover:underline">
+                                    {{ ticket.ticket_code }}
+                                </a>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.route }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.departure_date|date:"d.m.Y" }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.customer.get_full_name }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                                    {{ ticket.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Yaklaşan bilet bulunmamaktadır.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Ödeme Bekleyen Biletler -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-4 border-b">
+            <h2 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-exclamation-triangle mr-2"></i>Ödeme Bekleyen Biletler
+            </h2>
+        </div>
+        <div class="p-4">
+            {% if pending_payments %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bilet Kodu</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Toplam</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ödenen</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kalan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for ticket in pending_payments %}
+                        <tr>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="text-blue-600 hover:underline">
+                                    {{ ticket.ticket_code }}
+                                </a>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.customer.get_full_name }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.total_amount }} {{ ticket.currency }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">{{ ticket.total_paid }} {{ ticket.currency }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-red-600 font-semibold">
+                                {{ ticket.get_remaining_amount }} {{ ticket.currency }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Ödeme bekleyen bilet bulunmamaktadır.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

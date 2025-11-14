@@ -9,6 +9,9 @@ from decimal import Decimal
 from datetime import date, datetime
 from typing import Optional, Dict, List, Tuple
 from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_dynamic_price(
@@ -249,4 +252,209 @@ def calculate_free_children(
             paid_count -= free_in_rule
     
     return (free_count, paid_count)
+
+
+# ==================== ÖDEME VE İADE KONTROLÜ ====================
+
+def can_delete_with_payment_check(obj, source_module):
+    """
+    Ödeme kontrolü ile silme yapılabilir mi kontrol et
+    
+    Bu fonksiyon, ödeme alınmış rezervasyon/biletlerin silinmesi için
+    önce iade sürecinin tamamlanması gerektiğini kontrol eder.
+    
+    Args:
+        obj: Reservation, TourReservation veya FerryTicket objesi
+        source_module: 'reception', 'tours', 'ferry_tickets'
+    
+    Returns:
+        dict: {
+            'can_delete': bool,  # Silme yapılabilir mi?
+            'has_payment': bool,  # Ödeme var mı?
+            'refund_status': str or None,  # İade durumu
+            'refund_request_id': int or None,  # İade talebi ID
+            'refund_request': RefundRequest or None,  # İade talebi objesi
+            'message': str,  # Kullanıcıya gösterilecek mesaj
+            'total_paid': Decimal,  # Toplam ödenen tutar
+        }
+    """
+    from apps.tenant_apps.refunds.models import RefundRequest
+    
+    # Ödeme kontrolü
+    # total_paid field'ı varsa kullan, yoksa payments üzerinden hesapla
+    if hasattr(obj, 'total_paid'):
+        total_paid = getattr(obj, 'total_paid', 0) or Decimal('0')
+    else:
+        # Payments üzerinden hesapla (TourReservation için)
+        try:
+            payments = getattr(obj, 'payments', None)
+            if payments:
+                from django.db.models import Sum, Q
+                # is_deleted field'ı varsa filtrele, yoksa sadece status kontrolü yap
+                payment_filter = Q(status__in=['completed', 'pending'])
+                if hasattr(payments.model, 'is_deleted'):
+                    payment_filter = payment_filter & Q(is_deleted=False)
+                total_paid = payments.filter(payment_filter).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            else:
+                total_paid = Decimal('0')
+        except Exception as e:
+            logger.warning(f'Ödeme hesaplama hatası: {str(e)}')
+            total_paid = Decimal('0')
+    
+    has_payment = total_paid > 0
+    
+    if not has_payment:
+        return {
+            'can_delete': True,
+            'has_payment': False,
+            'refund_status': None,
+            'refund_request_id': None,
+            'refund_request': None,
+            'message': 'Ödeme yok, silme yapılabilir.',
+            'total_paid': Decimal('0'),
+        }
+    
+    # İade kontrolü
+    try:
+        refund_request = RefundRequest.objects.filter(
+            source_module=source_module,
+            source_id=obj.pk,
+            is_deleted=False
+        ).order_by('-created_at').first()
+    except Exception as e:
+        logger.error(f'İade kontrolü hatası: {str(e)}', exc_info=True)
+        refund_request = None
+    
+    if not refund_request:
+        return {
+            'can_delete': False,
+            'has_payment': True,
+            'refund_status': None,
+            'refund_request_id': None,
+            'refund_request': None,
+            'message': f'Bu kayıt için {total_paid} {getattr(obj, "currency", "TRY")} ödeme alınmış. Silme işlemi için önce iade yapılmalı.',
+            'total_paid': total_paid,
+        }
+    
+    # İade durumu kontrolü
+    if refund_request.status == 'completed':
+        return {
+            'can_delete': True,
+            'has_payment': True,
+            'refund_status': 'completed',
+            'refund_request_id': refund_request.pk,
+            'refund_request': refund_request,
+            'message': 'İade tamamlandı, silme yapılabilir.',
+            'total_paid': total_paid,
+        }
+    elif refund_request.status in ['pending', 'approved', 'processing']:
+        status_display = refund_request.get_status_display()
+        return {
+            'can_delete': False,
+            'has_payment': True,
+            'refund_status': refund_request.status,
+            'refund_request_id': refund_request.pk,
+            'refund_request': refund_request,
+            'message': f'İade durumu: {status_display}. İade tamamlanana kadar silme yapılamaz.',
+            'total_paid': total_paid,
+        }
+    else:
+        # rejected, cancelled durumları
+        return {
+            'can_delete': False,
+            'has_payment': True,
+            'refund_status': refund_request.status,
+            'refund_request_id': refund_request.pk,
+            'refund_request': refund_request,
+            'message': f'İade durumu: {refund_request.get_status_display()}. Yeni bir iade talebi oluşturulmalı.',
+            'total_paid': total_paid,
+        }
+
+
+def start_refund_process_for_deletion(obj, source_module, user, reason='Silme işlemi için iade'):
+    """
+    Silme işlemi için iade sürecini başlat
+    
+    Args:
+        obj: Reservation, TourReservation veya FerryTicket objesi
+        source_module: 'reception', 'tours', 'ferry_tickets'
+        user: İşlemi yapan kullanıcı
+        reason: İade nedeni
+    
+    Returns:
+        RefundRequest objesi veya None (hata durumunda)
+    """
+    from apps.tenant_apps.refunds.utils import create_refund_request
+    
+    try:
+        # Müşteri bilgilerini al
+        customer = getattr(obj, 'customer', None)
+        if customer:
+            customer_name = customer.get_full_name() if hasattr(customer, 'get_full_name') else f"{getattr(customer, 'first_name', '')} {getattr(customer, 'last_name', '')}".strip()
+            customer_email = getattr(customer, 'email', '')
+            customer_phone = getattr(customer, 'phone', '')
+        else:
+            # Müşteri yoksa objeden al
+            customer_name = getattr(obj, 'customer_name', '') or getattr(obj, 'customer_surname', '')
+            if not customer_name:
+                customer_name = f"{getattr(obj, 'customer_name', '')} {getattr(obj, 'customer_surname', '')}".strip()
+            customer_email = getattr(obj, 'customer_email', '')
+            customer_phone = getattr(obj, 'customer_phone', '')
+        
+        # Referans kodunu al
+        source_reference = getattr(obj, 'reservation_code', None) or getattr(obj, 'ticket_code', None) or f'ID-{obj.pk}'
+        
+        # Ödeme bilgilerini al
+        total_paid = getattr(obj, 'total_paid', 0) or Decimal('0')
+        currency = getattr(obj, 'currency', 'TRY')
+        
+        # Son ödeme bilgilerini al
+        payment_model_name = None
+        if source_module == 'reception':
+            payment_model_name = 'ReservationPayment'
+        elif source_module == 'tours':
+            payment_model_name = 'TourReservationPayment'
+        elif source_module == 'ferry_tickets':
+            payment_model_name = 'FerryTicketPayment'
+        
+        original_payment_method = ''
+        original_payment_date = None
+        
+        if payment_model_name:
+            try:
+                payments = getattr(obj, 'payments', None)
+                if payments:
+                    last_payment = payments.filter(is_deleted=False).order_by('-payment_date').first()
+                    if last_payment:
+                        original_payment_method = getattr(last_payment, 'payment_method', '')
+                        original_payment_date = getattr(last_payment, 'payment_date', None)
+            except Exception as e:
+                logger.warning(f'Son ödeme bilgisi alınamadı: {str(e)}')
+        
+        if not original_payment_date:
+            original_payment_date = getattr(obj, 'created_at', timezone.now()).date() if hasattr(getattr(obj, 'created_at', None), 'date') else timezone.now().date()
+        
+        # İade talebi oluştur
+        refund_request = create_refund_request(
+            source_module=source_module,
+            source_id=obj.pk,
+            source_reference=source_reference,
+            customer_name=customer_name or 'Bilinmeyen Müşteri',
+            customer_email=customer_email or '',
+            original_amount=total_paid,
+            original_payment_method=original_payment_method,
+            original_payment_date=original_payment_date,
+            reason=reason,
+            customer_phone=customer_phone,
+            created_by=user,
+            customer=customer if customer else None,
+        )
+        
+        logger.info(f'İade süreci başlatıldı - Modül: {source_module}, ID: {obj.pk}, İade Talebi: {refund_request.pk}')
+        
+        return refund_request
+        
+    except Exception as e:
+        logger.error(f'İade süreci başlatılırken hata: {str(e)}', exc_info=True)
+        return None
 

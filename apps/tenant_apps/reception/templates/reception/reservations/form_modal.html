@@ -36,12 +36,20 @@
                         <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                             <div class="form-group">
                                 <label>Check-in Tarihi <span class="text-red-500">*</span></label>
-                                {{ form.check_in_date }}
+                                {% if reservation and form.check_in_date.value %}
+                                    <input type="date" name="check_in_date" class="form-control" id="id_check_in_date" value="{{ form.check_in_date.value|date:'Y-m-d' }}" required>
+                                {% else %}
+                                    {{ form.check_in_date }}
+                                {% endif %}
                                 {{ form.check_in_date.errors }}
                             </div>
                             <div class="form-group">
                                 <label>Check-out Tarihi <span class="text-red-500">*</span></label>
-                                {{ form.check_out_date }}
+                                {% if reservation and form.check_out_date.value %}
+                                    <input type="date" name="check_out_date" class="form-control" id="id_check_out_date" value="{{ form.check_out_date.value|date:'Y-m-d' }}" required>
+                                {% else %}
+                                    {{ form.check_out_date }}
+                                {% endif %}
                                 {{ form.check_out_date.errors }}
                             </div>
                             <div class="form-group">
@@ -50,11 +58,19 @@
                             </div>
                             <div class="form-group">
                                 <label>Check-in Saati</label>
-                                {{ form.check_in_time }}
+                                {% if reservation and form.check_in_time.value %}
+                                    <input type="time" name="check_in_time" class="form-control" id="id_check_in_time" value="{{ form.check_in_time.value|time:'H:i' }}">
+                                {% else %}
+                                    {{ form.check_in_time }}
+                                {% endif %}
                             </div>
                             <div class="form-group">
                                 <label>Check-out Saati</label>
-                                {{ form.check_out_time }}
+                                {% if reservation and form.check_out_time.value %}
+                                    <input type="time" name="check_out_time" class="form-control" id="id_check_out_time" value="{{ form.check_out_time.value|time:'H:i' }}">
+                                {% else %}
+                                    {{ form.check_out_time }}
+                                {% endif %}
                             </div>
                             <div class="form-group">
                                 <label>Yetişkin Sayısı <span class="text-red-500">*</span></label>
@@ -81,12 +97,30 @@
                         <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                             <div class="form-group">
                                 <label>Oda Tipi <span class="text-red-500">*</span></label>
-                                {{ form.room }}
+                                {% if reservation and form.room.value %}
+                                    <select name="room" class="form-control" id="id_room" required>
+                                        <option value="">---------</option>
+                                        {% for choice in form.room.field.queryset %}
+                                            <option value="{{ choice.pk }}" {% if choice.pk == form.room.value %}selected{% endif %}>{{ choice.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    {{ form.room }}
+                                {% endif %}
                                 {{ form.room.errors }}
                             </div>
                             <div class="form-group">
                                 <label>Oda Numarası</label>
-                                {{ form.room_number }}
+                                {% if reservation and form.room_number.value %}
+                                    <select name="room_number" class="form-control" id="id_room_number">
+                                        <option value="">---------</option>
+                                        {% for choice in form.room_number.field.queryset %}
+                                            <option value="{{ choice.pk }}" {% if choice.pk == form.room_number.value %}selected{% endif %}>{{ choice.number }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    {{ form.room_number }}
+                                {% endif %}
                                 {{ form.room_number.errors }}
                             </div>
                             <div class="form-group">
@@ -153,12 +187,28 @@
                         <div class="groupbox-body" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
                             <div class="form-group">
                                 <label>Rezervasyon Durumu <span class="text-red-500">*</span></label>
-                                {{ form.status }}
+                                {% if reservation and form.status.value %}
+                                    <select name="status" class="form-control" id="id_status" required>
+                                        {% for choice in form.status.field.choices %}
+                                            <option value="{{ choice.0 }}" {% if choice.0 == form.status.value %}selected{% endif %}>{{ choice.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    {{ form.status }}
+                                {% endif %}
                                 {{ form.status.errors }}
                             </div>
                             <div class="form-group">
                                 <label>Rezervasyon Kaynağı</label>
-                                {{ form.source }}
+                                {% if reservation and form.source.value %}
+                                    <select name="source" class="form-control" id="id_source">
+                                        {% for choice in form.source.field.choices %}
+                                            <option value="{{ choice.0 }}" {% if choice.0 == form.source.value %}selected{% endif %}>{{ choice.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    {{ form.source }}
+                                {% endif %}
                             </div>
                             <div class="form-group">
                                 <label>Rezervasyon Acentesi</label>
@@ -673,10 +723,25 @@
         console.log('Ödeme:', paymentData);
         console.log('Toplam veri:', reservationData);
         
-        // Tarih formatını düzelt (dd/mm/yyyy -> yyyy-MM-dd)
+        // REZERVASYON TEMEL BİLGİLERİNİ DOLDUR (Düzenleme modunda)
+        // Django form instance değerleri zaten yüklenmiş olmalı, ama emin olmak için kontrol et
+        console.log('Rezervasyon temel bilgileri kontrol ediliyor...');
+        
+        // Form alanlarını al
         const checkInDateField = document.getElementById('id_check_in_date');
         const checkOutDateField = document.getElementById('id_check_out_date');
+        const checkInTimeField = document.getElementById('id_check_in_time');
+        const checkOutTimeField = document.getElementById('id_check_out_time');
+        const roomField = document.getElementById('id_room');
+        const roomNumberField = document.getElementById('id_room_number');
+        const statusField = document.getElementById('id_status');
+        const sourceField = document.getElementById('id_source');
+        const reservationAgentField = document.getElementById('id_reservation_agent');
+        const reservationChannelField = document.getElementById('id_reservation_channel');
+        const adultCountField = document.getElementById('id_adult_count');
+        const childCountField = document.getElementById('id_child_count');
         
+        // Tarih formatını düzelt (dd/mm/yyyy -> yyyy-MM-dd) - SADECE boşsa veya format yanlışsa
         if (checkInDateField && checkInDateField.value) {
             // Eğer dd/mm/yyyy formatındaysa dönüştür
             const dateValue = checkInDateField.value;
@@ -687,6 +752,7 @@
                     const month = parts[1].padStart(2, '0');
                     const year = parts[2];
                     checkInDateField.value = `${year}-${month}-${day}`;
+                    console.log('✓ Check-in tarihi formatı düzeltildi:', checkInDateField.value);
                 }
             }
         }
@@ -701,9 +767,25 @@
                     const month = parts[1].padStart(2, '0');
                     const year = parts[2];
                     checkOutDateField.value = `${year}-${month}-${day}`;
+                    console.log('✓ Check-out tarihi formatı düzeltildi:', checkOutDateField.value);
                 }
             }
         }
+        
+        // Form alanlarının değerlerini kontrol et ve logla
+        console.log('=== FORM ALAN DEĞERLERİ ===');
+        console.log('Check-in Tarihi:', checkInDateField?.value || 'BOŞ');
+        console.log('Check-out Tarihi:', checkOutDateField?.value || 'BOŞ');
+        console.log('Check-in Saati:', checkInTimeField?.value || 'BOŞ');
+        console.log('Check-out Saati:', checkOutTimeField?.value || 'BOŞ');
+        console.log('Oda:', roomField?.value || 'BOŞ');
+        console.log('Oda Numarası:', roomNumberField?.value || 'BOŞ');
+        console.log('Durum:', statusField?.value || 'BOŞ');
+        console.log('Kaynak:', sourceField?.value || 'BOŞ');
+        console.log('Acente:', reservationAgentField?.value || 'BOŞ');
+        console.log('Kanal:', reservationChannelField?.value || 'BOŞ');
+        console.log('Yetişkin Sayısı:', adultCountField?.value || 'BOŞ');
+        console.log('Çocuk Sayısı:', childCountField?.value || 'BOŞ');
         
         // Müşteri bilgilerini doldur
         console.log('Müşteri verisi kontrol ediliyor...', reservationData.customer);
@@ -997,54 +1079,65 @@
                             const ageField = document.querySelector(`input[name="guests-${formIndex}-age"]`);
                             const nationalityField = document.querySelector(`input[name="guests-${formIndex}-nationality"]`);
                             
-                            // Formset alanlarını doldur (boşsa veya mevcut değer yoksa)
+                            // Formset alanlarını doldur (SADECE boşsa - Django formset zaten doldurmuş olmalı)
+                            // Eğer formset alanları zaten doluysa, JavaScript ile override etme
                             if (firstNameField) {
                                 const currentValue = firstNameField.value || '';
-                                if (!currentValue.trim() || currentValue !== matchingGuest.first_name) {
+                                // Sadece alan boşsa doldur, doluysa Django'nun yüklediği değeri koru
+                                if (!currentValue.trim() && matchingGuest.first_name) {
                                     firstNameField.value = matchingGuest.first_name || '';
                                     console.log(`✓ Formset misafir ${formIndex} adı dolduruldu:`, matchingGuest.first_name);
                                     filledCount++;
+                                } else if (currentValue.trim()) {
+                                    console.log(`Formset misafir ${formIndex} adı zaten dolu:`, currentValue);
                                 }
                             }
                             if (lastNameField) {
                                 const currentValue = lastNameField.value || '';
-                                if (!currentValue.trim() || currentValue !== matchingGuest.last_name) {
+                                // Sadece alan boşsa doldur
+                                if (!currentValue.trim() && matchingGuest.last_name) {
                                     lastNameField.value = matchingGuest.last_name || '';
                                 }
                             }
                             if (genderField) {
                                 const currentValue = genderField.value || '';
-                                if (!currentValue.trim() || currentValue !== matchingGuest.gender) {
+                                // Sadece alan boşsa doldur
+                                if (!currentValue.trim() && matchingGuest.gender) {
                                     genderField.value = matchingGuest.gender || '';
                                 }
                             }
                             if (tcNoField) {
                                 const currentValue = tcNoField.value || '';
-                                if (!currentValue.trim() || currentValue !== matchingGuest.tc_no) {
+                                // Sadece alan boşsa doldur
+                                if (!currentValue.trim() && matchingGuest.tc_no) {
                                     tcNoField.value = matchingGuest.tc_no || '';
                                 }
                             }
                             if (passportNoField) {
                                 const currentValue = passportNoField.value || '';
-                                if (!currentValue.trim() || currentValue !== matchingGuest.passport_no) {
+                                // Sadece alan boşsa doldur
+                                if (!currentValue.trim() && matchingGuest.passport_no) {
                                     passportNoField.value = matchingGuest.passport_no || '';
                                 }
                             }
                             if (passportSerialField) {
                                 const currentValue = passportSerialField.value || '';
-                                if (!currentValue.trim() || currentValue !== matchingGuest.passport_serial_no) {
+                                // Sadece alan boşsa doldur
+                                if (!currentValue.trim() && matchingGuest.passport_serial_no) {
                                     passportSerialField.value = matchingGuest.passport_serial_no || '';
                                 }
                             }
                             if (idSerialField) {
                                 const currentValue = idSerialField.value || '';
-                                if (!currentValue.trim() || currentValue !== matchingGuest.id_serial_no) {
+                                // Sadece alan boşsa doldur
+                                if (!currentValue.trim() && matchingGuest.id_serial_no) {
                                     idSerialField.value = matchingGuest.id_serial_no || '';
                                 }
                             }
                             if (ageField) {
                                 const currentValue = ageField.value || '';
-                                if (!currentValue.trim() || currentValue !== String(matchingGuest.age || '')) {
+                                // Sadece alan boşsa doldur
+                                if (!currentValue.trim() && matchingGuest.age) {
                                     ageField.value = matchingGuest.age || '';
                                 }
                             }

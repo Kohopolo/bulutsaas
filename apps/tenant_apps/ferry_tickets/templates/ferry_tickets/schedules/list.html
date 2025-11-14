@@ -1,0 +1,116 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Seferler{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-calendar-alt"></i> Seferler
+            <div style="float: right;">
+                <a href="{% url 'ferry_tickets:schedule_create' %}" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Yeni Sefer
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Filtreler -->
+            <div style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px;">
+                <form method="get" style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; align-items: end;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Rota</label>
+                        <select name="route_id" class="form-control">
+                            <option value="">Tüm Rotalar</option>
+                            {% for route in routes %}
+                            <option value="{{ route.pk }}" {% if request.GET.route_id == route.pk|stringformat:"s" %}selected{% endif %}>{{ route.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Kalkış Tarihi</label>
+                        <input type="date" name="departure_date" value="{{ request.GET.departure_date }}" class="form-control">
+                    </div>
+                    <div>
+                        <button type="submit" class="vb-button primary">Filtrele</button>
+                        <a href="{% url 'ferry_tickets:schedule_list' %}" class="vb-button">Temizle</a>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rota</th>
+                                <th>Feribot</th>
+                                <th>Kalkış</th>
+                                <th>Varış</th>
+                                <th>Yetişkin Fiyat</th>
+                                <th>Çocuk Fiyat</th>
+                                <th>Müsait Koltuk</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in schedules %}
+                            <tr>
+                                <td><strong>{{ schedule.route }}</strong></td>
+                                <td>{{ schedule.ferry.name }}</td>
+                                <td>
+                                    {{ schedule.departure_date|date:"d.m.Y" }}<br>
+                                    <small>{{ schedule.departure_time|time:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    {{ schedule.arrival_date|date:"d.m.Y" }}<br>
+                                    <small>{{ schedule.arrival_time|time:"H:i" }}</small>
+                                </td>
+                                <td>{{ schedule.adult_price|floatformat:2 }} {{ schedule.currency }}</td>
+                                <td>{{ schedule.child_price|floatformat:2 }} {{ schedule.currency }}</td>
+                                <td>{{ schedule.available_passenger_seats }}</td>
+                                <td>
+                                    {% if schedule.is_active and not schedule.is_cancelled %}
+                                        <span class="badge badge-success">Aktif</span>
+                                    {% elif schedule.is_cancelled %}
+                                        <span class="badge badge-danger">İptal</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">Pasif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'ferry_tickets:schedule_update' schedule.pk %}" class="vb-button small">Düzenle</a>
+                                    <a href="{% url 'ferry_tickets:schedule_delete' schedule.pk %}" class="vb-button small danger">Sil</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 40px; color: #999;">
+                                    <i class="fas fa-calendar-alt" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                                    Henüz sefer bulunmamaktadır.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Sayfalama -->
+            {% if schedules.has_other_pages %}
+            <div style="padding: 15px; border-top: 1px solid #d4d4d4; text-align: center;">
+                {% if schedules.has_previous %}
+                <a href="?page={{ schedules.previous_page_number }}{% if request.GET.route_id %}&route_id={{ request.GET.route_id }}{% endif %}{% if request.GET.departure_date %}&departure_date={{ request.GET.departure_date }}{% endif %}" class="vb-button small">Önceki</a>
+                {% endif %}
+                <span style="margin: 0 15px;">Sayfa {{ schedules.number }} / {{ schedules.paginator.num_pages }}</span>
+                {% if schedules.has_next %}
+                <a href="?page={{ schedules.next_page_number }}{% if request.GET.route_id %}&route_id={{ request.GET.route_id }}{% endif %}{% if request.GET.departure_date %}&departure_date={{ request.GET.departure_date }}{% endif %}" class="vb-button small">Sonraki</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

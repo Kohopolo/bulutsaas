@@ -1,0 +1,78 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bilet İptal{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-times-circle"></i> Bilet İptal
+            <div style="float: right;">
+                <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Bilet Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Bilet Kodu:</span>
+                            <span class="voucher-value">{{ ticket.ticket_code }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Müşteri:</span>
+                            <span class="voucher-value">
+                                {% if ticket.customer %}
+                                    {{ ticket.customer.get_full_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Rota:</span>
+                            <span class="voucher-value">
+                                {% if ticket.schedule and ticket.schedule.route %}
+                                    {{ ticket.schedule.route }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox" style="margin-top: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-comment"></i> İptal Nedeni
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-grid">
+                            <div class="form-label">İptal Nedeni *</div>
+                            <div>
+                                <textarea name="cancellation_reason" class="form-control" rows="4" required placeholder="İptal nedenini açıklayın..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button danger" style="background: #dc3545; color: white; border-color: #dc3545;">
+                        <i class="fas fa-times-circle"></i> Bileti İptal Et
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

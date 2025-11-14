@@ -1,0 +1,117 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if feature %}Bungalov Özelliği Düzenle{% else %}Yeni Bungalov Özelliği{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-{% if feature %}edit{% else %}plus{% endif %}"></i> 
+            {% if feature %}Bungalov Özelliği Düzenle{% else %}Yeni Bungalov Özelliği{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'bungalovs:bungalov_feature_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Temel Bilgiler -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.name.label }} <span style="color: red;">*</span></label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="error-message">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.code.label }} <span style="color: red;">*</span></label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                <div class="error-message">{{ form.code.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.category.label }}</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                <div class="error-message">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.icon.label }}</label>
+                                {{ form.icon }}
+                                {% if form.icon.errors %}
+                                <div class="error-message">{{ form.icon.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">Font Awesome icon class (örn: fas fa-star)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.sort_order.label }}</label>
+                                {{ form.sort_order }}
+                                {% if form.sort_order.errors %}
+                                <div class="error-message">{{ form.sort_order.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.is_active.label }}</label>
+                                <div style="margin-top: 8px;">
+                                    {{ form.is_active }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Açıklama -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-align-left"></i> Açıklama
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-group">
+                            <label>{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="error-message">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Hataları -->
+                {% if form.non_field_errors %}
+                <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 3px; margin-bottom: 20px; color: #721c24;">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <!-- Butonlar -->
+                <div style="text-align: right; margin-top: 20px;">
+                    <a href="{% url 'bungalovs:bungalov_feature_list' %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

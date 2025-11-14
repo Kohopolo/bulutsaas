@@ -674,6 +674,8 @@ def reservation_update(request, pk):
                 
                 # SADECE form'daki ön ödeme mevcut toplam ödemeden BÜYÜKSE yeni ödeme ekle
                 # Eşitse veya küçükse hiçbir şey yapma (mevcut ödemeleri koru)
+                # ÖNEMLİ: advance_payment form'dan geliyor ve mevcut total_paid'i gösteriyor
+                # Eğer kullanıcı yeni bir ödeme ekliyorsa, advance_payment > existing_total_paid olacak
                 if advance_payment and advance_payment > existing_total_paid and payment_method:
                     # Yeni ödeme tutarı = form'daki ön ödeme - mevcut toplam ödeme
                     new_payment_amount = advance_payment - existing_total_paid
@@ -692,11 +694,12 @@ def reservation_update(request, pk):
                         import logging
                         logger = logging.getLogger(__name__)
                         logger.info(f'Yeni ödeme eklendi: {new_payment_amount} {reservation.currency}, Yöntem: {payment_method}')
-                elif advance_payment == existing_total_paid:
-                    # Ödeme değişmemiş, hiçbir şey yapma
+                else:
+                    # Ödeme değişmemiş veya azaltılmış, hiçbir şey yapma
+                    # (Ödeme silme işlemi ayrı bir fonksiyonla yapılmalı)
                     import logging
                     logger = logging.getLogger(__name__)
-                    logger.info(f'Ödeme değişmedi, yeni ödeme eklenmedi. Mevcut: {existing_total_paid}, Form: {advance_payment}')
+                    logger.info(f'Ödeme değişmedi veya azaltıldı, yeni ödeme eklenmedi. Mevcut: {existing_total_paid}, Form: {advance_payment}')
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
@@ -761,31 +764,76 @@ def reservation_update(request, pk):
                     'message': 'Form gönderilirken hatalar oluştu: ' + '; '.join(error_messages[:10])  # İlk 10 hatayı göster
                 })
     else:
-        form = ReservationForm(instance=reservation, hotel=hotel)
-        # Mevcut misafirleri formset'e yükle
         # Rezervasyonu yeniden yükle (misafirlerin güncel olduğundan emin ol)
         reservation.refresh_from_db()
         
+        # Form'u instance ile oluştur (Django otomatik olarak değerleri yükler)
+        form = ReservationForm(instance=reservation, hotel=hotel)
+        
+        # Debug: Form instance değerlerini kontrol et
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f'[DEBUG] Form instance değerleri kontrol ediliyor - Rezervasyon ID: {reservation.pk}')
+        logger.info(f'[DEBUG] Form check_in_date initial: {form.fields["check_in_date"].initial}')
+        logger.info(f'[DEBUG] Form check_out_date initial: {form.fields["check_out_date"].initial}')
+        logger.info(f'[DEBUG] Form room initial: {form.fields["room"].initial}')
+        logger.info(f'[DEBUG] Form status initial: {form.fields["status"].initial}')
+        logger.info(f'[DEBUG] Form source initial: {form.fields["source"].initial}')
+        logger.info(f'[DEBUG] Form adult_count initial: {form.fields["adult_count"].initial}')
+        logger.info(f'[DEBUG] Form child_count initial: {form.fields["child_count"].initial}')
+        logger.info(f'[DEBUG] Form room_rate initial: {form.fields["room_rate"].initial}')
+        logger.info(f'[DEBUG] Form currency initial: {form.fields["currency"].initial}')
+        
+        # Form instance değerlerini kontrol et
+        if form.instance:
+            logger.info(f'[DEBUG] Form instance check_in_date: {form.instance.check_in_date}')
+            logger.info(f'[DEBUG] Form instance check_out_date: {form.instance.check_out_date}')
+            logger.info(f'[DEBUG] Form instance room_id: {form.instance.room_id}')
+            logger.info(f'[DEBUG] Form instance status: {form.instance.status}')
+            logger.info(f'[DEBUG] Form instance source: {form.instance.source}')
+            logger.info(f'[DEBUG] Form instance adult_count: {form.instance.adult_count}')
+            logger.info(f'[DEBUG] Form instance child_count: {form.instance.child_count}')
+            logger.info(f'[DEBUG] Form instance room_rate: {form.instance.room_rate}')
+            logger.info(f'[DEBUG] Form instance currency: {form.instance.currency}')
+        
+        # Mevcut misafirleri formset'e yükle
+        
         # Formset'i queryset ile açıkça oluştur (instance yeterli değil)
         from .models import ReservationGuest
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Önce misafirleri kontrol et
+        all_guests = ReservationGuest.objects.filter(reservation=reservation)
+        logger.info(f'[DEBUG] Rezervasyon {reservation.pk} - Tüm misafirler (filter ile): {all_guests.count()}')
+        logger.info(f'[DEBUG] Rezervasyon {reservation.pk} - reservation.guests.count(): {reservation.guests.count()}')
+        
+        # Her misafiri logla
+        for guest in all_guests[:10]:
+            logger.info(f'[DEBUG] Misafir: ID={guest.id}, Ad={guest.first_name}, Soyad={guest.last_name}, Type={guest.guest_type}, Order={guest.guest_order}, Reservation_ID={guest.reservation_id}')
+        
+        # Formset'i oluştur
         guest_formset = ReservationGuestFormSet(
             instance=reservation,
             queryset=ReservationGuest.objects.filter(reservation=reservation).order_by('guest_type', 'guest_order')
         )
         
         # Debug: Formset'teki misafir sayısını kontrol et
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f'Rezervasyon {reservation.pk} için formset oluşturuldu.')
-        logger.info(f'Rezervasyon misafir sayısı: {reservation.guests.count()}')
-        logger.info(f'Formset queryset sayısı: {guest_formset.queryset.count()}')
-        logger.info(f'Formset form sayısı: {len(guest_formset)}')
+        logger.info(f'[DEBUG] Rezervasyon {reservation.pk} için formset oluşturuldu.')
+        logger.info(f'[DEBUG] Rezervasyon misafir sayısı: {reservation.guests.count()}')
+        logger.info(f'[DEBUG] Formset queryset sayısı: {guest_formset.queryset.count()}')
+        logger.info(f'[DEBUG] Formset form sayısı: {len(guest_formset)}')
+        
+        # Formset formlarını detaylı logla
+        for i, form in enumerate(guest_formset):
+            logger.info(f'[DEBUG] Formset Form {i}: ID={form.instance.id if form.instance else "YENİ"}, Type={form.instance.guest_type if form.instance else "N/A"}, Order={form.instance.guest_order if form.instance else "N/A"}, Ad={form.instance.first_name if form.instance else "N/A"}')
         
         # Eğer formset hala boşsa, misafirleri logla
         if len(guest_formset) == 0 and reservation.guests.count() > 0:
-            logger.warning(f'Formset boş ama {reservation.guests.count()} misafir var!')
+            logger.warning(f'[WARNING] Formset boş ama {reservation.guests.count()} misafir var!')
+            logger.warning(f'[WARNING] Bu bir sorun! Formset misafirleri yükleyemiyor.')
             for guest in reservation.guests.all()[:5]:
-                logger.info(f'Misafir: {guest.id} - {guest.first_name} {guest.last_name} (type: {guest.guest_type}, order: {guest.guest_order}, reservation_id: {guest.reservation_id})')
+                logger.warning(f'[WARNING] Misafir: {guest.id} - {guest.first_name} {guest.last_name} (type: {guest.guest_type}, order: {guest.guest_order}, reservation_id: {guest.reservation_id})')
     
     # Misafir bilgileri (JavaScript için JSON)
     import json
@@ -897,7 +945,7 @@ def reservation_update(request, pk):
 @login_required
 @require_hotel_permission('delete')
 def reservation_delete(request, pk):
-    """Rezervasyon Sil (Soft Delete) - İki Aşamalı Onay"""
+    """Rezervasyon Sil (Soft Delete) - Ödeme ve İade Kontrolü ile"""
     hotel = request.active_hotel
     reservation = get_object_or_404(
         Reservation,
@@ -906,12 +954,59 @@ def reservation_delete(request, pk):
         is_deleted=False
     )
     
+    # Ödeme ve iade kontrolü
+    from apps.tenant_apps.core.utils import can_delete_with_payment_check, start_refund_process_for_deletion
+    
+    delete_check = can_delete_with_payment_check(reservation, 'reception')
+    
     if request.method == 'POST':
         # İki aşamalı onay kontrolü
         confirm_step = request.POST.get('confirm_step', '1')
         final_confirm = request.POST.get('final_confirm', '')
+        start_refund = request.POST.get('start_refund', '0') == '1'  # İade başlatma isteği
         
         if confirm_step == '1':
+            # Ödeme kontrolü - İade başlatma isteği varsa
+            if start_refund and delete_check['has_payment'] and not delete_check['refund_request']:
+                # İade sürecini başlat
+                refund_request = start_refund_process_for_deletion(
+                    reservation,
+                    'reception',
+                    request.user,
+                    reason='Rezervasyon silme işlemi için iade'
+                )
+                
+                if refund_request:
+                    messages.success(
+                        request,
+                        f'İade süreci başlatıldı. İade Talebi No: {refund_request.request_number}. '
+                        f'İade tamamlandıktan sonra silme işlemini yapabilirsiniz.'
+                    )
+                    return JsonResponse({
+                        'success': True,
+                        'refund_started': True,
+                        'refund_request_id': refund_request.pk,
+                        'refund_request_number': refund_request.request_number,
+                        'message': f'İade süreci başlatıldı. İade Talebi No: {refund_request.request_number}',
+                        'redirect_url': reverse('refunds:refund_request_detail', kwargs={'pk': refund_request.pk})
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'İade süreci başlatılamadı. Lütfen tekrar deneyin.'
+                    }, status=400)
+            
+            # İlk onay - ödeme/iade durumunu kontrol et
+            if not delete_check['can_delete']:
+                return JsonResponse({
+                    'success': False,
+                    'error': delete_check['message'],
+                    'has_payment': delete_check['has_payment'],
+                    'refund_status': delete_check['refund_status'],
+                    'refund_request_id': delete_check['refund_request_id'],
+                    'can_start_refund': delete_check['has_payment'] and not delete_check['refund_request'],
+                }, status=400)
+            
             # İlk onay - sadece onay mesajı döndür
             return JsonResponse({
                 'success': True,
@@ -920,6 +1015,18 @@ def reservation_delete(request, pk):
             })
         
         elif confirm_step == '2':
+            # Silme kontrolünü tekrar yap (durum değişmiş olabilir)
+            delete_check = can_delete_with_payment_check(reservation, 'reception')
+            
+            if not delete_check['can_delete']:
+                return JsonResponse({
+                    'success': False,
+                    'error': delete_check['message'],
+                    'has_payment': delete_check['has_payment'],
+                    'refund_status': delete_check['refund_status'],
+                    'refund_request_id': delete_check['refund_request_id'],
+                }, status=400)
+            
             # İkinci onay - rezervasyon kodu kontrolü
             entered_code = request.POST.get('reservation_code', '').strip()
             
@@ -966,6 +1073,12 @@ def reservation_delete(request, pk):
     # GET request - silme modalı için bilgileri döndür
     context = {
         'reservation': reservation,
+        'delete_check': delete_check,
+        'can_delete': delete_check['can_delete'],
+        'has_payment': delete_check['has_payment'],
+        'refund_status': delete_check['refund_status'],
+        'refund_request': delete_check['refund_request'],
+        'refund_message': delete_check['message'],
     }
     
     return render(request, 'reception/reservations/delete.html', context)
@@ -2308,32 +2421,44 @@ def reservation_voucher_detail(request, pk):
 @login_required
 @require_hotel_permission('view')
 def reservation_voucher_pdf(request, pk):
-    """Voucher PDF olarak indir"""
+    """Voucher PDF olarak indir - Direkt PDF formatında"""
     from .models import ReservationVoucher
     from django.http import HttpResponse
+    from django.contrib import messages
+    from django.shortcuts import redirect
     import logging
     logger = logging.getLogger(__name__)
     
     voucher = get_object_or_404(ReservationVoucher, pk=pk)
     
     # Voucher HTML'ini oluştur
-    from .utils import generate_reservation_voucher
-    voucher_html, _ = generate_reservation_voucher(voucher.reservation, voucher.voucher_template)
-    
-    # PDF oluştur (weasyprint veya xhtml2pdf kullanılabilir)
     try:
-        from weasyprint import HTML
-        pdf = HTML(string=voucher_html).write_pdf()
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="voucher_{voucher.voucher_code}.pdf"'
-        return response
-    except ImportError:
-        # weasyprint yoksa HTML döndür (indir butonu ile)
-        logger.warning('weasyprint bulunamadı, HTML olarak döndürülüyor')
-        return render(request, 'reception/vouchers/pdf_view.html', {
-            'voucher': voucher,
-            'voucher_html': voucher_html,
-        })
+        from .utils import generate_reservation_voucher
+        voucher_html, _ = generate_reservation_voucher(voucher.reservation, voucher.voucher_template)
+    except Exception as e:
+        logger.error(f'Voucher HTML oluşturulurken hata: {str(e)}', exc_info=True)
+        messages.error(request, f'Voucher PDF oluşturulurken hata: {str(e)}')
+        return redirect('reception:reservation_voucher_detail', pk=voucher.pk)
+    
+    # PDF oluştur - Güvenli utility fonksiyonu kullan (ReportLab öncelikli)
+    from apps.tenant_apps.core.pdf_utils import generate_pdf_response
+    
+    pdf_response = generate_pdf_response(
+        voucher_html,
+        filename=f'voucher_{voucher.voucher_code}.pdf'
+    )
+    
+    if pdf_response:
+        return pdf_response
+    
+    # PDF oluşturulamadıysa hata mesajı göster
+    logger.error('PDF oluşturma için gerekli kütüphaneler bulunamadı (ReportLab veya WeasyPrint)')
+    messages.error(
+        request,
+        'PDF oluşturulamadı. Lütfen sistem yöneticisine başvurun. '
+        'Gerekli kütüphaneler: reportlab veya weasyprint'
+    )
+    return redirect('reception:reservation_voucher_detail', pk=voucher.pk)
 
 
 @login_required

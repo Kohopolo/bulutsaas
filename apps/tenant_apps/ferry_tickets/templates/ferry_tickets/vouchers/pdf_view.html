@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voucher PDF - {{ voucher.voucher_code }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .download-btn {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .voucher-content {
+            border: 1px solid #ddd;
+            padding: 20px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="download-btn">
+        <button onclick="window.print()" class="btn">
+            <i class="fas fa-print"></i> Yazdır / PDF İndir
+        </button>
+    </div>
+    
+    <div class="voucher-content">
+        {{ voucher_html|safe }}
+    </div>
+</body>
+</html>
+

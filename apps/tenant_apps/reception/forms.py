@@ -210,12 +210,106 @@ class ReservationForm(forms.ModelForm):
             # Otel bilgisini set et
             self.fields['hotel'].initial = hotel.id
         
-        # Status ve Source varsayılan değerleri
-        self.fields['status'].initial = ReservationStatus.PENDING
-        self.fields['source'].initial = ReservationSource.DIRECT
+        # Düzenleme modunda (instance varsa) tüm alanları instance değerleri ile doldur
+        # ÖNEMLİ: Django ModelForm instance ile oluşturulduğunda otomatik olarak değerleri yükler
+        # Ancak bazı widget'lar (özellikle DateInput) bu değerleri doğru render etmeyebilir
+        # Bu yüzden initial değerlerini manuel olarak set ediyoruz
+        if self.instance and self.instance.pk:
+            # Mevcut toplam ödemeyi göster
+            self.fields['advance_payment'].initial = self.instance.total_paid or Decimal('0')
+            
+            # Son ödeme yöntemini göster
+            last_payment = self.instance.payments.filter(is_deleted=False).order_by('-payment_date').first()
+            if last_payment:
+                self.fields['payment_method'].initial = last_payment.payment_method
+            
+            # Tarih alanlarını instance değerleri ile doldur (ZORUNLU - Django otomatik yüklemiyor)
+            if self.instance.check_in_date:
+                # DateInput widget için format: YYYY-MM-DD
+                self.fields['check_in_date'].initial = self.instance.check_in_date.strftime('%Y-%m-%d') if hasattr(self.instance.check_in_date, 'strftime') else str(self.instance.check_in_date)
+            if self.instance.check_out_date:
+                self.fields['check_out_date'].initial = self.instance.check_out_date.strftime('%Y-%m-%d') if hasattr(self.instance.check_out_date, 'strftime') else str(self.instance.check_out_date)
+            if self.instance.check_in_time:
+                self.fields['check_in_time'].initial = self.instance.check_in_time.strftime('%H:%M') if hasattr(self.instance.check_in_time, 'strftime') else str(self.instance.check_in_time)
+            if self.instance.check_out_time:
+                self.fields['check_out_time'].initial = self.instance.check_out_time.strftime('%H:%M') if hasattr(self.instance.check_out_time, 'strftime') else str(self.instance.check_out_time)
+            
+            # Sayısal alanları instance değerleri ile doldur
+            if self.instance.adult_count is not None:
+                self.fields['adult_count'].initial = self.instance.adult_count
+            if self.instance.child_count is not None:
+                self.fields['child_count'].initial = self.instance.child_count
+            if self.instance.room_rate is not None:
+                self.fields['room_rate'].initial = str(self.instance.room_rate)  # Decimal için string'e çevir
+            if self.instance.discount_amount is not None:
+                self.fields['discount_amount'].initial = str(self.instance.discount_amount)
+            if self.instance.discount_percentage is not None:
+                self.fields['discount_percentage'].initial = str(self.instance.discount_percentage)
+            if self.instance.tax_amount is not None:
+                self.fields['tax_amount'].initial = str(self.instance.tax_amount)
+            
+            # Select alanlarını instance değerleri ile doldur (ZORUNLU - Django otomatik yüklemiyor)
+            if self.instance.room_id:
+                self.fields['room'].initial = self.instance.room_id
+            if self.instance.room_number_id:
+                self.fields['room_number'].initial = self.instance.room_number_id
+            if self.instance.status:
+                self.fields['status'].initial = self.instance.status
+            if self.instance.source:
+                self.fields['source'].initial = self.instance.source
+            if self.instance.reservation_agent_id:
+                self.fields['reservation_agent'].initial = self.instance.reservation_agent_id
+            if self.instance.reservation_channel_id:
+                self.fields['reservation_channel'].initial = self.instance.reservation_channel_id
+            if self.instance.discount_type:
+                self.fields['discount_type'].initial = self.instance.discount_type
+            if self.instance.currency:
+                self.fields['currency'].initial = self.instance.currency
+            
+            # Boolean alanları
+            if self.instance.is_comp is not None:
+                self.fields['is_comp'].initial = self.instance.is_comp
+            if self.instance.is_no_show is not None:
+                self.fields['is_no_show'].initial = self.instance.is_no_show
+            if self.instance.is_manual_price is not None:
+                self.fields['is_manual_price'].initial = self.instance.is_manual_price
+            if self.instance.early_check_in is not None:
+                self.fields['early_check_in'].initial = self.instance.early_check_in
+            if self.instance.late_check_out is not None:
+                self.fields['late_check_out'].initial = self.instance.late_check_out
+            
+            # Textarea alanları
+            if self.instance.no_show_reason:
+                self.fields['no_show_reason'].initial = self.instance.no_show_reason
+            if self.instance.special_requests:
+                self.fields['special_requests'].initial = self.instance.special_requests
+            if self.instance.internal_notes:
+                self.fields['internal_notes'].initial = self.instance.internal_notes
+            
+            # Ücret alanları
+            if self.instance.early_check_in_fee is not None:
+                self.fields['early_check_in_fee'].initial = str(self.instance.early_check_in_fee)
+            if self.instance.late_check_out_fee is not None:
+                self.fields['late_check_out_fee'].initial = str(self.instance.late_check_out_fee)
+            
+            # Debug: Initial değerlerini logla
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f'[DEBUG] Form initial değerleri set edildi - Rezervasyon ID: {self.instance.pk}')
+            logger.info(f'[DEBUG] check_in_date initial: {self.fields["check_in_date"].initial}')
+            logger.info(f'[DEBUG] check_out_date initial: {self.fields["check_out_date"].initial}')
+            logger.info(f'[DEBUG] room initial: {self.fields["room"].initial}')
+            logger.info(f'[DEBUG] status initial: {self.fields["status"].initial}')
+            logger.info(f'[DEBUG] room_rate initial: {self.fields["room_rate"].initial}')
+        
+        # Status ve Source varsayılan değerleri (sadece yeni rezervasyon için)
+        if not self.instance or not self.instance.pk:
+            self.fields['status'].initial = ReservationStatus.PENDING
+            self.fields['source'].initial = ReservationSource.DIRECT
         
         # Currency varsayılan
-        self.fields['currency'].initial = 'TRY'
+        if not self.instance or not self.instance.currency:
+            self.fields['currency'].initial = 'TRY'
     
     def clean(self):
         cleaned_data = super().clean()

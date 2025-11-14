@@ -73,6 +73,12 @@ urlpatterns = [
     # Kanal Yönetimi (Channel Management)
     path('channel-management/', include('apps.tenant_apps.channel_management.urls')),
     
+    # Feribot Bileti (Ferry Tickets)
+    path('ferry-tickets/', include('apps.tenant_apps.ferry_tickets.urls')),
+    
+    # Bungalov Yönetimi (Bungalovs)
+    path('bungalovs/', include('apps.tenant_apps.bungalovs.urls')),
+    
     # Tenant Apps (tenant üyelerine özel) - Şimdilik kapalı
     # path('reservations/', include('apps.tenant_apps.reservations.urls')),
     # path('housekeeping/', include('apps.tenant_apps.housekeeping.urls')),

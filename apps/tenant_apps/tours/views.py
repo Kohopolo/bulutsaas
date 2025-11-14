@@ -386,10 +386,20 @@ def tour_reservation_detail(request, pk):
     total_paid = reservation.payments.filter(status='completed').aggregate(total=Sum('amount'))['total'] or 0
     remaining_amount = reservation.total_amount - Decimal(str(total_paid))
     
+    # Ödeme ve iade kontrolü (iptal/silme için)
+    from apps.tenant_apps.core.utils import can_delete_with_payment_check
+    delete_check = can_delete_with_payment_check(reservation, 'tours')
+    
     context = {
         'reservation': reservation,
         'total_paid': total_paid,
         'remaining_amount': remaining_amount,
+        'delete_check': delete_check,
+        'can_delete': delete_check['can_delete'],
+        'has_payment': delete_check['has_payment'],
+        'refund_status': delete_check['refund_status'],
+        'refund_request': delete_check['refund_request'],
+        'refund_message': delete_check['message'],
     }
     
     return render(request, 'tenant/tours/reservations/detail.html', context)
@@ -985,11 +995,45 @@ def tour_reservation_update(request, pk):
 @login_required
 @require_http_methods(["POST"])
 def tour_reservation_cancel(request, pk):
-    """Rezervasyon iptal"""
+    """Rezervasyon iptal - Ödeme ve İade Kontrolü ile"""
     reservation = get_object_or_404(TourReservation, pk=pk)
     
     if reservation.status == 'cancelled':
         messages.warning(request, 'Bu rezervasyon zaten iptal edilmiş.')
+        return redirect('tours:reservation_detail', pk=reservation.pk)
+    
+    # Ödeme ve iade kontrolü
+    from apps.tenant_apps.core.utils import can_delete_with_payment_check, start_refund_process_for_deletion
+    
+    delete_check = can_delete_with_payment_check(reservation, 'tours')
+    start_refund = request.POST.get('start_refund', '0') == '1' if request.method == 'POST' else False
+    
+    # İade başlatma isteği varsa
+    if start_refund and delete_check['has_payment'] and not delete_check['refund_request']:
+        refund_request = start_refund_process_for_deletion(
+            reservation,
+            'tours',
+            request.user,
+            reason='Rezervasyon iptal işlemi için iade'
+        )
+        
+        if refund_request:
+            messages.success(
+                request,
+                f'İade süreci başlatıldı. İade Talebi No: {refund_request.request_number}. '
+                f'İade tamamlandıktan sonra iptal işlemini yapabilirsiniz.'
+            )
+            return redirect('refunds:refund_request_detail', pk=refund_request.pk)
+        else:
+            messages.error(request, 'İade süreci başlatılamadı. Lütfen tekrar deneyin.')
+            return redirect('tours:reservation_detail', pk=reservation.pk)
+    
+    # Ödeme kontrolü - İptal işlemi için
+    if delete_check['has_payment'] and not delete_check['can_delete']:
+        messages.error(request, delete_check['message'])
+        if request.method == 'POST':
+            return redirect('tours:reservation_detail', pk=reservation.pk)
+        # GET request ise detail sayfasına yönlendir (modal orada açılacak)
         return redirect('tours:reservation_detail', pk=reservation.pk)
     
     # İptal işlemi - kontenjan geri verilir (otomatik olarak get_available_capacity'de hesaplanır)

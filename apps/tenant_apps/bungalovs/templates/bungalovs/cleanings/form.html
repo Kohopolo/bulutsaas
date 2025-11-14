@@ -1,0 +1,185 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if cleaning %}Temizlik Kaydı Düzenle{% else %}Yeni Temizlik Kaydı{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-{% if cleaning %}edit{% else %}plus{% endif %}"></i> 
+            {% if cleaning %}Temizlik Kaydı Düzenle{% else %}Yeni Temizlik Kaydı{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'bungalovs:cleaning_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Temel Bilgiler -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.bungalov.label }} <span style="color: red;">*</span></label>
+                                {{ form.bungalov }}
+                                {% if form.bungalov.errors %}
+                                <div class="error-message">{{ form.bungalov.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.reservation.label }}</label>
+                                {{ form.reservation }}
+                                {% if form.reservation.errors %}
+                                <div class="error-message">{{ form.reservation.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.cleaning_type.label }} <span style="color: red;">*</span></label>
+                                {{ form.cleaning_type }}
+                                {% if form.cleaning_type.errors %}
+                                <div class="error-message">{{ form.cleaning_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.status.label }} <span style="color: red;">*</span></label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                <div class="error-message">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.cleaning_date.label }} <span style="color: red;">*</span></label>
+                                {{ form.cleaning_date }}
+                                {% if form.cleaning_date.errors %}
+                                <div class="error-message">{{ form.cleaning_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.cleaning_time.label }}</label>
+                                {{ form.cleaning_time }}
+                                {% if form.cleaning_time.errors %}
+                                <div class="error-message">{{ form.cleaning_time.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Personel -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-users"></i> Personel
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.assigned_to.label }}</label>
+                                {{ form.assigned_to }}
+                                {% if form.assigned_to.errors %}
+                                <div class="error-message">{{ form.assigned_to.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.completed_by.label }}</label>
+                                {{ form.completed_by }}
+                                {% if form.completed_by.errors %}
+                                <div class="error-message">{{ form.completed_by.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.completed_at.label }}</label>
+                                {{ form.completed_at }}
+                                {% if form.completed_at.errors %}
+                                <div class="error-message">{{ form.completed_at.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.inspected_by.label }}</label>
+                                {{ form.inspected_by }}
+                                {% if form.inspected_by.errors %}
+                                <div class="error-message">{{ form.inspected_by.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.inspected_at.label }}</label>
+                                {{ form.inspected_at }}
+                                {% if form.inspected_at.errors %}
+                                <div class="error-message">{{ form.inspected_at.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notlar -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-sticky-note"></i> Notlar
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.cleaning_notes.label }}</label>
+                                {{ form.cleaning_notes }}
+                                {% if form.cleaning_notes.errors %}
+                                <div class="error-message">{{ form.cleaning_notes.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.issues_found.label }}</label>
+                                {{ form.issues_found }}
+                                {% if form.issues_found.errors %}
+                                <div class="error-message">{{ form.issues_found.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>{{ form.inspection_notes.label }}</label>
+                                {{ form.inspection_notes }}
+                                {% if form.inspection_notes.errors %}
+                                <div class="error-message">{{ form.inspection_notes.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Hataları -->
+                {% if form.non_field_errors %}
+                <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 3px; margin-bottom: 20px; color: #721c24;">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <!-- Butonlar -->
+                <div style="text-align: right; margin-top: 20px;">
+                    <a href="{% url 'bungalovs:cleaning_list' %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

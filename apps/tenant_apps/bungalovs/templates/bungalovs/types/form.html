@@ -1,0 +1,220 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if bungalov_type %}Bungalov Tipi Düzenle{% else %}Yeni Bungalov Tipi{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-{% if bungalov_type %}edit{% else %}plus{% endif %}"></i> 
+            {% if bungalov_type %}Bungalov Tipi Düzenle{% else %}Yeni Bungalov Tipi{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'bungalovs:bungalov_type_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Temel Bilgiler -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.name.label }} <span style="color: red;">*</span></label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="error-message">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.code.label }} <span style="color: red;">*</span></label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                <div class="error-message">{{ form.code.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="error-message">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kapasite Bilgileri -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-users"></i> Kapasite Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.max_adults.label }} <span style="color: red;">*</span></label>
+                                {{ form.max_adults }}
+                                {% if form.max_adults.errors %}
+                                <div class="error-message">{{ form.max_adults.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.max_children.label }} <span style="color: red;">*</span></label>
+                                {{ form.max_children }}
+                                {% if form.max_children.errors %}
+                                <div class="error-message">{{ form.max_children.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.max_total.label }} <span style="color: red;">*</span></label>
+                                {{ form.max_total }}
+                                {% if form.max_total.errors %}
+                                <div class="error-message">{{ form.max_total.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alan Bilgileri -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-ruler-combined"></i> Alan Bilgileri (m²)
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.total_area.label }}</label>
+                                {{ form.total_area }}
+                                {% if form.total_area.errors %}
+                                <div class="error-message">{{ form.total_area.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.indoor_area.label }}</label>
+                                {{ form.indoor_area }}
+                                {% if form.indoor_area.errors %}
+                                <div class="error-message">{{ form.indoor_area.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.outdoor_area.label }}</label>
+                                {{ form.outdoor_area }}
+                                {% if form.outdoor_area.errors %}
+                                <div class="error-message">{{ form.outdoor_area.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Oda Bilgileri -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-door-open"></i> Oda Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.bedroom_count.label }} <span style="color: red;">*</span></label>
+                                {{ form.bedroom_count }}
+                                {% if form.bedroom_count.errors %}
+                                <div class="error-message">{{ form.bedroom_count.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.bathroom_count.label }} <span style="color: red;">*</span></label>
+                                {{ form.bathroom_count }}
+                                {% if form.bathroom_count.errors %}
+                                <div class="error-message">{{ form.bathroom_count.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Özellikler -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-check-circle"></i> Özellikler
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.has_living_room.label }}</label>
+                                <div style="margin-top: 8px;">
+                                    {{ form.has_living_room }}
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.has_kitchen.label }}</label>
+                                <div style="margin-top: 8px;">
+                                    {{ form.has_kitchen }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Durum ve Sıralama -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-cog"></i> Durum ve Sıralama
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.is_active.label }}</label>
+                                <div style="margin-top: 8px;">
+                                    {{ form.is_active }}
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.sort_order.label }}</label>
+                                {{ form.sort_order }}
+                                {% if form.sort_order.errors %}
+                                <div class="error-message">{{ form.sort_order.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Hataları -->
+                {% if form.non_field_errors %}
+                <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 3px; margin-bottom: 20px; color: #721c24;">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <!-- Butonlar -->
+                <div style="text-align: right; margin-top: 20px;">
+                    <a href="{% url 'bungalovs:bungalov_type_list' %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -22,14 +22,20 @@ function openReservationModal(reservationId = null) {
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
-        // Form'u resetle (yeni rezervasyon için)
+        // Form'u resetle (SADECE yeni rezervasyon için - düzenleme modunda resetleme!)
         const form = document.getElementById('reservationForm');
         if (form) {
-            form.reset();
-            // Form action'ı yeni rezervasyon için ayarla
-            const createUrl = form.action.replace(/\/\d+\/edit\//, '/create/');
-            if (!form.action.includes('/create/')) {
-                form.action = createUrl;
+            // Düzenleme modunda form resetleme - form zaten Django tarafından doldurulmuş
+            const isEditMode = form.action.includes('/edit/');
+            if (!isEditMode) {
+                form.reset();
+                // Form action'ı yeni rezervasyon için ayarla
+                const createUrl = form.action.replace(/\/\d+\/edit\//, '/create/');
+                if (!form.action.includes('/create/')) {
+                    form.action = createUrl;
+                }
+            } else {
+                console.log('Düzenleme modu - Form resetlenmedi, Django değerleri korunuyor');
             }
         }
         
@@ -38,7 +44,10 @@ function openReservationModal(reservationId = null) {
             // loadReservationData(reservationId);
             console.log('Rezervasyon yükleme henüz implement edilmedi:', reservationId);
         } else {
-            resetForm();
+            // Sadece yeni rezervasyon için reset
+            if (!form || !form.action.includes('/edit/')) {
+                resetForm();
+            }
         }
         
         // Event listener'ları bağla (modal açıldığında)
@@ -46,12 +55,14 @@ function openReservationModal(reservationId = null) {
             attachEventListeners();
         }, 100);
         
-        // İlk hesaplamaları yap
-        if (typeof calculateNights === 'function') {
-            calculateNights();
-        }
-        if (typeof updateGuestForms === 'function') {
-            updateGuestForms();
+        // İlk hesaplamaları yap (sadece yeni rezervasyon için)
+        if (!form || !form.action.includes('/edit/')) {
+            if (typeof calculateNights === 'function') {
+                calculateNights();
+            }
+            if (typeof updateGuestForms === 'function') {
+                updateGuestForms();
+            }
         }
     } else {
         console.error('reservationModal elementi bulunamadı!');

@@ -102,57 +102,34 @@ body {
    TOOLBAR (Menü & Araç Çubuğu)
    ================================ */
 .toolbar {
-    background: #e8f4f8;
-    border-bottom: 1px solid #c0d4e0;
+    background: #f3f3f3;
+    border-bottom: 1px solid #d4d4d4;
     padding: 8px 15px;
     display: flex;
-    gap: 8px;
-    align-items: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-    min-height: 48px;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .toolbar-button {
-    padding: 6px 12px;
+    padding: 8px 16px;
     background: white;
-    border: 1px solid #b0c4de;
+    border: 1px solid #adadad;
     border-radius: 3px;
     cursor: pointer;
     font-size: 13px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: all 0.15s;
-    color: #2c3e50;
-    font-weight: 500;
+    gap: 8px;
+    transition: all 0.2s;
 }
 
 .toolbar-button:hover {
-    background: #d0e8f5;
-    border-color: #5a9bc8;
+    background: #e5f3ff;
+    border-color: #0078d4;
 }
 
 .toolbar-button:active {
-    background: #b8d8eb;
-}
-
-.toolbar-button-icon {
-    padding: 6px 10px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #4a6fa5;
-    transition: all 0.15s;
-    border-radius: 3px;
-}
-
-.toolbar-button-icon:hover {
-    background: #d0e8f5;
-    color: #2c5f8d;
+    background: #cce8ff;
 }
 
 .toolbar-separator {
@@ -299,109 +276,35 @@ body {
    ================================ */
 .datagrid {
     width: 100%;
-    border: 1px solid #d4d4d4;
-    border-radius: 4px;
-    background: white;
-    overflow: hidden;
-}
-
-.vb-datagrid-container {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: calc(100vh - 300px);
-}
-
-.datagrid table {
-    width: 100%;
     border-collapse: collapse;
     background: white;
     font-size: 13px;
 }
 
 .datagrid thead {
-    background: #f8f9fa;
-}
-
-.datagrid thead tr {
-    border-bottom: 2px solid #d4d4d4;
+    background: #f0f0f0;
 }
 
 .datagrid th {
-    padding: 10px 12px;
+    padding: 12px;
     text-align: left;
     font-weight: 600;
-    color: #495057;
-    border-right: 1px solid #d4d4d4;
-    background: #f8f9fa;
-    position: relative;
-}
-
-.datagrid th:last-child {
-    border-right: none;
-}
-
-/* Filter input row below headers */
-.datagrid thead tr.filter-row {
-    background: #ffffff;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.datagrid thead tr.filter-row th {
-    padding: 6px 8px;
-    background: white;
-    border-right: 1px solid #e0e0e0;
-    border-top: 1px solid #e0e0e0;
-}
-
-.datagrid thead tr.filter-row th:last-child {
-    border-right: none;
-}
-
-.datagrid .filter-input {
-    width: 100%;
-    padding: 4px 6px;
-    border: 1px solid #ced4da;
-    border-radius: 2px;
-    font-size: 12px;
-    background: white;
-}
-
-.datagrid .filter-input:focus {
-    outline: none;
-    border-color: #0078d4;
-    box-shadow: 0 0 0 1px #0078d4;
-}
-
-.datagrid tbody tr {
-    border-bottom: 1px solid #e0e0e0;
-    transition: background 0.15s;
-}
-
-.datagrid tbody tr:nth-child(even) {
-    background: #ffffff;
-}
-
-.datagrid tbody tr:nth-child(odd) {
-    background: #f8f9fa;
+    color: #333;
+    border: 1px solid #d4d4d4;
 }
 
 .datagrid td {
-    padding: 8px 12px;
-    border-right: 1px solid #e0e0e0;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
     color: #333;
-    font-size: 13px;
 }
 
-.datagrid td:last-child {
-    border-right: none;
+.datagrid tr:hover {
+    background: #f5f5f5;
 }
 
-.datagrid tbody tr:hover {
-    background: #e8f4f8 !important;
-}
-
-.datagrid tbody tr.selected {
-    background: #cce8ff !important;
+.datagrid tr.selected {
+    background: #cce8ff;
 }
 
 /* ================================
@@ -585,13 +488,6 @@ body {
 .badge.warning { background: #ff8c00; color: white; }
 .badge.danger { background: #d13438; color: white; }
 .badge.info { background: #0078d4; color: white; }
-
-/* Oda Durumu Badge'leri */
-.badge-available { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-.badge-occupied { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-.badge-maintenance { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-.badge-cleaning { background: #cfe2ff; color: #004085; border: 1px solid #b3d7ff; }
-.badge-reserved { background: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
 
 /* ================================
    SCROLLBAR STYLING
