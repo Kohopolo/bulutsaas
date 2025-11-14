@@ -1,0 +1,146 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}İzin Talepleri - Personel Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-calendar-times mr-2 text-vb-primary"></i>
+            İzin Talepleri
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'staff:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ana Ekran
+            </a>
+            <a href="{% url 'staff:leave_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni İzin Talebi
+            </a>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Durum</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Bekliyor</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Onaylandı</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Reddedildi</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>İptal Edildi</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">İzin Tipi</label>
+                <select name="leave_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    <option value="annual" {% if leave_type_filter == 'annual' %}selected{% endif %}>Yıllık İzin</option>
+                    <option value="sick" {% if leave_type_filter == 'sick' %}selected{% endif %}>Hastalık İzni</option>
+                    <option value="personal" {% if leave_type_filter == 'personal' %}selected{% endif %}>Özel İzin</option>
+                    <option value="unpaid" {% if leave_type_filter == 'unpaid' %}selected{% endif %}>Ücretsiz İzin</option>
+                    <option value="maternity" {% if leave_type_filter == 'maternity' %}selected{% endif %}>Doğum İzni</option>
+                    <option value="paternity" {% if leave_type_filter == 'paternity' %}selected{% endif %}>Babalık İzni</option>
+                    <option value="other" {% if leave_type_filter == 'other' %}selected{% endif %}>Diğer</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if leaves %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Personel</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İzin Tipi</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Başlangıç</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Bitiş</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Toplam Gün</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Talep Tarihi</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leaves %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                            {{ leave.staff.full_name }}
+                            <span class="text-gray-500 text-xs block">{{ leave.staff.employee_id }}</span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ leave.get_leave_type_display }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ leave.start_date|date:"d.m.Y" }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ leave.end_date|date:"d.m.Y" }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">{{ leave.total_days }} gün</td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-1 rounded text-xs font-semibold
+                                {% if leave.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif leave.status == 'approved' %}bg-green-100 text-green-800
+                                {% elif leave.status == 'rejected' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ leave.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ leave.requested_at|date:"d.m.Y H:i" }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="flex space-x-2">
+                                <a href="#" class="text-vb-primary hover:text-blue-600" title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="text-yellow-600 hover:text-yellow-700" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if leaves.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Sayfa {{ leaves.number }} / {{ leaves.paginator.num_pages }} (Toplam {{ leaves.paginator.count }} kayıt)
+                </div>
+                <div class="flex space-x-2">
+                    {% if leaves.has_previous %}
+                    <a href="?page={{ leaves.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if leave_type_filter %}&leave_type={{ leave_type_filter }}{% endif %}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+                    {% if leaves.has_next %}
+                    <a href="?page={{ leaves.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if leave_type_filter %}&leave_type={{ leave_type_filter }}{% endif %}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="p-8 text-center">
+            <i class="fas fa-calendar-times text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg">Henüz izin talebi bulunmamaktadır.</p>
+            <a href="{% url 'staff:leave_create' %}" class="mt-4 inline-block px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                İlk İzin Talebini Oluştur
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

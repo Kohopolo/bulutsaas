@@ -79,6 +79,9 @@ urlpatterns = [
     # Bungalov Yönetimi (Bungalovs)
     path('bungalovs/', include('apps.tenant_apps.bungalovs.urls')),
     
+    # Yedekleme Yönetimi (Backup)
+    path('backup/', include('apps.tenant_apps.backup.urls')),
+    
     # Tenant Apps (tenant üyelerine özel) - Şimdilik kapalı
     # path('reservations/', include('apps.tenant_apps.reservations.urls')),
     # path('housekeeping/', include('apps.tenant_apps.housekeeping.urls')),

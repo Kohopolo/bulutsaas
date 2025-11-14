@@ -13,7 +13,7 @@ class TenantPaymentGatewayForm(forms.ModelForm):
         model = TenantPaymentGateway
         fields = [
             'gateway', 'api_key', 'secret_key', 'merchant_id', 'store_key',
-            'use_3d_secure', 'callback_url', 'enable_installment', 
+            'paytr_api_type', 'use_3d_secure', 'callback_url', 'enable_installment', 
             'max_installment', 'is_active', 'is_test_mode', 'settings'
         ]
         widgets = {
@@ -74,6 +74,10 @@ class TenantPaymentGatewayForm(forms.ModelForm):
                 'rows': 3,
                 'id': 'id_settings'
             }),
+            'paytr_api_type': forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'id_paytr_api_type'
+            }),
         }
     
     def __init__(self, *args, **kwargs):
@@ -132,6 +136,8 @@ class TenantPaymentGatewayForm(forms.ModelForm):
                 self.fields['secret_key'].help_text = 'PayTR Merchant Key'
                 self.fields['store_key'].label = 'Merchant Salt'
                 self.fields['store_key'].help_text = 'PayTR Merchant Salt'
+                self.fields['paytr_api_type'].label = 'API Tipi'
+                self.fields['paytr_api_type'].help_text = 'PayTR için kullanılacak API tipi (Direkt API veya iFrame API)'
                 self.fields['api_key'].widget = forms.HiddenInput()
             
             # NestPay ve Banka Sanal Pos için
@@ -145,6 +151,9 @@ class TenantPaymentGatewayForm(forms.ModelForm):
                 self.fields['store_key'].help_text = 'Banka tarafından verilen Store Key veya Password'
                 self.fields['api_key'].widget = forms.HiddenInput()
                 self.fields['secret_key'].widget = forms.HiddenInput()
+                # PayTR dışındaki gateway'ler için paytr_api_type'ı gizle
+                if 'paytr_api_type' in self.fields:
+                    self.fields['paytr_api_type'].widget = forms.HiddenInput()
             
             # Diğer gateway'ler için genel
             else:
@@ -152,4 +161,7 @@ class TenantPaymentGatewayForm(forms.ModelForm):
                 self.fields['secret_key'].label = 'Secret Key'
                 self.fields['merchant_id'].label = 'Merchant ID'
                 self.fields['store_key'].label = 'Store Key'
+                # PayTR dışındaki gateway'ler için paytr_api_type'ı gizle
+                if 'paytr_api_type' in self.fields:
+                    self.fields['paytr_api_type'].widget = forms.HiddenInput()
 

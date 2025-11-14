@@ -57,15 +57,106 @@
                         {% endif %}
                     </div>
                     
+                    <!-- API Bilgileri - Dinamik Form Alanları -->
                     <div class="form-group" style="grid-column: span 2;">
-                        <label for="{{ form.api_credentials.id_for_label }}">{{ form.api_credentials.label }}</label>
+                        <label><strong>API Bilgileri</strong></label>
+                        <div id="api-credentials-container" style="background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">
+                            {% if template %}
+                                {% if template.required_fields %}
+                                    <div style="margin-bottom: 15px;">
+                                        <strong style="color: #495057; font-size: 13px; margin-bottom: 10px; display: block;">
+                                            <i class="fas fa-asterisk" style="color: #dc3545; font-size: 10px;"></i> Gerekli Alanlar
+                                        </strong>
+                                        {% for field_key, field_label in template.required_fields.items %}
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label for="api_field_{{ field_key }}" style="font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 5px; display: block;">
+                                                {{ field_label }} <span style="color: #dc3545;">*</span>
+                                            </label>
+                                            <input 
+                                                type="{% if 'password' in field_key or 'secret' in field_key %}password{% else %}text{% endif %}" 
+                                                id="api_field_{{ field_key }}" 
+                                                name="api_field_{{ field_key }}"
+                                                class="form-control api-credential-field" 
+                                                data-field-key="{{ field_key }}"
+                                                placeholder="{{ field_label }} giriniz"
+                                                style="font-size: 13px;"
+                                            />
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if template.optional_fields %}
+                                    <div>
+                                        <strong style="color: #495057; font-size: 13px; margin-bottom: 10px; display: block;">
+                                            <i class="fas fa-info-circle" style="color: #17a2b8; font-size: 10px;"></i> Opsiyonel Alanlar
+                                        </strong>
+                                        {% for field_key, field_label in template.optional_fields.items %}
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label for="api_field_{{ field_key }}" style="font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 5px; display: block;">
+                                                {{ field_label }}
+                                            </label>
+                                            <input 
+                                                type="{% if 'password' in field_key or 'secret' in field_key %}password{% else %}text{% endif %}" 
+                                                id="api_field_{{ field_key }}" 
+                                                name="api_field_{{ field_key }}"
+                                                class="form-control api-credential-field" 
+                                                data-field-key="{{ field_key }}"
+                                                placeholder="{{ field_label }} giriniz (opsiyonel)"
+                                                style="font-size: 13px;"
+                                            />
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if not template.required_fields and not template.optional_fields %}
+                                    <div style="color: #6c757d; font-size: 13px; padding: 10px; background: #fff; border-radius: 3px; border: 1px dashed #ced4da;">
+                                        <i class="fas fa-info-circle"></i> Bu kanal için özel API alanları tanımlanmamış. Genel alanları kullanabilirsiniz.
+                                    </div>
+                                    <div class="form-group" style="margin-top: 15px;">
+                                        <label for="api_field_api_key" style="font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 5px; display: block;">
+                                            API Key
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            id="api_field_api_key" 
+                                            name="api_field_api_key"
+                                            class="form-control api-credential-field" 
+                                            data-field-key="api_key"
+                                            placeholder="API Key giriniz"
+                                            style="font-size: 13px;"
+                                        />
+                                    </div>
+                                    <div class="form-group" style="margin-top: 12px;">
+                                        <label for="api_field_api_secret" style="font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 5px; display: block;">
+                                            API Secret
+                                        </label>
+                                        <input 
+                                            type="password" 
+                                            id="api_field_api_secret" 
+                                            name="api_field_api_secret"
+                                            class="form-control api-credential-field" 
+                                            data-field-key="api_secret"
+                                            placeholder="API Secret giriniz"
+                                            style="font-size: 13px;"
+                                        />
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div style="color: #6c757d; font-size: 13px; padding: 10px; background: #fff; border-radius: 3px; border: 1px dashed #ced4da;">
+                                    <i class="fas fa-info-circle"></i> Önce bir kanal şablonu seçiniz.
+                                </div>
+                            {% endif %}
+                        </div>
+                        <!-- Gizli alan - JSON verisi buraya yazılacak -->
                         {{ form.api_credentials }}
-                        {% if form.api_credentials.help_text %}
-                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.api_credentials.help_text }}</small>
-                        {% endif %}
                         {% if form.api_credentials.errors %}
                         <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.api_credentials.errors }}</div>
                         {% endif %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 8px;">
+                            <i class="fas fa-lock"></i> API bilgileriniz güvenli bir şekilde saklanacaktır.
+                        </small>
                     </div>
                     
                     <div class="form-group">
@@ -220,5 +311,95 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const apiCredentialsInput = document.getElementById('id_api_credentials');
+    const apiFields = document.querySelectorAll('.api-credential-field');
+    const form = document.querySelector('form');
+    
+    // Gerekli alanları belirle (template'ten gelen bilgilere göre)
+    const requiredFieldKeys = [];
+    {% if template and template.required_fields %}
+        {% for field_key, field_label in template.required_fields.items %}
+            requiredFieldKeys.push('{{ field_key }}');
+        {% endfor %}
+    {% endif %}
+    
+    // Mevcut API credentials'ı yükle (eğer varsa)
+    function loadExistingCredentials() {
+        if (apiCredentialsInput && apiCredentialsInput.value) {
+            try {
+                const credentials = JSON.parse(apiCredentialsInput.value);
+                apiFields.forEach(function(field) {
+                    const fieldKey = field.getAttribute('data-field-key');
+                    if (credentials[fieldKey]) {
+                        field.value = credentials[fieldKey];
+                    }
+                });
+            } catch (e) {
+                console.error('API credentials parse hatası:', e);
+            }
+        }
+    }
+    
+    // API alanlarını JSON'a dönüştür
+    function updateApiCredentials() {
+        const credentials = {};
+        apiFields.forEach(function(field) {
+            const fieldKey = field.getAttribute('data-field-key');
+            const value = field.value.trim();
+            if (value) {
+                credentials[fieldKey] = value;
+            }
+        });
+        
+        if (apiCredentialsInput) {
+            apiCredentialsInput.value = JSON.stringify(credentials);
+        }
+    }
+    
+    // Her alan değiştiğinde JSON'u güncelle
+    apiFields.forEach(function(field) {
+        field.addEventListener('input', updateApiCredentials);
+        field.addEventListener('blur', updateApiCredentials);
+    });
+    
+    // Form gönderilmeden önce JSON'u güncelle ve validasyon yap
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            updateApiCredentials();
+            
+            // Gerekli alanları kontrol et
+            let hasError = false;
+            const errorMessages = [];
+            
+            requiredFieldKeys.forEach(function(requiredKey) {
+                const field = document.querySelector('.api-credential-field[data-field-key="' + requiredKey + '"]');
+                if (field && !field.value.trim()) {
+                    field.style.borderColor = '#dc3545';
+                    hasError = true;
+                    const label = field.closest('.form-group')?.querySelector('label')?.textContent || requiredKey;
+                    errorMessages.push(label.replace('*', '').trim());
+                } else if (field) {
+                    field.style.borderColor = '';
+                }
+            });
+            
+            if (hasError) {
+                e.preventDefault();
+                alert('Lütfen tüm gerekli alanları doldurunuz:\n- ' + errorMessages.join('\n- '));
+                return false;
+            }
+        });
+    }
+    
+    // Sayfa yüklendiğinde mevcut değerleri yükle
+    loadExistingCredentials();
+    
+    // İlk yüklemede JSON'u güncelle
+    updateApiCredentials();
+});
+</script>
 {% endblock %}
 

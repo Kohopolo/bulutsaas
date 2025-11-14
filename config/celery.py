@@ -35,6 +35,16 @@ app.conf.beat_schedule = {
         'task': 'apps.core.tasks.cleanup_cache',
         'schedule': crontab(minute=0, hour='*/6'),
     },
+    # Her gece saat 03:00'de günlük otomatik veritabanı yedekleme
+    'daily-database-backup': {
+        'task': 'backup.daily_backup',
+        'schedule': crontab(hour=3, minute=0),
+    },
+    # Her hafta Pazar günü saat 04:00'de eski yedekleri temizle (30 günden eski)
+    'cleanup-old-backups': {
+        'task': 'backup.cleanup_old_backups',
+        'schedule': crontab(hour=4, minute=0, day_of_week=0),  # 0 = Pazar
+    },
 }
 
 @app.task(bind=True, ignore_result=True)

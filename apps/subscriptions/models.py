@@ -93,17 +93,22 @@ class Subscription(TimeStampedModel):
         return False
 
     def renew(self, period=None):
-        """Aboneliği yenile"""
+        """Aboneliği yenile - Bitiş tarihinden sonra ekle"""
         if period:
             self.period = period
         
-        self.start_date = timezone.now().date()
+        # start_date'i değiştirme, sadece end_date'i uzat
+        # Eski paketin bitiş tarihinden itibaren uzat (bitiş tarihi geçmişse bile bitiş tarihinden itibaren)
+        # Eğer bitiş tarihi geçmişse bugünden başlat, değilse bitiş tarihinden sonra ekle
+        base_date = max(self.end_date, timezone.now().date())
         
         if self.period == 'monthly':
-            self.end_date = self.start_date + timedelta(days=30)
+            # Bitiş tarihinden itibaren 1 ay ekle
+            self.end_date = base_date + timedelta(days=30)
             self.amount = self.package.price_monthly
         elif self.period == 'yearly':
-            self.end_date = self.start_date + timedelta(days=365)
+            # Bitiş tarihinden itibaren 1 yıl ekle
+            self.end_date = base_date + timedelta(days=365)
             self.amount = self.package.price_yearly or (self.package.price_monthly * 12)
         
         self.next_billing_date = self.end_date

@@ -18,7 +18,7 @@ from django.db import transaction
 from django.core.mail import send_mail
 from django.conf import settings
 from django_tenants.utils import schema_context, get_public_schema_name
-from apps.payments.models import PaymentGateway, TenantPaymentGateway, PaymentTransaction, PaymentWebhook
+from apps.payments.models import PaymentGateway, TenantPaymentGateway, SuperAdminPaymentGateway, PaymentTransaction, PaymentWebhook
 from apps.payments.gateways import IyzicoGateway, PayTRGateway, NestPayGateway
 from apps.subscriptions.models import Subscription
 from apps.packages.models import Package
@@ -27,37 +27,68 @@ from apps.tenants.models import Tenant
 logger = logging.getLogger(__name__)
 
 
-def get_gateway_instance(gateway_code: str, tenant_config: TenantPaymentGateway):
-    """Get gateway instance by code"""
+def get_superadmin_gateway():
+    """
+    Super Admin'in aktif ödeme gateway'ini döndürür
+    Paket yenileme/yükseltme ödemeleri için kullanılır
+    """
+    superadmin_gateway = SuperAdminPaymentGateway.objects.filter(
+        is_active=True
+    ).select_related('gateway').first()
+    
+    if not superadmin_gateway:
+        logger.warning('Super Admin ödeme gateway ayarları bulunamadı.')
+        return None
+    
+    return superadmin_gateway
+
+
+def get_gateway_instance(gateway_code: str, config):
+    """Get gateway instance by code
+    
+    Args:
+        gateway_code: Gateway kodu (iyzico, paytr, vb.)
+        config: TenantPaymentGateway veya SuperAdminPaymentGateway instance
+    """
     from .gateways import GarantiGateway, DenizbankGateway, PayUGateway
     
-    config = {
-        'api_key': tenant_config.api_key,
-        'secret_key': tenant_config.secret_key,
-        'merchant_id': tenant_config.merchant_id,
-        'store_key': tenant_config.store_key,
-        'is_test_mode': tenant_config.is_test_mode,
+    gateway_config = {
+        'api_key': config.api_key,
+        'secret_key': config.secret_key,
+        'merchant_id': config.merchant_id,
+        'store_key': config.store_key,
+        'is_test_mode': config.is_test_mode,
     }
     
+    # PayTR için API tipini ekle
+    if gateway_code == 'paytr':
+        # PayTR API tipi kontrolü - boş string veya None ise 'direct' kullan
+        paytr_api_type = getattr(config, 'paytr_api_type', None)
+        if not paytr_api_type or (isinstance(paytr_api_type, str) and paytr_api_type.strip() == ''):
+            paytr_api_type = 'direct'
+        gateway_config['paytr_api_type'] = paytr_api_type
+        # Debug: API tipini logla
+        logger.info(f"PayTR API type from config: {paytr_api_type} (original: {getattr(config, 'paytr_api_type', None)})")
+    
     if gateway_code == 'iyzico':
-        return IyzicoGateway(config)
+        return IyzicoGateway(gateway_config)
     elif gateway_code == 'paytr':
-        return PayTRGateway(config)
+        return PayTRGateway(gateway_config)
     elif gateway_code == 'nestpay':
-        config['bank_code'] = tenant_config.settings.get('bank_code', 'isbank')
-        return NestPayGateway(config)
+        gateway_config['bank_code'] = config.settings.get('bank_code', 'isbank')
+        return NestPayGateway(gateway_config)
     elif gateway_code == 'garanti':
-        return GarantiGateway(config)
+        return GarantiGateway(gateway_config)
     elif gateway_code == 'denizbank':
-        return DenizbankGateway(config)
+        return DenizbankGateway(gateway_config)
     elif gateway_code == 'payu':
-        return PayUGateway(config)
+        return PayUGateway(gateway_config)
     # Diğer bankalar için NestPay kullan (banka kodunu settings'den al)
     elif gateway_code in ['isbank', 'akbank', 'ziraat', 'yapikredi', 'halkbank', 
                           'qnbfinansbank', 'teb', 'sekerbank', 'ingbank', 'vakifbank',
                           'fibabanka', 'albaraka', 'kuveytturk', 'ziraatkatilim', 'vakifkatilim']:
-        config['bank_code'] = gateway_code
-        return NestPayGateway(config)
+        gateway_config['bank_code'] = gateway_code
+        return NestPayGateway(gateway_config)
     else:
         raise ValueError(f"Unknown gateway: {gateway_code}")
 

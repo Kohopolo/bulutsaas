@@ -111,6 +111,7 @@ def tenant_modules(request):
         'has_channel_management_module': 'channel_management' in enabled_module_codes and 'channel_management' in user_accessible_modules,
         'has_ferry_tickets_module': 'ferry_tickets' in enabled_module_codes and 'ferry_tickets' in user_accessible_modules,
         'has_bungalovs_module': 'bungalovs' in enabled_module_codes and 'bungalovs' in user_accessible_modules,
+        'has_backup_module': 'backup' in enabled_module_codes and 'backup' in user_accessible_modules,
         'has_users_module': True,  # Core modül, her zaman aktif
         'has_roles_module': True,  # Core modül, her zaman aktif
         'has_permissions_module': True,  # Core modül, her zaman aktif

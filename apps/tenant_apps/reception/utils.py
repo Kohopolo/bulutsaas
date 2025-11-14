@@ -271,9 +271,16 @@ def generate_reservation_voucher(reservation, template=None):
                     placeholder = f'{{{{{key}}}}}'
                     voucher_html = voucher_html.replace(placeholder, str(value or ''))
             
-            # CSS ekle
+            # CSS ekle (Türkçe karakter desteği ile)
             if template.template_css:
-                voucher_html = f'<style>{template.template_css}</style>\n{voucher_html}'
+                css_with_charset = f'@charset "UTF-8";\n{template.template_css}'
+                if 'font-family' not in template.template_css.lower():
+                    css_with_charset += '\nbody, * { font-family: Arial, "DejaVu Sans", "Liberation Sans", sans-serif; }'
+                voucher_html = f'<style>{css_with_charset}</style>\n{voucher_html}'
+            else:
+                # Varsayılan CSS ekle
+                default_css = '@charset "UTF-8";\nbody, * { font-family: Arial, "DejaVu Sans", "Liberation Sans", sans-serif; }'
+                voucher_html = f'<style>{default_css}</style>\n{voucher_html}'
         else:
             # Varsayılan voucher şablonu
             context = {
@@ -283,18 +290,40 @@ def generate_reservation_voucher(reservation, template=None):
             voucher_html = render_to_string('reception/vouchers/default.html', context)
     except Exception as e:
         logger.error(f'Voucher HTML oluşturulurken hata: {str(e)}', exc_info=True)
-        # Hata durumunda basit bir HTML döndür
-        voucher_html = f"""
-        <html>
-        <head><title>Voucher - {reservation.reservation_code}</title></head>
-        <body>
-            <h1>Rezervasyon Voucher</h1>
-            <p>Rezervasyon Kodu: {reservation.reservation_code}</p>
-            <p>Müşteri: {voucher_data.get('customer_name', 'N/A')}</p>
-            <p>Hata: Voucher şablonu render edilemedi. {str(e)}</p>
-        </body>
-        </html>
-        """
+        # Hata durumunda basit bir HTML döndür (Türkçe karakter desteği ile)
+        voucher_html = f"""<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Voucher - {reservation.reservation_code}</title>
+    <style>
+        @charset "UTF-8";
+        body, * {{ font-family: Arial, "DejaVu Sans", "Liberation Sans", sans-serif; }}
+    </style>
+</head>
+<body>
+    <h1>Rezervasyon Voucher</h1>
+    <p>Rezervasyon Kodu: {reservation.reservation_code}</p>
+    <p>Müşteri: {voucher_data.get('customer_name', 'N/A')}</p>
+    <p>Hata: Voucher şablonu render edilemedi. {str(e)}</p>
+</body>
+</html>
+"""
+    
+    # UTF-8 meta tag'i ve DOCTYPE kontrolü
+    if '<!DOCTYPE' not in voucher_html and '<!doctype' not in voucher_html:
+        if '<html' not in voucher_html.lower():
+            voucher_html = f'<!DOCTYPE html>\n<html lang="tr">\n{voucher_html}\n</html>'
+        else:
+            voucher_html = f'<!DOCTYPE html>\n{voucher_html}'
+    
+    if '<meta charset="UTF-8">' not in voucher_html and '<meta charset="utf-8">' not in voucher_html:
+        if '<head>' in voucher_html:
+            voucher_html = voucher_html.replace('<head>', '<head>\n    <meta charset="UTF-8">', 1)
+        elif '<HEAD>' in voucher_html:
+            voucher_html = voucher_html.replace('<HEAD>', '<HEAD>\n    <meta charset="UTF-8">', 1)
+        elif '<html>' in voucher_html:
+            voucher_html = voucher_html.replace('<html>', '<html>\n<head>\n    <meta charset="UTF-8">\n</head>', 1)
     
     return voucher_html, voucher_data
 

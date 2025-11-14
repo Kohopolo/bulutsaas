@@ -11,6 +11,30 @@ from django.shortcuts import redirect
 logger = logging.getLogger(__name__)
 
 
+def extract_body_content(html_content):
+    """
+    HTML'den sadece body içeriğini çıkar (CSS ve script tag'leri hariç)
+    ReportLab için kullanılır
+    """
+    import re
+    
+    # Body içeriğini çıkar
+    body_match = re.search(r'<body[^>]*>(.*?)</body>', html_content, re.DOTALL | re.IGNORECASE)
+    if body_match:
+        body_content = body_match.group(1)
+    else:
+        # Body tag'i yoksa tüm içeriği al
+        body_content = html_content
+    
+    # Script tag'lerini kaldır
+    body_content = re.sub(r'<script[^>]*>.*?</script>', '', body_content, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Style tag'lerini kaldır (ReportLab için CSS gerekmez)
+    body_content = re.sub(r'<style[^>]*>.*?</style>', '', body_content, flags=re.DOTALL | re.IGNORECASE)
+    
+    return body_content
+
+
 def html_to_pdf_reportlab(html_content, filename='document.pdf'):
     """
     HTML içeriğini ReportLab kullanarak PDF'e dönüştür (Türkçe karakter desteği ile)
@@ -37,6 +61,9 @@ def html_to_pdf_reportlab(html_content, filename='document.pdf'):
         # HTML'i UTF-8 olarak garanti et
         if isinstance(html_content, bytes):
             html_content = html_content.decode('utf-8')
+        
+        # Body içeriğini çıkar (CSS ve script tag'leri hariç)
+        body_content = extract_body_content(html_content)
         
         # Türkçe karakter desteği için font kaydı
         # Windows sistem fontlarını kullan (Türkçe karakter desteği var)
@@ -72,8 +99,8 @@ def html_to_pdf_reportlab(html_content, filename='document.pdf'):
             turkish_font_name = 'Helvetica'
         
         # HTML'i temizle ve basit tag'leri ReportLab formatına dönüştür
-        html_content = html_content.replace('<br>', '<br/>')
-        html_content = html_content.replace('<br />', '<br/>')
+        body_content = body_content.replace('<br>', '<br/>')
+        body_content = body_content.replace('<br />', '<br/>')
         
         # PDF buffer
         buffer = BytesIO()
@@ -112,39 +139,94 @@ def html_to_pdf_reportlab(html_content, filename='document.pdf'):
         # İçerik oluştur
         story = []
         
-        # HTML'i parçalara ayır ve işle
-        # Basit bir HTML parser (sadece temel tag'ler için)
-        parts = re.split(r'(<[^>]+>)', html_content)
-        current_text = ''
+        # HTML'i temizle - sadece metin ve temel tag'leri koru
+        # Tüm HTML tag'lerini kaldır ve sadece metni al
+        # Önce label ve value class'larını işle
+        text_content = re.sub(r'<[^>]+>', ' ', body_content)  # Tüm tag'leri boşlukla değiştir
+        text_content = re.sub(r'\s+', ' ', text_content)  # Çoklu boşlukları tek boşluğa indir
+        text_content = text_content.strip()
         
-        for part in parts:
-            if part.startswith('<'):
-                # Tag işleme
-                if part.lower() in ['<br/>', '<br>', '<p>', '</p>']:
-                    if current_text.strip():
-                        # Türkçe karakterleri koru
-                        story.append(Paragraph(current_text.strip(), normal_style))
-                        current_text = ''
-                    if part.lower() in ['<br/>', '<br>']:
-                        story.append(Spacer(1, 0.3*cm))
-                elif part.lower() == '<h1>':
-                    if current_text.strip():
-                        story.append(Paragraph(current_text.strip(), normal_style))
-                        current_text = ''
-                elif part.lower() == '</h1>':
-                    if current_text.strip():
-                        story.append(Paragraph(current_text.strip(), title_style))
-                        story.append(Spacer(1, 0.5*cm))
-                        current_text = ''
-            else:
-                current_text += part
+        # Eğer içerik varsa paragraflara böl
+        if text_content:
+            # Satır sonlarına göre böl
+            lines = text_content.split('\n')
+            for line in lines:
+                line = line.strip()
+                if line:
+                    # H1 başlığı kontrolü
+                    if 'Feribot Bileti' in line or 'Bilet Kodu:' in line:
+                        # Başlık stilinde göster
+                        if 'Feribot Bileti' in line:
+                            story.append(Paragraph('Feribot Bileti', title_style))
+                            story.append(Spacer(1, 0.3*cm))
+                        else:
+                            story.append(Paragraph(line, normal_style))
+                            story.append(Spacer(1, 0.2*cm))
+                    else:
+                        # Normal paragraf
+                        story.append(Paragraph(line, normal_style))
+                        story.append(Spacer(1, 0.15*cm))
         
-        # Kalan metni ekle
-        if current_text.strip():
-            story.append(Paragraph(current_text.strip(), normal_style))
+        # Eğer yukarıdaki yöntem çalışmazsa, HTML'i daha detaylı parse et
+        if not story:
+            # HTML tag'lerini koruyarak parse et
+            parts = re.split(r'(<[^>]+>)', body_content)
+            current_text = ''
+            in_label = False
+            in_value = False
+            
+            for part in parts:
+                if part.startswith('<'):
+                    tag_lower = part.lower()
+                    # Label ve value class'larını kontrol et
+                    if 'class="label"' in tag_lower or "class='label'" in tag_lower:
+                        in_label = True
+                        if current_text.strip():
+                            story.append(Paragraph(current_text.strip(), normal_style))
+                            current_text = ''
+                    elif 'class="value"' in tag_lower or "class='value'" in tag_lower:
+                        in_value = True
+                        if current_text.strip():
+                            story.append(Paragraph(current_text.strip(), normal_style))
+                            current_text = ''
+                    elif tag_lower in ['</span>', '</div>', '</p>']:
+                        if current_text.strip():
+                            story.append(Paragraph(current_text.strip(), normal_style))
+                            story.append(Spacer(1, 0.15*cm))
+                            current_text = ''
+                        in_label = False
+                        in_value = False
+                    elif tag_lower in ['<br/>', '<br>', '<br />']:
+                        if current_text.strip():
+                            story.append(Paragraph(current_text.strip(), normal_style))
+                            current_text = ''
+                        story.append(Spacer(1, 0.2*cm))
+                    elif tag_lower == '<h1>':
+                        if current_text.strip():
+                            story.append(Paragraph(current_text.strip(), normal_style))
+                            current_text = ''
+                    elif tag_lower == '</h1>':
+                        if current_text.strip():
+                            story.append(Paragraph(current_text.strip(), title_style))
+                            story.append(Spacer(1, 0.5*cm))
+                            current_text = ''
+                else:
+                    # Metin içeriği - sadece boş olmayan metinleri ekle
+                    part_clean = part.strip()
+                    if part_clean:
+                        current_text += part_clean + ' '
+            
+            # Kalan metni ekle
+            if current_text.strip():
+                story.append(Paragraph(current_text.strip(), normal_style))
         
         # PDF oluştur
-        doc.build(story)
+        if story:
+            doc.build(story)
+        else:
+            # İçerik yoksa hata
+            logger.warning('ReportLab için içerik bulunamadı')
+            return None
         
         buffer.seek(0)
         logger.info(f'ReportLab ile PDF oluşturuldu (Türkçe karakter desteği ile): {filename}')
@@ -156,6 +238,34 @@ def html_to_pdf_reportlab(html_content, filename='document.pdf'):
     except Exception as e:
         logger.error(f'ReportLab ile PDF oluşturulurken hata: {str(e)}', exc_info=True)
         return None
+
+
+def clean_html_for_pdf(html_content):
+    """
+    HTML içeriğini PDF oluşturma için temizle
+    - CSS'i koru ama düzgün formatla
+    - Script tag'lerini kaldır
+    - HTML'i geçerli hale getir
+    """
+    import re
+    
+    # Script tag'lerini kaldır
+    html_content = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
+    
+    # HTML'i geçerli hale getir
+    # Eğer DOCTYPE yoksa ekle
+    if '<!DOCTYPE' not in html_content and '<!doctype' not in html_content:
+        if '<html' not in html_content.lower():
+            html_content = f'<!DOCTYPE html>\n<html lang="tr">\n{html_content}\n</html>'
+        else:
+            html_content = f'<!DOCTYPE html>\n{html_content}'
+    
+    # Meta charset kontrolü
+    if '<meta charset' not in html_content.lower():
+        html_content = html_content.replace('<head>', '<head>\n    <meta charset="UTF-8">', 1)
+        html_content = html_content.replace('<HEAD>', '<HEAD>\n    <meta charset="UTF-8">', 1)
+    
+    return html_content
 
 
 def generate_pdf_response(html_content, filename='document.pdf', fallback_to_html=False):
@@ -186,6 +296,9 @@ def generate_pdf_response(html_content, filename='document.pdf', fallback_to_htm
     # UTF-8 encoding'i garanti et
     html_content = html_content.encode('utf-8').decode('utf-8')
     
+    # HTML'i temizle (script tag'lerini kaldır, geçerli hale getir)
+    html_content = clean_html_for_pdf(html_content)
+    
     # 1. WeasyPrint dene (HTML/CSS desteği mükemmel, Türkçe karakter desteği var)
     try:
         from weasyprint import HTML
@@ -194,10 +307,11 @@ def generate_pdf_response(html_content, filename='document.pdf', fallback_to_htm
         # Font yapılandırması (Türkçe karakter desteği için)
         font_config = FontConfiguration()
         
-        # HTML'i PDF'e dönüştür (string olarak, encoding belirtmeden)
-        # WeasyPrint otomatik olarak UTF-8 kullanır
+        # HTML'i PDF'e dönüştür
+        # WeasyPrint otomatik olarak UTF-8 kullanır ve CSS'i düzgün render eder
         pdf_data = HTML(
-            string=html_content
+            string=html_content,
+            base_url=None  # External resource'ları yükleme
         ).write_pdf(font_config=font_config)
         
         logger.info(f'WeasyPrint ile PDF oluşturuldu (Türkçe karakter desteği ile): {filename}')

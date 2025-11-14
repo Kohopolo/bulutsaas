@@ -103,10 +103,17 @@
                         Mevcut Paketiniz
                     </button>
                     {% else %}
-                    <a href="{% url 'payments:initiate' package.id %}" class="block w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors text-center font-semibold">
+                    {% if superadmin_gateway %}
+                    <a href="{% url 'tenant_subscriptions:upgrade_payment' package.id %}" class="block w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors text-center font-semibold">
                         <i class="fas fa-arrow-up mr-2"></i>
                         Bu Paketi Seç
                     </a>
+                    {% else %}
+                    <button disabled class="w-full px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Ödeme Gateway Bulunamadı
+                    </button>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>

@@ -100,6 +100,7 @@ TENANT_APPS = [
     'apps.tenant_apps.channel_management',  # Kanal Yönetimi
     'apps.tenant_apps.ferry_tickets',  # Feribot Bileti
     'apps.tenant_apps.bungalovs',  # Bungalov Yönetimi
+    'apps.tenant_apps.backup',  # Yedekleme Yönetimi
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -121,6 +122,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    # Backup Directory Protection (Güvenlik - backupdatabase klasörüne erişimi engeller)
+    'apps.tenant_apps.backup.middleware.BackupDirectoryProtectionMiddleware',
     
     # Otel Middleware (Tenant middleware'den sonra)
     'apps.tenant_apps.hotels.middleware.HotelMiddleware',

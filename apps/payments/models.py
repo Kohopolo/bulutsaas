@@ -113,6 +113,20 @@ class TenantPaymentGateway(TimeStampedModel):
     # Ek Ayarlar (JSON)
     settings = models.JSONField('Ek Ayarlar', default=dict, blank=True)
     
+    # PayTR API Tipi (Sadece PayTR için kullanılır)
+    PAYTR_API_TYPE_CHOICES = [
+        ('direct', 'Direkt API'),
+        ('iframe', 'iFrame API'),
+    ]
+    paytr_api_type = models.CharField(
+        'PayTR API Tipi',
+        max_length=20,
+        choices=PAYTR_API_TYPE_CHOICES,
+        default='direct',
+        blank=True,
+        help_text='PayTR için kullanılacak API tipi (Direkt API veya iFrame API)'
+    )
+    
     class Meta:
         verbose_name = 'Tenant Ödeme Gateway'
         verbose_name_plural = 'Tenant Ödeme Gateway\'leri'
@@ -121,6 +135,65 @@ class TenantPaymentGateway(TimeStampedModel):
     
     def __str__(self):
         return f"{self.tenant.name} - {self.gateway.name}"
+
+
+class SuperAdminPaymentGateway(TimeStampedModel):
+    """
+    SaaS Super Admin Ödeme Gateway Ayarları
+    Paket yenileme/yükseltme ödemeleri için kullanılır
+    Public schema'da saklanır, tenant'a bağlı değildir
+    """
+    gateway = models.ForeignKey(
+        PaymentGateway,
+        on_delete=models.CASCADE,
+        related_name='superadmin_configs',
+        verbose_name='Gateway',
+        limit_choices_to={'code__in': ['iyzico', 'paytr']}  # Sadece Iyzico ve PayTR
+    )
+    
+    # API Credentials (Şifrelenmiş)
+    api_key = models.CharField('API Key', max_length=255, blank=True)
+    secret_key = models.CharField('Secret Key', max_length=255, blank=True)
+    merchant_id = models.CharField('Merchant ID', max_length=100, blank=True)
+    store_key = models.CharField('Store Key', max_length=255, blank=True)
+    
+    # 3D Secure Ayarları
+    use_3d_secure = models.BooleanField('3D Secure Kullan', default=True)
+    callback_url = models.URLField('Callback URL', blank=True)
+    
+    # Taksit Ayarları
+    enable_installment = models.BooleanField('Taksit Aktif', default=False)
+    max_installment = models.IntegerField('Maksimum Taksit', default=12)
+    
+    # Durum
+    is_active = models.BooleanField('Aktif mi?', default=True)
+    is_test_mode = models.BooleanField('Test Modu', default=True)
+    
+    # Ek Ayarlar (JSON)
+    settings = models.JSONField('Ek Ayarlar', default=dict, blank=True)
+    
+    # PayTR API Tipi (Sadece PayTR için kullanılır)
+    PAYTR_API_TYPE_CHOICES = [
+        ('direct', 'Direkt API'),
+        ('iframe', 'iFrame API'),
+    ]
+    paytr_api_type = models.CharField(
+        'PayTR API Tipi',
+        max_length=20,
+        choices=PAYTR_API_TYPE_CHOICES,
+        default='direct',
+        blank=True,
+        help_text='PayTR için kullanılacak API tipi (Direkt API veya iFrame API)'
+    )
+    
+    class Meta:
+        verbose_name = 'Super Admin Ödeme Gateway'
+        verbose_name_plural = 'Super Admin Ödeme Gateway\'leri'
+        unique_together = ('gateway',)  # Her gateway için sadece bir kayıt
+        ordering = ['gateway']
+    
+    def __str__(self):
+        return f"Super Admin - {self.gateway.name}"
 
 
 class PaymentTransaction(TimeStampedModel):

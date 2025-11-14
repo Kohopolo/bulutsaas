@@ -10,6 +10,7 @@ urlpatterns = [
     # Kanal Şablonları
     path('templates/', views.template_list, name='template_list'),
     path('templates/<int:pk>/', views.template_detail, name='template_detail'),
+    path('templates/<int:pk>/test-connection/', views.test_template_connection, name='test_template_connection'),
     
     # Kanal Konfigürasyonları
     path('configurations/', views.configuration_list, name='configuration_list'),

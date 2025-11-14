@@ -13,7 +13,7 @@ from datetime import datetime
 def generate_tour_pdf_program(tour):
     """
     Tur PDF programı oluştur
-    reportlab veya weasyprint kullanılabilir
+    reportlab veya weasyprint kullanılabilir (Türkçe karakter desteği ile)
     """
     try:
         from reportlab.lib.pagesizes import A4
@@ -24,6 +24,7 @@ def generate_tour_pdf_program(tour):
         from reportlab.pdfbase import pdfmetrics
         from reportlab.pdfbase.ttfonts import TTFont
         from io import BytesIO
+        import os
         
         # PDF buffer
         buffer = BytesIO()
@@ -38,15 +39,59 @@ def generate_tour_pdf_program(tour):
             bottomMargin=2*cm
         )
         
-        # Stil tanımlamaları
+        # Türkçe karakter desteği için font kaydı
+        turkish_font_name = 'Helvetica'
+        try:
+            font_paths = [
+                'C:/Windows/Fonts/dejavu/DejaVuSans.ttf',
+                'C:/Windows/Fonts/arial.ttf',
+                'C:/Windows/Fonts/tahoma.ttf',
+            ]
+            
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    try:
+                        pdfmetrics.registerFont(TTFont('TurkishFont', font_path))
+                        turkish_font_name = 'TurkishFont'
+                        break
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+        
+        # Stil tanımlamaları (Türkçe font ile)
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
+            fontName=turkish_font_name,
             fontSize=24,
             textColor=colors.HexColor('#2d3e50'),
             spaceAfter=30,
             alignment=1,  # Center
+            encoding='utf-8',
+        )
+        
+        # Normal stil için Türkçe font
+        normal_style = ParagraphStyle(
+            'TurkishNormal',
+            parent=styles['Normal'],
+            fontName=turkish_font_name,
+            encoding='utf-8',
+        )
+        
+        heading2_style = ParagraphStyle(
+            'TurkishHeading2',
+            parent=styles['Heading2'],
+            fontName=turkish_font_name,
+            encoding='utf-8',
+        )
+        
+        heading3_style = ParagraphStyle(
+            'TurkishHeading3',
+            parent=styles['Heading3'],
+            fontName=turkish_font_name,
+            encoding='utf-8',
         )
         
         # İçerik oluştur
@@ -81,13 +126,13 @@ def generate_tour_pdf_program(tour):
         
         # Açıklama
         if tour.description:
-            story.append(Paragraph('<b>Tur Açıklaması:</b>', styles['Heading2']))
-            story.append(Paragraph(tour.description.replace('\n', '<br/>'), styles['Normal']))
+            story.append(Paragraph('<b>Tur Açıklaması:</b>', heading2_style))
+            story.append(Paragraph(tour.description.replace('\n', '<br/>'), normal_style))
             story.append(Spacer(1, 0.5*cm))
         
         # Program
         if tour.programs.exists():
-            story.append(Paragraph('<b>Gün Gün Program:</b>', styles['Heading2']))
+            story.append(Paragraph('<b>Gün Gün Program:</b>', heading2_style))
             story.append(Spacer(1, 0.3*cm))
             
             for program in tour.programs.all().order_by('day_number', 'sort_order'):
@@ -95,25 +140,25 @@ def generate_tour_pdf_program(tour):
                 if program.title:
                     day_title += f": {program.title}"
                 
-                story.append(Paragraph(day_title, styles['Heading3']))
+                story.append(Paragraph(day_title, heading3_style))
                 
                 if program.description:
-                    story.append(Paragraph(program.description.replace('\n', '<br/>'), styles['Normal']))
+                    story.append(Paragraph(program.description.replace('\n', '<br/>'), normal_style))
                 
                 if program.activities:
-                    story.append(Paragraph(f"<b>Aktiviteler:</b> {program.activities}", styles['Normal']))
+                    story.append(Paragraph(f"<b>Aktiviteler:</b> {program.activities}", normal_style))
                 
                 if program.meals:
-                    story.append(Paragraph(f"<b>Yemekler:</b> {program.meals}", styles['Normal']))
+                    story.append(Paragraph(f"<b>Yemekler:</b> {program.meals}", normal_style))
                 
                 if program.accommodation:
-                    story.append(Paragraph(f"<b>Konaklama:</b> {program.accommodation}", styles['Normal']))
+                    story.append(Paragraph(f"<b>Konaklama:</b> {program.accommodation}", normal_style))
                 
                 story.append(Spacer(1, 0.5*cm))
         
         # Fiyat Bilgileri
         story.append(PageBreak())
-        story.append(Paragraph('<b>Fiyat Bilgileri:</b>', styles['Heading2']))
+        story.append(Paragraph('<b>Fiyat Bilgileri:</b>', heading2_style))
         story.append(Spacer(1, 0.3*cm))
         
         price_data = [
@@ -140,23 +185,23 @@ def generate_tour_pdf_program(tour):
         
         # Fiyata Dahil/Dahil Olmayanlar
         if tour.price_includes:
-            story.append(Paragraph('<b>Fiyata Dahil:</b>', styles['Heading3']))
+            story.append(Paragraph('<b>Fiyata Dahil:</b>', heading3_style))
             for item in tour.price_includes.split('\n'):
                 if item.strip():
-                    story.append(Paragraph(f"• {item.strip()}", styles['Normal']))
+                    story.append(Paragraph(f"• {item.strip()}", normal_style))
             story.append(Spacer(1, 0.3*cm))
         
         if tour.price_excludes:
-            story.append(Paragraph('<b>Fiyata Dahil Olmayanlar:</b>', styles['Heading3']))
+            story.append(Paragraph('<b>Fiyata Dahil Olmayanlar:</b>', heading3_style))
             for item in tour.price_excludes.split('\n'):
                 if item.strip():
-                    story.append(Paragraph(f"• {item.strip()}", styles['Normal']))
+                    story.append(Paragraph(f"• {item.strip()}", normal_style))
             story.append(Spacer(1, 0.3*cm))
         
         # Notlar
         if tour.notes:
-            story.append(Paragraph('<b>Önemli Notlar:</b>', styles['Heading3']))
-            story.append(Paragraph(tour.notes.replace('\n', '<br/>'), styles['Normal']))
+            story.append(Paragraph('<b>Önemli Notlar:</b>', heading3_style))
+            story.append(Paragraph(tour.notes.replace('\n', '<br/>'), normal_style))
         
         # PDF oluştur
         doc.build(story)
@@ -185,7 +230,7 @@ def generate_tour_pdf_program(tour):
 
 def generate_reservation_voucher(reservation):
     """
-    Rezervasyon voucher'ı oluştur (HTML)
+    Rezervasyon voucher'ı oluştur (HTML) - Türkçe karakter desteği ile
     """
     context = {
         'reservation': reservation,
@@ -203,10 +248,37 @@ def generate_reservation_voucher(reservation):
         voucher_html = voucher_html.replace('{{tour_date}}', reservation.tour_date.date.strftime('%d.%m.%Y'))
         voucher_html = voucher_html.replace('{{total_amount}}', str(reservation.total_amount))
         voucher_html = voucher_html.replace('{{currency}}', reservation.currency)
-        return voucher_html
     else:
         # Varsayılan voucher şablonu
-        return render_to_string('tenant/tours/reservations/voucher_default.html', context)
+        voucher_html = render_to_string('tenant/tours/reservations/voucher_default.html', context)
+    
+    # UTF-8 meta tag'i ve DOCTYPE kontrolü
+    if '<!DOCTYPE' not in voucher_html and '<!doctype' not in voucher_html:
+        if '<html' not in voucher_html.lower():
+            voucher_html = f'<!DOCTYPE html>\n<html lang="tr">\n{voucher_html}\n</html>'
+        else:
+            voucher_html = f'<!DOCTYPE html>\n{voucher_html}'
+    
+    if '<meta charset="UTF-8">' not in voucher_html and '<meta charset="utf-8">' not in voucher_html:
+        if '<head>' in voucher_html:
+            voucher_html = voucher_html.replace('<head>', '<head>\n    <meta charset="UTF-8">', 1)
+        elif '<HEAD>' in voucher_html:
+            voucher_html = voucher_html.replace('<HEAD>', '<HEAD>\n    <meta charset="UTF-8">', 1)
+        elif '<html>' in voucher_html:
+            voucher_html = voucher_html.replace('<html>', '<html>\n<head>\n    <meta charset="UTF-8">\n</head>', 1)
+    
+    # CSS'e charset ve font-family ekle
+    if '<style>' in voucher_html:
+        if '@charset' not in voucher_html:
+            voucher_html = voucher_html.replace('<style>', '<style>\n@charset "UTF-8";', 1)
+        if 'font-family' not in voucher_html.lower():
+            voucher_html = voucher_html.replace('<style>', '<style>\nbody, * { font-family: Arial, "DejaVu Sans", "Liberation Sans", sans-serif; }', 1)
+    else:
+        # Style tag'i yoksa ekle
+        if '<head>' in voucher_html:
+            voucher_html = voucher_html.replace('<head>', '<head>\n    <style>\n@charset "UTF-8";\nbody, * { font-family: Arial, "DejaVu Sans", "Liberation Sans", sans-serif; }\n    </style>', 1)
+    
+    return voucher_html
 
 
 def create_whatsapp_link(phone, message):

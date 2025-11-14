@@ -54,7 +54,7 @@ def dashboard(request):
     # Son satışlar
     recent_sales = SalesRecord.objects.filter(
         hotel=hotel, is_deleted=False
-    ).select_related('reservation', 'agency', 'sales_person').order_by('-sales_date')[:10]
+    ).select_related('agency', 'sales_person').order_by('-sales_date')[:10]
     
     context = {
         'hotel': hotel,
@@ -145,7 +145,7 @@ def sales_record_list(request):
     if date_to:
         records = records.filter(sales_date__lte=date_to)
     
-    records = records.select_related('reservation', 'agency', 'sales_person').order_by('-sales_date')
+    records = records.select_related('agency', 'sales_person').order_by('-sales_date')
     
     paginator = Paginator(records, 25)
     page_number = request.GET.get('page')

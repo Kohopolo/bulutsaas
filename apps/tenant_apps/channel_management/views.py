@@ -84,6 +84,72 @@ def template_detail(request, pk):
     return render(request, 'channel_management/template_detail.html', context)
 
 
+@login_required
+@require_channel_management_permission('view')
+def test_template_connection(request, pk):
+    """Kanal Şablonu Bağlantı Testi"""
+    from django.http import JsonResponse
+    
+    template = get_object_or_404(ChannelTemplate, pk=pk, is_active=True, is_deleted=False)
+    
+    # Bu şablonu kullanan aktif konfigürasyonları bul
+    tenant = request.tenant if hasattr(request, 'tenant') else None
+    
+    if not tenant:
+        return JsonResponse({
+            'success': False,
+            'message': 'Tenant bulunamadı.'
+        }, status=400)
+    
+    # Bu şablon için aktif konfigürasyon var mı?
+    configuration = ChannelConfiguration.objects.filter(
+        tenant=tenant,
+        template=template,
+        is_active=True,
+        is_deleted=False
+    ).first()
+    
+    if not configuration:
+        return JsonResponse({
+            'success': False,
+            'message': f'{template.name} için aktif bir konfigürasyon bulunamadı. Lütfen önce kanalı yapılandırın.'
+        }, status=400)
+    
+    # API bilgileri kontrolü
+    if not configuration.api_credentials:
+        return JsonResponse({
+            'success': False,
+            'message': 'API bilgileri eksik. Lütfen konfigürasyonu kontrol edin.'
+        }, status=400)
+    
+    try:
+        # Integration sınıfını yükle
+        from .utils import get_channel_integration
+        
+        integration = get_channel_integration(configuration)
+        
+        # Bağlantı testi yap
+        is_authenticated = integration.authenticate()
+        
+        if is_authenticated:
+            return JsonResponse({
+                'success': True,
+                'message': f'{template.name} bağlantı testi başarılı! API bağlantısı çalışıyor.'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': f'{template.name} bağlantı testi başarısız. API bilgilerini kontrol edin.'
+            }, status=400)
+            
+    except Exception as e:
+        logger.error(f"Kanal bağlantı testi hatası: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': f'Bağlantı testi sırasında hata oluştu: {str(e)}'
+        }, status=500)
+
+
 # ==================== KANAL KONFİGÜRASYONLARI ====================
 
 @login_required

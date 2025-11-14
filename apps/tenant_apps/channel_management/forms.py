@@ -42,11 +42,8 @@ class ChannelConfigurationForm(forms.ModelForm):
                 'class': 'form-control',
                 'id': 'id_name'
             }),
-            'api_credentials': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 5,
+            'api_credentials': forms.HiddenInput(attrs={
                 'id': 'id_api_credentials',
-                'placeholder': 'JSON format: {"api_key": "...", "api_secret": "..."}'
             }),
             'api_endpoint': forms.URLInput(attrs={
                 'class': 'form-control',
@@ -164,12 +161,17 @@ class ChannelConfigurationForm(forms.ModelForm):
         if credentials:
             try:
                 if isinstance(credentials, str):
-                    json.loads(credentials)
+                    # String ise JSON'a parse et
+                    parsed = json.loads(credentials)
+                    return parsed
                 elif isinstance(credentials, dict):
-                    json.dumps(credentials)
-            except (json.JSONDecodeError, TypeError):
+                    # Dict ise olduğu gibi döndür
+                    return credentials
+                else:
+                    raise forms.ValidationError('API bilgileri geçerli bir JSON formatında olmalıdır.')
+            except (json.JSONDecodeError, TypeError) as e:
                 raise forms.ValidationError('API bilgileri geçerli bir JSON formatında olmalıdır.')
-        return credentials
+        return credentials or {}
     
     def clean_commission_rate(self):
         """Komisyon oranını kontrol et"""

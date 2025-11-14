@@ -1045,22 +1045,71 @@ def voucher_payment(request, token):
             voucher.payment_transaction = payment_transaction
             voucher.save()
             
-            # Gateway'e ödeme başlat
-            result = gateway.initiate_payment(
-                transaction_id=transaction_id,
-                amount=payment_amount,
-                currency=ticket.currency,
-                customer_info=customer_info,
-                return_url=request.build_absolute_uri(
-                    reverse('ferry_tickets:voucher_payment_callback', kwargs={'token': token})
-                ),
-                cancel_url=request.build_absolute_uri(
-                    reverse('ferry_tickets:voucher_payment_fail', kwargs={'token': token})
-                ),
+            # Ödeme sayfası oluştur
+            callback_url = request.build_absolute_uri(
+                reverse('ferry_tickets:voucher_payment_callback', kwargs={'token': token})
             )
             
-            if result.get('success') and result.get('redirect_url'):
-                return redirect(result['redirect_url'])
+            # Müşteri IP adresi (PayTR iFrame API için gerekli)
+            user_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+            if ',' in user_ip:
+                user_ip = user_ip.split(',')[0].strip()
+            
+            # Gateway'e ödeme başlat
+            result = gateway.create_payment(
+                amount=payment_amount,
+                currency=ticket.currency,
+                order_id=transaction_id,
+                customer_info=customer_info,
+                callback_url=callback_url,
+                success_url=request.build_absolute_uri(
+                    reverse('ferry_tickets:voucher_payment_callback', kwargs={'token': token})
+                ),
+                fail_url=request.build_absolute_uri(
+                    reverse('ferry_tickets:voucher_payment_fail', kwargs={'token': token})
+                ),
+                user_ip=user_ip,  # PayTR iFrame API için gerekli
+                basket_items=[{
+                    'name': f'Bilet Ödemesi - {ticket.ticket_code}',
+                    'price': str(payment_amount),
+                    'quantity': 1
+                }],
+            )
+            
+            if result.get('success'):
+                # Gateway transaction ID'yi kaydet
+                payment_transaction.gateway_transaction_id = result.get('transaction_id', '')
+                payment_transaction.gateway_response = result
+                payment_transaction.save()
+                
+                # İyzico HTML içerik döndürüyor, PayTR Direkt API ve iFrame API HTML form döndürüyor
+                payment_url = result.get('payment_url', '')
+                threeDSHtmlContent = result.get('threeDSHtmlContent', '')
+                html_content = result.get('html_content', '')
+                iframe_token = result.get('iframe_token', '')
+                
+                # Eğer HTML içerik varsa (İyzico, PayTR Direkt API veya PayTR iFrame API), render et
+                if html_content:
+                    # PayTR Direkt API veya iFrame API HTML form
+                    from django.http import HttpResponse
+                    return HttpResponse(html_content, content_type='text/html; charset=utf-8')
+                elif threeDSHtmlContent:
+                    # İyzico HTML içerik
+                    from django.http import HttpResponse
+                    return HttpResponse(threeDSHtmlContent, content_type='text/html; charset=utf-8')
+                elif payment_url and payment_url.startswith('<'):
+                    # payment_url HTML içerik ise
+                    from django.http import HttpResponse
+                    return HttpResponse(payment_url, content_type='text/html; charset=utf-8')
+                elif payment_url or iframe_token:
+                    # URL ise (PayTR iFrame veya diğer), redirect et
+                    # PayTR iFrame için token varsa URL oluştur
+                    if iframe_token and not payment_url:
+                        payment_url = f"https://www.paytr.com/odeme/guvenli/{iframe_token}"
+                    return redirect(payment_url)
+                else:
+                    messages.error(request, 'Ödeme sayfası oluşturulamadı.')
+                    return redirect('ferry_tickets:voucher_payment', token=token)
             else:
                 messages.error(request, result.get('error', 'Ödeme başlatılamadı.'))
                 return redirect('ferry_tickets:voucher_payment', token=token)

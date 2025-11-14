@@ -2714,12 +2714,29 @@ def voucher_payment(request, token):
                 reverse('reception:voucher_payment_callback', kwargs={'token': token})
             )
             
+            # Müşteri IP adresi (PayTR iFrame API için gerekli)
+            user_ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+            if ',' in user_ip:
+                user_ip = user_ip.split(',')[0].strip()
+            
             result = gateway.create_payment(
                 amount=payment_amount,
                 currency=voucher.payment_currency,
                 order_id=transaction_id,
                 customer_info=customer_info,
                 callback_url=callback_url,
+                success_url=request.build_absolute_uri(
+                    reverse('reception:voucher_payment_callback', kwargs={'token': token})
+                ),
+                fail_url=request.build_absolute_uri(
+                    reverse('reception:voucher_payment', kwargs={'token': token})
+                ),
+                user_ip=user_ip,  # PayTR iFrame API için gerekli
+                basket_items=[{
+                    'name': f'Voucher Ödemesi - {voucher.voucher_code}',
+                    'price': str(payment_amount),
+                    'quantity': 1
+                }],
             )
             
             if result.get('success'):
@@ -2728,9 +2745,31 @@ def voucher_payment(request, token):
                 payment_transaction.gateway_response = result
                 payment_transaction.save()
                 
-                # 3D Secure için redirect
-                if result.get('payment_url'):
-                    return redirect(result['payment_url'])
+                # İyzico HTML içerik döndürüyor, PayTR Direkt API ve iFrame API HTML form döndürüyor
+                payment_url = result.get('payment_url', '')
+                threeDSHtmlContent = result.get('threeDSHtmlContent', '')
+                html_content = result.get('html_content', '')
+                iframe_token = result.get('iframe_token', '')
+                
+                # Eğer HTML içerik varsa (İyzico, PayTR Direkt API veya PayTR iFrame API), render et
+                if html_content:
+                    # PayTR Direkt API veya iFrame API HTML form
+                    from django.http import HttpResponse
+                    return HttpResponse(html_content, content_type='text/html; charset=utf-8')
+                elif threeDSHtmlContent:
+                    # İyzico HTML içerik
+                    from django.http import HttpResponse
+                    return HttpResponse(threeDSHtmlContent, content_type='text/html; charset=utf-8')
+                elif payment_url and payment_url.startswith('<'):
+                    # payment_url HTML içerik ise
+                    from django.http import HttpResponse
+                    return HttpResponse(payment_url, content_type='text/html; charset=utf-8')
+                elif payment_url or iframe_token:
+                    # URL ise (PayTR iFrame veya diğer), redirect et
+                    # PayTR iFrame için token varsa URL oluştur
+                    if iframe_token and not payment_url:
+                        payment_url = f"https://www.paytr.com/odeme/guvenli/{iframe_token}"
+                    return redirect(payment_url)
                 else:
                     messages.error(request, 'Ödeme sayfası oluşturulamadı.')
                     return redirect('reception:voucher_payment', token=token)
