@@ -1,0 +1,138 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Kampanya Yönetimi - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Kampanya Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-tags mr-2 text-vb-primary"></i>
+            Kampanyalar
+        </h2>
+        <a href="{% url 'tours:campaign_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+            <i class="fas fa-plus mr-2"></i>
+            Yeni Kampanya Ekle
+        </a>
+    </div>
+    
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Aktif</label>
+                <select name="is_active" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    <option value="1" {% if request.GET.is_active == '1' %}selected{% endif %}>Aktif</option>
+                    <option value="0" {% if request.GET.is_active == '0' %}selected{% endif %}>Pasif</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Öne Çıkan</label>
+                <select name="is_featured" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    <option value="1" {% if request.GET.is_featured == '1' %}selected{% endif %}>Evet</option>
+                    <option value="0" {% if request.GET.is_featured == '0' %}selected{% endif %}>Hayır</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Kampanya Tipi</label>
+                <select name="campaign_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    {% for value, label in campaign_type_choices %}
+                    <option value="{{ value }}" {% if request.GET.campaign_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Ara</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Kampanya adı, kod..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+            </div>
+            <div class="md:col-span-4 flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-filter mr-2"></i>Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Kampanya Listesi -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for campaign in campaigns %}
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            {% if campaign.image %}
+            <img src="{{ campaign.image.url }}" alt="{{ campaign.name }}" class="w-full h-48 object-cover">
+            {% else %}
+            <div class="w-full h-48 bg-gradient-to-br from-vb-primary to-blue-600 flex items-center justify-center">
+                <i class="fas fa-tag text-white text-4xl"></i>
+            </div>
+            {% endif %}
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-2">
+                    <h3 class="text-lg font-bold text-vb-navy">{{ campaign.name }}</h3>
+                    {% if campaign.is_featured %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        <i class="fas fa-star"></i> Öne Çıkan
+                    </span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-600 mb-3">{{ campaign.get_campaign_type_display }}</p>
+                <p class="text-sm text-gray-500 mb-4 line-clamp-2">{{ campaign.description|truncatewords:15 }}</p>
+                <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
+                    <span><i class="fas fa-calendar mr-1"></i>{{ campaign.start_date|date:"d.m.Y" }}</span>
+                    <span><i class="fas fa-calendar-check mr-1"></i>{{ campaign.end_date|date:"d.m.Y" }}</span>
+                </div>
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-sm text-gray-600">Kullanım:</span>
+                    <span class="text-sm font-semibold text-gray-900">
+                        {{ campaign.usage_count }} / {{ campaign.usage_limit|default:"Sınırsız" }}
+                    </span>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="{% url 'tours:campaign_detail' campaign.pk %}" class="flex-1 px-3 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors text-center text-sm">
+                        <i class="fas fa-eye mr-1"></i> Detay
+                    </a>
+                    <a href="{% url 'tours:campaign_update' campaign.pk %}" class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="post" action="{% url 'tours:campaign_delete' campaign.pk %}" class="inline" onsubmit="return confirm('Bu kampanyayı silmek istediğinizden emin misiniz?');">
+                        {% csrf_token %}
+                        <button type="submit" class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full">
+            <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <i class="fas fa-tags text-gray-400 text-5xl mb-4"></i>
+                <p class="text-gray-500 text-lg">Kampanya bulunamadı.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Sayfalama -->
+    {% if campaigns.has_other_pages %}
+    <div class="mt-6 flex justify-center">
+        <div class="flex space-x-2">
+            {% if campaigns.has_previous %}
+            <a href="?page={{ campaigns.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+               class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Önceki</a>
+            {% endif %}
+            <span class="px-3 py-2 bg-vb-primary text-white rounded-lg">{{ campaigns.number }} / {{ campaigns.paginator.num_pages }}</span>
+            {% if campaigns.has_next %}
+            <a href="?page={{ campaigns.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+               class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Sonraki</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,169 @@
+{% load static %}
+<div id="{{ widget.attrs.id }}_container" class="json-widget key-value-widget">
+    <div class="pairs-container space-y-3">
+        {% if widget.pairs %}
+        {% for key, value in widget.pairs %}
+        <div class="pair-item flex items-center gap-3">
+            <div class="flex-1">
+                <label class="block text-xs text-gray-600 mb-1">{{ widget.key_label }}</label>
+                <input type="{{ widget.key_type }}" 
+                       value="{{ key }}" 
+                       class="pair-key form-control" 
+                       placeholder="{{ widget.key_label }}">
+            </div>
+            <div class="flex-1">
+                <label class="block text-xs text-gray-600 mb-1">{{ widget.value_label }}</label>
+                <input type="{{ widget.value_type }}" 
+                       value="{{ value }}" 
+                       class="pair-value form-control" 
+                       placeholder="{{ widget.value_label }}"
+                       {% if widget.value_type == 'number' %}step="0.01"{% endif %}>
+            </div>
+            <div class="flex items-end">
+                <button type="button" class="remove-pair-btn text-red-600 hover:text-red-700 p-2" title="Sil">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <!-- Boş durum - otomatik oluşturulacak -->
+        {% endif %}
+        <!-- Template - Yeni çift eklemek için -->
+        <div class="pair-item flex items-center gap-3" style="display: none;">
+            <div class="flex-1">
+                <label class="block text-xs text-gray-600 mb-1">{{ widget.key_label }}</label>
+                <input type="{{ widget.key_type }}" 
+                       class="pair-key form-control" 
+                       placeholder="{{ widget.key_label }}">
+            </div>
+            <div class="flex-1">
+                <label class="block text-xs text-gray-600 mb-1">{{ widget.value_label }}</label>
+                <input type="{{ widget.value_type }}" 
+                       class="pair-value form-control" 
+                       placeholder="{{ widget.value_label }}"
+                       {% if widget.value_type == 'number' %}step="0.01"{% endif %}>
+            </div>
+            <div class="flex items-end">
+                <button type="button" class="remove-pair-btn text-red-600 hover:text-red-700 p-2" title="Sil">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <button type="button" class="add-pair-btn mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+        <i class="fas fa-plus mr-2"></i>
+        Yeni Çift Ekle
+    </button>
+    <input type="hidden" id="{{ widget.attrs.id }}_json" name="{{ widget.name }}" value="{{ widget.value|default:'{}' }}">
+</div>
+
+<script>
+(function() {
+    const container = document.getElementById('{{ widget.attrs.id }}_container');
+    if (!container) return;
+    
+    const hiddenInput = document.getElementById('{{ widget.attrs.id }}_json');
+    const pairsContainer = container.querySelector('.pairs-container');
+    const addBtn = container.querySelector('.add-pair-btn');
+    
+    function updateHiddenInput() {
+        const pairs = [];
+        pairsContainer.querySelectorAll('.pair-item:not([style*="display: none"])').forEach(item => {
+            const keyInput = item.querySelector('.pair-key');
+            const valueInput = item.querySelector('.pair-value');
+            if (!keyInput || !valueInput) return;
+            
+            const key = keyInput.value.trim();
+            const value = valueInput.value.trim();
+            if (key) {
+                // Tip dönüşümü
+                let finalValue = value;
+                const valueType = '{{ widget.value_type }}';
+                if (valueType === 'number') {
+                    try {
+                        finalValue = parseFloat(value);
+                        if (isNaN(finalValue)) finalValue = 0;
+                    } catch {
+                        finalValue = 0;
+                    }
+                }
+                pairs.push([key, finalValue]);
+            }
+        });
+        const jsonValue = pairs.length > 0 ? JSON.stringify(Object.fromEntries(pairs)) : '{}';
+        if (hiddenInput) {
+            hiddenInput.value = jsonValue;
+        }
+    }
+    
+    function addPair(key = '', value = '') {
+        const template = pairsContainer.querySelector('.pair-item[style*="display: none"]') || 
+                        pairsContainer.querySelector('.pair-item');
+        if (!template) return;
+        
+        const newPair = template.cloneNode(true);
+        newPair.style.display = 'flex';
+        const keyInput = newPair.querySelector('.pair-key');
+        const valueInput = newPair.querySelector('.pair-value');
+        if (keyInput) keyInput.value = key;
+        if (valueInput) valueInput.value = value;
+        pairsContainer.appendChild(newPair);
+        
+        const removeBtn = newPair.querySelector('.remove-pair-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                newPair.remove();
+                updateHiddenInput();
+            });
+        }
+        
+        newPair.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', updateHiddenInput);
+        });
+        
+        updateHiddenInput();
+    }
+    
+    if (addBtn) {
+        addBtn.addEventListener('click', function() {
+            addPair();
+        });
+    }
+    
+    // Mevcut pair'ler için event listener'lar
+    if (pairsContainer) {
+        pairsContainer.querySelectorAll('.pair-item').forEach(item => {
+            if (item.style.display !== 'none') {
+            const removeBtn = item.querySelector('.remove-pair-btn');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function() {
+                    item.remove();
+                    updateHiddenInput();
+                });
+            }
+            
+                item.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', updateHiddenInput);
+                });
+            }
+        });
+    }
+    
+    // İlk yüklemede güncelle
+    if (hiddenInput) {
+        updateHiddenInput();
+    }
+    
+    // Eğer max_adults varsa ve pairs boşsa, otomatik oluştur
+    {% if widget.max_adults %}
+    const maxAdults = {{ widget.max_adults }};
+    if (pairsContainer && pairsContainer.querySelectorAll('.pair-item:not([style*="display: none"])').length === 0) {
+        for (let i = 1; i <= maxAdults; i++) {
+            addPair(String(i), String(i));
+        }
+    }
+    {% endif %}
+})();
+</script>
+

@@ -1,0 +1,157 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if template %}Voucher Şablonu Düzenle{% else %}Yeni Voucher Şablonu{% endif %}{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .form-control {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 3px;
+        font-size: 13px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: white;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #0078d4;
+        box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+    
+    textarea.form-control[rows="20"] {
+        min-height: 400px;
+    }
+    
+    textarea.form-control[rows="10"] {
+        min-height: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-file-alt"></i> {% if template %}Voucher Şablonu Düzenle{% else %}Yeni Voucher Şablonu{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'reception:voucher_template_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div style="padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 3px; margin-bottom: 15px; color: #721c24;">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-grid">
+                            <div class="form-label">Şablon Adı *</div>
+                            <div>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div style="color: #d13438; font-size: 12px; margin-top: 5px;">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-label">Kod *</div>
+                            <div>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                <div style="color: #d13438; font-size: 12px; margin-top: 5px;">{{ form.code.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-label">Açıklama</div>
+                            <div>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div style="color: #d13438; font-size: 12px; margin-top: 5px;">{{ form.description.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox" style="margin-top: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-code"></i> Şablon İçeriği
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-grid">
+                            <div class="form-label">HTML Şablon *</div>
+                            <div>
+                                {{ form.template_html }}
+                                {% if form.template_html.errors %}
+                                <div style="color: #d13438; font-size: 12px; margin-top: 5px;">{{ form.template_html.errors.0 }}</div>
+                                {% endif %}
+                                <div style="font-size: 11px; color: #666; margin-top: 5px;">
+                                    Kullanılabilir değişkenler: {{ reservation }}, {{ voucher_data }}, {{ hotel }}, {{ customer }}
+                                </div>
+                            </div>
+                            
+                            <div class="form-label">CSS Stilleri</div>
+                            <div>
+                                {{ form.template_css }}
+                                {% if form.template_css.errors %}
+                                <div style="color: #d13438; font-size: 12px; margin-top: 5px;">{{ form.template_css.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox" style="margin-top: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-cog"></i> Ayarlar
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-grid">
+                            <div class="form-label">Aktif</div>
+                            <div>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    {{ form.is_active }}
+                                    <span>Aktif</span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-label">Varsayılan Şablon</div>
+                            <div>
+                                <label style="display: flex; align-items: center; gap: 8px;">
+                                    {{ form.is_default }}
+                                    <span>Varsayılan Şablon Olarak İşaretle</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'reception:voucher_template_list' %}" class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

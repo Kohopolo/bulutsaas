@@ -361,3 +361,33 @@ STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
 STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
 
 
+
+SITE_NAME = env('SITE_NAME', default='SaaS 2026')
+SITE_URL = env('SITE_URL', default='http://localhost:8000')
+ADMIN_URL = env('ADMIN_URL', default='admin/')
+
+# Subscription Settings
+TRIAL_PERIOD_DAYS = env.int('TRIAL_PERIOD_DAYS', default=14)
+SUBSCRIPTION_GRACE_PERIOD_DAYS = env.int('SUBSCRIPTION_GRACE_PERIOD_DAYS', default=3)
+
+# Payment Settings
+STRIPE_PUBLIC_KEY = env('STRIPE_PUBLIC_KEY', default='')
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
+
+
+
+SITE_NAME = env('SITE_NAME', default='SaaS 2026')
+SITE_URL = env('SITE_URL', default='http://localhost:8000')
+ADMIN_URL = env('ADMIN_URL', default='admin/')
+
+# Subscription Settings
+TRIAL_PERIOD_DAYS = env.int('TRIAL_PERIOD_DAYS', default=14)
+SUBSCRIPTION_GRACE_PERIOD_DAYS = env.int('SUBSCRIPTION_GRACE_PERIOD_DAYS', default=3)
+
+# Payment Settings
+STRIPE_PUBLIC_KEY = env('STRIPE_PUBLIC_KEY', default='')
+STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='')
+
+

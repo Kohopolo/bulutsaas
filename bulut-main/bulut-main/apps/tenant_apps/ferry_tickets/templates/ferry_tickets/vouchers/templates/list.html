@@ -1,0 +1,73 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Voucher Şablonları{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-file-alt"></i> Voucher Şablonları
+            <div style="float: right;">
+                <a href="{% url 'ferry_tickets:voucher_template_create' %}" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Yeni Şablon
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Voucher Şablonları Tablosu -->
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Şablon Adı</th>
+                                <th>Kod</th>
+                                <th>Açıklama</th>
+                                <th>Varsayılan</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in templates %}
+                            <tr>
+                                <td><strong>{{ template.name }}</strong></td>
+                                <td>{{ template.code }}</td>
+                                <td>{{ template.description|truncatewords:10|default:"-" }}</td>
+                                <td>
+                                    {% if template.is_default %}
+                                        <span class="badge badge-info">Varsayılan</span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if template.is_active %}
+                                        <span class="badge badge-success">Aktif</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Pasif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'ferry_tickets:voucher_template_detail' template.pk %}" class="vb-button small">Detay</a>
+                                    <a href="{% url 'ferry_tickets:voucher_template_update' template.pk %}" class="vb-button small">Düzenle</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+                                    <i class="fas fa-inbox" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                                    Henüz voucher şablonu bulunmamaktadır.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

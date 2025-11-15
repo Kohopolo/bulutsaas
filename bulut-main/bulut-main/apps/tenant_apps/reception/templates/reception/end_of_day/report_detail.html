@@ -1,0 +1,132 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Gün Sonu Raporu Detayı - {{ report.get_report_type_display }}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-file-alt"></i> Gün Sonu Raporu Detayı - {{ report.get_report_type_display }}
+            <div style="float: right;">
+                {% if report.report_file %}
+                <a href="{% url 'reception:end_of_day_report_download' report.pk %}" class="vb-button primary">
+                    <i class="fas fa-download"></i> Raporu İndir
+                </a>
+                {% endif %}
+                <a href="{% url 'reception:end_of_day_report_list' %}{% if operation.hotel %}?hotel_id={{ operation.hotel.id }}{% endif %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Temel Bilgiler -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Rapor Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Rapor Türü:</span>
+                            <span class="voucher-value">{{ report.get_report_type_display }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Format:</span>
+                            <span class="voucher-value">{{ report.get_export_format_display|upper }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Oluşturulma:</span>
+                            <span class="voucher-value">{{ report.generated_at|date:"d.m.Y H:i:s" }}</span>
+                        </div>
+                        {% if report.report_file %}
+                        <div class="voucher-row">
+                            <span class="voucher-label">Dosya:</span>
+                            <span class="voucher-value">
+                                <a href="{% url 'reception:end_of_day_report_download' report.pk %}" target="_blank">
+                                    <i class="fas fa-file"></i> {{ report.report_file.name|slice:"-50:" }}
+                                </a>
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-calendar-check"></i> İşlem Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Otel:</span>
+                            <span class="voucher-value">{{ operation.hotel.name }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">İşlem Tarihi:</span>
+                            <span class="voucher-value">{{ operation.operation_date|date:"d.m.Y" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Durum:</span>
+                            <span class="voucher-value">
+                                <span class="badge badge-{% if operation.status == 'completed' %}success{% elif operation.status == 'failed' %}danger{% else %}warning{% endif %}">
+                                    {{ operation.get_status_display }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">İşlem Detayı:</span>
+                            <span class="voucher-value">
+                                <a href="{% url 'reception:end_of_day_operation_detail' operation.pk %}" class="vb-button small">
+                                    <i class="fas fa-eye"></i> Görüntüle
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rapor İçeriği -->
+            {% if report.report_data %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-chart-bar"></i> Rapor İçeriği
+                </div>
+                <div class="groupbox-body">
+                    <pre style="white-space: pre-wrap; background: #f8f9fa; padding: 15px; border-radius: 3px; overflow-x: auto;">{{ report.report_data|safe }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Export Bilgileri -->
+            {% if report.exported_to %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-share-alt"></i> Export Bilgileri
+                </div>
+                <div class="groupbox-body">
+                    <p><strong>Gönderildiği Sistemler:</strong></p>
+                    <ul>
+                        {% for system in report.exported_to %}
+                        <li>{{ system }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Notlar -->
+            {% if report.notes %}
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-sticky-note"></i> Notlar
+                </div>
+                <div class="groupbox-body">
+                    <pre style="white-space: pre-wrap; margin: 0;">{{ report.notes }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

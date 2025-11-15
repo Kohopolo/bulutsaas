@@ -67,3 +67,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f'\n[OK] {created_count} permission oluşturuldu')
         )
 
+
+
+
+

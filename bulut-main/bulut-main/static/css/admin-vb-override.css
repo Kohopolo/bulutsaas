@@ -1,0 +1,479 @@
+/**
+ * UNFOLD VB OVERRIDE - Maksimum Specificity
+ * Bu CSS Unfold'un TailwindCSS'ini zorla override eder
+ */
+
+/* ============================================
+   SIDEBAR - Navy Blue (ZORLA!)
+   ============================================ */
+
+/* Sidebar container - tüm varyasyonlar */
+aside,
+aside.bg-primary-600,
+aside[class*="bg-primary"],
+nav[class*="bg-primary"],
+.dark aside,
+html aside {
+    background-color: #2d3e50 !important;
+    background-image: none !important;
+}
+
+/* Sidebar header */
+aside header,
+aside > div:first-child,
+aside [class*="bg-primary-700"],
+.dark aside header {
+    background-color: #1e2935 !important;
+    background-image: none !important;
+    border-bottom: 1px solid #151e29 !important;
+}
+
+/* Sidebar links - text color */
+aside a,
+aside a span,
+aside button,
+aside button span,
+nav a,
+nav a span {
+    color: #b8c5d6 !important;
+}
+
+/* Sidebar links hover */
+aside a:hover,
+aside button:hover,
+nav a:hover {
+    background-color: #34495e !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* Active/current link */
+aside a[aria-current="page"],
+aside a.active,
+aside button[aria-current="page"],
+nav a[aria-current="page"] {
+    background-color: #151e29 !important;
+    background-image: none !important;
+    border-left: 3px solid #3498db !important;
+    color: #ffffff !important;
+}
+
+/* Sidebar icons */
+aside svg,
+aside i,
+nav svg,
+nav i {
+    color: #b8c5d6 !important;
+}
+
+/* ============================================
+   BUTTONS - Flat VB Style
+   ============================================ */
+
+/* Tüm butonlar - primary olmayan */
+button:not([class*="bg-primary"]),
+a[class*="btn"]:not([class*="bg-primary"]),
+input[type="submit"]:not([class*="bg-primary"]),
+input[type="button"]:not([class*="bg-primary"]) {
+    background-color: #e9ecef !important;
+    background-image: none !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    color: #333333 !important;
+    box-shadow: none !important;
+}
+
+/* Primary button */
+button[class*="bg-primary"],
+button[class*="primary"],
+a[class*="bg-primary"],
+input[type="submit"] {
+    background-color: #3498db !important;
+    background-image: none !important;
+    border: 1px solid #3498db !important;
+    border-radius: 3px !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+button[class*="bg-primary"]:hover,
+button[class*="primary"]:hover,
+input[type="submit"]:hover {
+    background-color: #2980b9 !important;
+    background-image: none !important;
+    border-color: #2980b9 !important;
+}
+
+/* Success/Green buttons */
+button[class*="bg-green"],
+button[class*="success"],
+a[class*="bg-green"] {
+    background-color: #27ae60 !important;
+    background-image: none !important;
+    border: 1px solid #27ae60 !important;
+    color: #ffffff !important;
+}
+
+/* Danger/Red buttons */
+button[class*="bg-red"],
+button[class*="danger"],
+a[class*="bg-red"] {
+    background-color: #e74c3c !important;
+    background-image: none !important;
+    border: 1px solid #e74c3c !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   TABLES - VB DataGridView
+   ============================================ */
+
+/* Table container */
+table,
+.results table,
+div[class*="overflow"] table {
+    border: 1px solid #dee2e6 !important;
+    border-collapse: collapse !important;
+    border-radius: 3px !important;
+    background-color: #ffffff !important;
+}
+
+/* Table header */
+thead,
+thead th,
+table thead tr {
+    background-color: #f8f9fa !important;
+    background-image: none !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+thead th {
+    border-right: 1px solid #dee2e6 !important;
+    font-weight: 600 !important;
+    padding: 10px 12px !important;
+}
+
+/* Table body rows */
+tbody tr {
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #ffffff !important;
+    background-image: none !important;
+}
+
+tbody tr:nth-child(odd) {
+    background-color: #f8f9fa !important;
+    background-image: none !important;
+}
+
+tbody tr:hover {
+    background-color: #e9ecef !important;
+    background-image: none !important;
+}
+
+tbody td {
+    border-right: 1px solid #dee2e6 !important;
+    padding: 8px 12px !important;
+}
+
+/* ============================================
+   FORMS - VB Style
+   ============================================ */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="url"],
+select,
+textarea {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 3px !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    padding: 6px 10px !important;
+    box-shadow: none !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    outline: none !important;
+}
+
+/* ============================================
+   CARDS/PANELS - VB GroupBox
+   ============================================ */
+
+/* Cards */
+div[class*="bg-white"],
+div[class*="bg-gray"],
+.module,
+.card {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+}
+
+/* ============================================
+   HEADER/TOP BAR
+   ============================================ */
+
+header,
+header[class*="bg-"],
+.header {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    box-shadow: none !important;
+}
+
+/* ============================================
+   BORDER RADIUS OVERRIDE (Keskin köşeler)
+   ============================================ */
+
+button,
+input,
+select,
+textarea,
+div[class*="rounded"],
+a[class*="rounded"] {
+    border-radius: 3px !important;
+}
+
+/* Rounded-full'u override et */
+[class*="rounded-full"],
+.rounded-full {
+    border-radius: 3px !important;
+}
+
+/* ============================================
+   REMOVE GRADIENTS
+   ============================================ */
+
+[class*="bg-gradient"],
+[class*="from-"],
+[class*="to-"] {
+    background-image: none !important;
+}
+
+/* ============================================
+   SHADOWS - Minimal
+   ============================================ */
+
+[class*="shadow"],
+.shadow,
+.shadow-sm,
+.shadow-md,
+.shadow-lg {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ============================================
+   TEXT COLORS
+   ============================================ */
+
+/* Primary text */
+[class*="text-primary"] {
+    color: #2d3e50 !important;
+}
+
+/* Muted text */
+[class*="text-gray"] {
+    color: #6c757d !important;
+}
+
+/* ============================================
+   BADGES/TAGS
+   ============================================ */
+
+span[class*="bg-"],
+.badge,
+[class*="badge"] {
+    border-radius: 3px !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+}
+
+/* Success badge */
+span[class*="bg-green"],
+.badge-success {
+    background-color: #27ae60 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* Danger badge */
+span[class*="bg-red"],
+.badge-danger {
+    background-color: #e74c3c !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* Warning badge */
+span[class*="bg-yellow"],
+.badge-warning {
+    background-color: #f39c12 !important;
+    background-image: none !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   DASHBOARD STATS
+   ============================================ */
+
+/* Dashboard stat cards */
+.dashboard div[class*="bg-white"],
+main > div > div[class*="grid"] > div {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 3px !important;
+}
+
+/* ============================================
+   PAGINATION
+   ============================================ */
+
+.pagination,
+[class*="pagination"] {
+    display: flex !important;
+    gap: 4px !important;
+}
+
+.pagination a,
+.pagination span,
+.pagination button {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 3px !important;
+    padding: 6px 12px !important;
+    color: #333333 !important;
+}
+
+.pagination a:hover {
+    background-color: #e9ecef !important;
+    background-image: none !important;
+}
+
+.pagination .current,
+.pagination [aria-current="page"] {
+    background-color: #3498db !important;
+    background-image: none !important;
+    color: #ffffff !important;
+    border-color: #3498db !important;
+}
+
+/* ============================================
+   SEARCH INPUT
+   ============================================ */
+
+input[type="search"],
+input[name="q"] {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 3px !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+}
+
+/* ============================================
+   MAIN CONTENT AREA
+   ============================================ */
+
+main,
+#main,
+[role="main"] {
+    background-color: #f5f7fa !important;
+    background-image: none !important;
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+
+a {
+    color: #3498db !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #2980b9 !important;
+    text-decoration: underline !important;
+}
+
+/* ============================================
+   ALERTS/MESSAGES
+   ============================================ */
+
+[class*="alert"],
+.alert,
+.message {
+    border-radius: 3px !important;
+    border: 1px solid !important;
+}
+
+.alert-success,
+[class*="bg-green-"] {
+    background-color: #27ae60 !important;
+    background-image: none !important;
+    border-color: #229954 !important;
+    color: #ffffff !important;
+}
+
+.alert-danger,
+.alert-error,
+[class*="bg-red-"] {
+    background-color: #e74c3c !important;
+    background-image: none !important;
+    border-color: #c0392b !important;
+    color: #ffffff !important;
+}
+
+/* ============================================
+   DROPDOWN MENUS
+   ============================================ */
+
+[class*="dropdown"],
+[class*="menu"],
+.dropdown-menu {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 3px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 10px !important;
+    height: 10px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: #f5f7fa !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e0 !important;
+    border-radius: 5px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0 !important;
+}
+
+

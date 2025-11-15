@@ -532,3 +532,7 @@ Bu rapor, önbüro modülünün kapsamlı bir analizini ve tasarımını içerme
 
 **Öncelikli Geliştirme**: Rezervasyon sistemi ve ödeme entegrasyonları ile başlanmalıdır.
 
+
+
+
+

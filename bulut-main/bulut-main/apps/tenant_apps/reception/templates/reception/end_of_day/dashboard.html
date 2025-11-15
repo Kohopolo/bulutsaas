@@ -1,0 +1,199 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Gün Sonu İşlemleri Dashboard{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-moon"></i> Gün Sonu İşlemleri Dashboard
+            <div style="float: right;">
+                {% if accessible_hotels|length > 1 %}
+                <select id="hotelSelect" onchange="changeHotel()" class="vb-button" style="margin-right: 10px; padding: 8px 15px;">
+                    {% for h in accessible_hotels %}
+                    <option value="{{ h.id }}" {% if h.id == hotel.id %}selected{% endif %}>{{ h.name }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                <a href="{% url 'reception:end_of_day_run_hotel' hotel.id %}" class="vb-button primary">
+                    <i class="fas fa-play"></i> Gün Sonu İşlemini Başlat
+                </a>
+                <a href="{% url 'reception:end_of_day_settings_hotel' hotel.id %}" class="vb-button">
+                    <i class="fas fa-cog"></i> Ayarlar
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Otel Bilgisi -->
+            <div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 3px;">
+                <h3 style="margin: 0; color: #1976d2;">
+                    <i class="fas fa-hotel"></i> {{ hotel.name }}
+                </h3>
+                <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">
+                    Gün sonu işlemleri bu otel için yapılacaktır.
+                </p>
+            </div>
+
+            <!-- İstatistikler -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-list"></i> Toplam İşlem
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #2c5f8d;">{{ total_operations }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-check-circle"></i> Tamamlanan
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: green;">{{ completed_operations }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-times-circle"></i> Başarısız
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: red;">{{ failed_operations }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-calendar-day"></i> Bugünün İşlemi
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        {% if today_operation %}
+                        <div style="font-size: 18px; font-weight: bold; color: {% if today_operation.status == 'completed' %}green{% elif today_operation.status == 'failed' %}red{% else %}orange{% endif %};">
+                            {{ today_operation.get_status_display }}
+                        </div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                            {{ today_operation.operation_date|date:"d.m.Y" }}
+                        </div>
+                        {% else %}
+                        <div style="font-size: 18px; font-weight: bold; color: #666;">Yok</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bugünün İşlemi -->
+            {% if today_operation %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-calendar-check"></i> Bugünün İşlemi ({{ today_operation.operation_date|date:"d.m.Y" }})
+                </div>
+                <div class="groupbox-body">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div>
+                            <strong>Durum:</strong> 
+                            <span class="badge badge-{% if today_operation.status == 'completed' %}success{% elif today_operation.status == 'failed' %}danger{% else %}warning{% endif %}">
+                                {{ today_operation.get_status_display }}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>Başlangıç:</strong> 
+                            {% if today_operation.started_at %}
+                            {{ today_operation.started_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                            <span style="color: #666;">Henüz başlamadı</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <strong>Bitiş:</strong> 
+                            {% if today_operation.completed_at %}
+                            {{ today_operation.completed_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                            <span style="color: #666;">Henüz bitmedi</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <a href="{% url 'reception:end_of_day_operation_detail' today_operation.pk %}" class="vb-button primary">
+                            <i class="fas fa-eye"></i> Detayları Görüntüle
+                        </a>
+                        {% if can_run_today %}
+                        <a href="{% url 'reception:end_of_day_run_hotel' hotel.id %}" class="vb-button" style="background: #28a745; color: white; border-color: #28a745;">
+                            <i class="fas fa-redo"></i> Yeniden Çalıştır
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="form-groupbox" style="margin-bottom: 20px; background: #fff3cd; border: 1px solid #ffc107;">
+                <div class="groupbox-body" style="text-align: center; padding: 20px;">
+                    <i class="fas fa-info-circle" style="font-size: 48px; color: #ffc107; margin-bottom: 10px;"></i>
+                    <h3 style="margin: 10px 0; color: #856404;">Bugün için henüz gün sonu işlemi yapılmadı</h3>
+                    <p style="color: #856404; margin-bottom: 15px;">Gün sonu işlemini başlatmak için aşağıdaki butona tıklayın.</p>
+                    <a href="{% url 'reception:end_of_day_run_hotel' hotel.id %}" class="vb-button primary" style="font-size: 16px; padding: 12px 30px;">
+                        <i class="fas fa-play"></i> Gün Sonu İşlemini Başlat
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Son İşlemler -->
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-history"></i> Son İşlemler
+                    <a href="{% url 'reception:end_of_day_operation_list' %}" class="vb-button" style="float: right; padding: 5px 15px; font-size: 12px;">
+                        <i class="fas fa-list"></i> Tümünü Gör
+                    </a>
+                </div>
+                <div class="groupbox-body">
+                    {% if recent_operations %}
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Durum</th>
+                                <th>Otomasyon Türü</th>
+                                <th>Oluşturan</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for operation in recent_operations %}
+                            <tr>
+                                <td>{{ operation.operation_date|date:"d.m.Y" }}</td>
+                                <td>
+                                    <span class="badge badge-{% if operation.status == 'completed' %}success{% elif operation.status == 'failed' %}danger{% elif operation.status == 'running' %}warning{% else %}secondary{% endif %}">
+                                        {{ operation.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ operation.get_automation_type_display }}</td>
+                                <td>{{ operation.created_by.get_full_name|default:operation.created_by.username }}</td>
+                                <td>{% if operation.started_at %}{{ operation.started_at|date:"H:i" }}{% else %}-{% endif %}</td>
+                                <td>{% if operation.completed_at %}{{ operation.completed_at|date:"H:i" }}{% else %}-{% endif %}</td>
+                                <td>
+                                    <a href="{% url 'reception:end_of_day_operation_detail' operation.pk %}" class="vb-button small">
+                                        <i class="fas fa-eye"></i> Detay
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="text-align: center; color: #666; padding: 20px;">Henüz işlem yapılmamış.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeHotel() {
+    const hotelId = document.getElementById('hotelSelect').value;
+    window.location.href = '{% url "reception:end_of_day_dashboard" %}?hotel_id=' + hotelId;
+}
+</script>
+{% endblock %}
+

@@ -40,3 +40,7 @@ class Command(BaseCommand):
                 self.style.WARNING(f'[SKIP] Ödeme Yönetimi modülü zaten mevcut: {module.name}')
             )
 
+
+
+
+

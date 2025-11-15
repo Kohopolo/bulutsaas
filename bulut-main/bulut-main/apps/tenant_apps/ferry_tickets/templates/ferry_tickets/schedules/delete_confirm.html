@@ -1,0 +1,39 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Sefer Sil{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-trash"></i> Sefer Sil
+            <div style="float: right;">
+                <a href="{% url 'ferry_tickets:schedule_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <div style="padding: 20px; text-align: center;">
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                    <strong>{{ schedule.route }}</strong> rotasındaki seferi silmek istediğinizden emin misiniz?
+                </p>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Kalkış: {{ schedule.departure_date|date:"d.m.Y" }} {{ schedule.departure_time|time:"H:i" }}
+                </p>
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="vb-button danger" style="background: #dc3545; color: white; border-color: #dc3545;">
+                        <i class="fas fa-trash"></i> Evet, Sil
+                    </button>
+                </form>
+                <a href="{% url 'ferry_tickets:schedule_list' %}" class="vb-button" style="margin-left: 10px;">
+                    İptal
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -122,3 +122,7 @@ html_content = html_content.encode('utf-8').decode('utf-8')
 
 **Son Güncelleme:** 2025-01-27
 
+
+
+
+

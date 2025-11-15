@@ -1,0 +1,123 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Toplu Oda Numarası Ekle - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Toplu Oda Numarası Ekle{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h2 class="text-2xl font-bold text-vb-navy mb-6">
+                <i class="fas fa-layer-group mr-2 text-vb-primary"></i>
+                Toplu Oda Numarası Ekle
+            </h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Başlangıç ve bitiş numaraları arasındaki tüm oda numaraları otomatik olarak oluşturulacaktır.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Oda Tipi *</label>
+                        {{ form.room }}
+                        {% if form.room.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.room.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Kat</label>
+                        {{ form.floor }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Blok</label>
+                        {{ form.block }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Başlangıç Numarası *</label>
+                        {{ form.start_number }}
+                        {% if form.start_number.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.start_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Bitiş Numarası *</label>
+                        {{ form.end_number }}
+                        {% if form.end_number.errors %}
+                        <p class="text-red-600 text-xs mt-1">{{ form.end_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Uyarı:</strong> Başlangıç: {{ form.start_number.value|default:"?" }}, Bitiş: {{ form.end_number.value|default:"?" }} arasında 
+                        <span id="room-count">?</span> oda numarası oluşturulacak.
+                    </p>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <a href="{% url 'hotels:room_number_list' %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                        <i class="fas fa-save mr-2"></i>
+                        Oluştur
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startInput = document.getElementById('id_start_number');
+    const endInput = document.getElementById('id_end_number');
+    const countSpan = document.getElementById('room-count');
+    
+    function updateCount() {
+        const start = parseInt(startInput.value) || 0;
+        const end = parseInt(endInput.value) || 0;
+        if (start > 0 && end > 0 && end >= start) {
+            countSpan.textContent = (end - start + 1);
+        } else {
+            countSpan.textContent = '?';
+        }
+    }
+    
+    startInput.addEventListener('input', updateCount);
+    endInput.addEventListener('input', updateCount);
+    updateCount();
+});
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #ffffff;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+</style>
+{% endblock %}
+

@@ -30,3 +30,7 @@ def require_ferry_ticket_permission(permission_level='view'):
         return _wrapped_view
     return decorator
 
+
+
+
+

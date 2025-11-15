@@ -83,3 +83,7 @@ urlpatterns = [
     path('api/schedules/', views.api_schedules, name='api_schedules'),
 ]
 
+
+
+
+

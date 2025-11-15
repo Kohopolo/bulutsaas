@@ -1,0 +1,209 @@
+{% comment %}
+Room Rack Component (ElektraWeb Style)
+Usage:
+    {% include 'vb_theme/components/room-rack.html' with 
+        rooms=rooms 
+        view_mode='grid'
+    %}
+{% endcomment %}
+
+<div class="room-rack-container">
+    {% if rooms %}
+        {% for room in rooms %}
+        <div class="room-card {% if room.selected %}selected{% endif %}"
+             data-room-number="{{ room.number }}"
+             data-room-status="{{ room.status }}"
+             data-room-type="{{ room.room_type }}">
+            
+            <!-- Room Card Header -->
+            <div class="room-card-header">
+                <div>
+                    <div class="room-number">{{ room.number }}</div>
+                    <div class="room-type">{{ room.room_type }}</div>
+                </div>
+                <div>
+                    <span class="room-status {{ room.cleaning_status|lower }}">
+                        {% if room.cleaning_status == 'CLEAN' %}
+                            Temiz
+                        {% elif room.cleaning_status == 'DIRTY' %}
+                            Kirli
+                        {% else %}
+                            {{ room.cleaning_status }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Room Card Body -->
+            <div class="room-card-body">
+                {% if room.occupied %}
+                    <!-- Occupied Room -->
+                    <div class="room-guest">
+                        <i class="fas fa-user"></i> {{ room.guest_name }}
+                    </div>
+                    <div class="room-dates">
+                        <div>
+                            <i class="fas fa-sign-in-alt"></i>
+                            <small>{{ room.check_in|date:"d.m.Y" }}</small>
+                        </div>
+                        <div>
+                            <i class="fas fa-sign-out-alt"></i>
+                            <small>{{ room.check_out|date:"d.m.Y" }}</small>
+                        </div>
+                    </div>
+                    {% if room.guests_count %}
+                    <div style="margin-top: 8px; font-size: 11px; color: #6c757d;">
+                        <i class="fas fa-users"></i> {{ room.guests_count }} Kişi
+                        {% if room.children_count %}
+                            ({{ room.children_count }} Çocuk)
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if room.reservation_note %}
+                    <div style="margin-top: 4px; font-size: 11px; color: #f39c12;">
+                        <i class="fas fa-sticky-note"></i> {{ room.reservation_note|truncatechars:30 }}
+                    </div>
+                    {% endif %}
+                {% elif room.reserved %}
+                    <!-- Reserved Room -->
+                    <div class="room-guest">
+                        <i class="fas fa-calendar-check"></i> {{ room.guest_name }}
+                    </div>
+                    <div class="room-dates">
+                        <div>
+                            <i class="fas fa-clock"></i>
+                            <small>Giriş: {{ room.check_in|date:"d.m H:i" }}</small>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #6c757d;">
+                        <i class="fas fa-info-circle"></i> Rezervasyon: {{ room.reservation_code }}
+                    </div>
+                {% else %}
+                    <!-- Vacant Room -->
+                    <div style="text-align: center; padding: 20px 0; color: #27ae60;">
+                        <i class="fas fa-check-circle" style="font-size: 32px; opacity: 0.5;"></i>
+                        <div style="margin-top: 8px; font-weight: 600;">Boş Oda</div>
+                    </div>
+                    {% if room.next_reservation %}
+                    <div style="margin-top: 8px; font-size: 11px; color: #f39c12; text-align: center;">
+                        <i class="fas fa-calendar"></i> Sonraki: {{ room.next_reservation|date:"d.m" }}
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+            
+            <!-- Room Card Footer (Optional - for price/actions) -->
+            {% if room.show_footer %}
+            <div class="room-card-footer" style="border-top: 1px solid #dee2e6; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                {% if room.price %}
+                <div style="font-weight: 600; color: var(--navy-primary);">
+                    {{ room.price }} ₺
+                </div>
+                {% endif %}
+                <div style="display: flex; gap: 4px;">
+                    <button class="vb-button vb-button-icon vb-button-primary" 
+                            data-action="view" 
+                            data-room-id="{{ room.id }}"
+                            data-tooltip="Detay">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="vb-button vb-button-icon vb-button-success" 
+                            data-action="checkin" 
+                            data-room-id="{{ room.id }}"
+                            data-tooltip="Check-in">
+                        <i class="fas fa-door-open"></i>
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="vb-groupbox" style="grid-column: 1 / -1; text-align: center; padding: 60px;">
+            <i class="fas fa-door-closed" style="font-size: 64px; opacity: 0.2; color: #6c757d;"></i>
+            <p style="margin-top: 20px; color: #6c757d; font-size: 16px;">Oda bulunamadı</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Room Rack Filters (Optional) -->
+{% if show_filters %}
+<div class="filters-bar">
+    <div class="filter-group">
+        <label>Oda Durumu</label>
+        <select class="vb-select" name="room_status">
+            <option value="">Tümü</option>
+            <option value="vacant">Boş</option>
+            <option value="occupied">Dolu</option>
+            <option value="reserved">Rezerve</option>
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label>Temizlik Durumu</label>
+        <select class="vb-select" name="cleaning_status">
+            <option value="">Tümü</option>
+            <option value="clean">Temiz</option>
+            <option value="dirty">Kirli</option>
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label>Oda Tipi</label>
+        <select class="vb-select" name="room_type">
+            <option value="">Tümü</option>
+            {% for room_type in room_types %}
+            <option value="{{ room_type.id }}">{{ room_type.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="filter-group">
+        <label>Oda Durum</label>
+        <select class="vb-select" name="oda_durum">
+            <option value="">Tümü</option>
+            <option value="kirli">Kirli</option>
+            <option value="temiz">Temiz</option>
+            <option value="kapali">Kapalı</option>
+        </select>
+    </div>
+    
+    <div class="filter-group" style="align-self: flex-end;">
+        <button class="vb-button vb-button-primary" data-action="apply-filters">
+            <i class="fas fa-filter"></i> Filtrele
+        </button>
+    </div>
+    
+    <div class="filter-group" style="align-self: flex-end;">
+        <button class="vb-button" data-action="clear-filters">
+            <i class="fas fa-times"></i> Temizle
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Room Legend -->
+<div class="room-legend" style="display: flex; gap: 20px; padding: 16px; background: white; border: 1px solid #dee2e6; border-radius: 4px; margin-top: 16px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 16px; height: 16px; background: var(--status-clean); border-radius: 3px;"></div>
+        <span style="font-size: 12px;">Temiz</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 16px; height: 16px; background: var(--status-dirty); border-radius: 3px;"></div>
+        <span style="font-size: 12px;">Kirli</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 16px; height: 16px; background: var(--status-occupied); border-radius: 3px;"></div>
+        <span style="font-size: 12px;">Dolu</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 16px; height: 16px; background: var(--status-reserved); border-radius: 3px;"></div>
+        <span style="font-size: 12px;">Rezerve</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 16px; height: 16px; background: var(--status-highlight); border: 2px solid var(--button-warning); border-radius: 3px;"></div>
+        <span style="font-size: 12px;">Seçili</span>
+    </div>
+</div>
+
+

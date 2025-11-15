@@ -1,0 +1,1233 @@
+/**
+ * ElektraWeb VB Desktop Application Theme
+ * Visual Basic Style UI for SaaS 2026
+ * 
+ * Design Standard: DESIGN_STANDARD.md
+ * Layout: Full-screen, Panel-based, Fixed positions
+ * Color Scheme: Navy blue + Gray (ElektraWeb style)
+ */
+
+/* ============================================
+   1. CSS VARIABLES - ElektraWeb Color Palette
+   ============================================ */
+:root {
+    /* Navy Colors (Sidebar) */
+    --navy-primary: #2d3e50;
+    --navy-dark: #1e2935;
+    --navy-darker: #151e29;
+    --navy-light: #3d4f61;
+    --navy-hover: #34495e;
+    
+    /* Top Bar */
+    --topbar-bg: #f8f9fa;
+    --topbar-border: #dee2e6;
+    
+    /* Sidebar */
+    --sidebar-bg: var(--navy-primary);
+    --sidebar-header-bg: var(--navy-dark);
+    --sidebar-text: #b8c5d6;
+    --sidebar-text-active: #ffffff;
+    --sidebar-active: #3498db;
+    --sidebar-hover: var(--navy-hover);
+    --sidebar-border: var(--navy-darker);
+    
+    /* Content Area */
+    --content-bg: #f5f7fa;
+    --content-card-bg: #ffffff;
+    
+    /* Toolbar */
+    --toolbar-bg: #ffffff;
+    --toolbar-border: #e5e8eb;
+    
+    /* Status Bar */
+    --statusbar-bg: #34495e;
+    --statusbar-text: #ecf0f1;
+    --statusbar-border: #2c3e50;
+    
+    /* Buttons (VB Style - Flat, no gradients) */
+    --button-default: #e9ecef;
+    --button-border: #ced4da;
+    --button-hover: #dee2e6;
+    --button-primary: #3498db;
+    --button-primary-hover: #2980b9;
+    --button-success: #27ae60;
+    --button-success-hover: #229954;
+    --button-danger: #e74c3c;
+    --button-danger-hover: #c0392b;
+    --button-warning: #f39c12;
+    --button-warning-hover: #e67e22;
+    
+    /* DataGrid (VB DataGridView) */
+    --grid-header: #f8f9fa;
+    --grid-border: #dee2e6;
+    --grid-row-even: #ffffff;
+    --grid-row-odd: #f8f9fa;
+    --grid-row-hover: #e9ecef;
+    --grid-row-selected: #d1ecf1;
+    
+    /* Status Colors (ElektraWeb) */
+    --status-clean: #4ade80;    /* Temiz (Öce) - Yeşil */
+    --status-dirty: #60a5fa;    /* Kirli (Öce) - Mavi */
+    --status-occupied: #f87171; /* Dolu */
+    --status-reserved: #fbbf24; /* Rezerve */
+    --status-highlight: #fef08a; /* Seçili - Sarı */
+    
+    /* Typography */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-base: 13px;
+    --font-size-small: 11px;
+    --font-size-large: 15px;
+    
+    /* Layout Dimensions (FIXED!) */
+    --titlebar-height: 56px;
+    --toolbar-height: 48px;
+    --sidebar-width: 260px;
+    --statusbar-height: 36px;
+    
+    /* Border Radius (VB Style - minimal) */
+    --border-radius-small: 3px;
+    --border-radius-medium: 4px;
+    
+    /* Shadows (VB Style - minimal) */
+    --shadow-small: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   2. GLOBAL RESET & BASE STYLES
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ============================================
+   INPUT BORDER STANDARDI - REZERVASYON MODÜLÜ REFERANSI
+   Tüm input, select, textarea için zorunlu border
+   Tailwind CSS override için en yüksek öncelik
+   ============================================ */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="hidden"]),
+select:not([multiple]),
+textarea {
+    /* Border - ZORUNLU ve GÖRÜNÜR */
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    
+    /* Background */
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    
+    /* Box shadow ile ekstra border garantisi */
+    -webkit-box-shadow: inset 0 0 0 1px #6c757d !important;
+    -moz-box-shadow: inset 0 0 0 1px #6c757d !important;
+    box-shadow: inset 0 0 0 1px #6c757d !important;
+    
+    /* Padding ve temel stiller */
+    padding: 6px 10px !important;
+    border-radius: 3px !important;
+    font-size: 13px !important;
+    min-height: 32px !important;
+    box-sizing: border-box !important;
+    
+    /* Tarayıcı varsayılan stillerini kaldır */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: #333;
+    background: var(--content-bg);
+}
+
+/* ============================================
+   3. MAIN LAYOUT - Desktop Application
+   ============================================ */
+.desktop-app {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ============================================
+   4. TITLE BAR (Top - 56px)
+   ============================================ */
+.titlebar {
+    height: var(--titlebar-height);
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--topbar-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.titlebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy-primary);
+}
+
+.titlebar-brand img {
+    height: 32px;
+    width: auto;
+}
+
+.titlebar-modules {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    padding: 0 20px;
+}
+
+.module-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+    color: #6c757d;
+    font-size: var(--font-size-small);
+}
+
+.module-icon:hover {
+    background: var(--button-hover);
+    color: var(--button-primary);
+}
+
+.module-icon.active {
+    background: var(--button-primary);
+    color: white;
+}
+
+.module-icon i {
+    font-size: 20px;
+}
+
+.titlebar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    border: 1px solid var(--toolbar-border);
+}
+
+.user-menu:hover {
+    background: var(--button-hover);
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--button-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ============================================
+   5. TOOLBAR (Below Title Bar - 48px)
+   ============================================ */
+.toolbar {
+    height: var(--toolbar-height);
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    flex-shrink: 0;
+    z-index: 99;
+}
+
+.toolbar-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--toolbar-border);
+    margin: 0 8px;
+}
+
+/* ============================================
+   6. MAIN CONTAINER (Sidebar + Content)
+   ============================================ */
+.main-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ============================================
+   7. SIDEBAR (Left - 260px Fixed)
+   ============================================ */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-right: 1px solid var(--sidebar-border);
+    z-index: 98;
+}
+
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar-header {
+    height: 50px;
+    background: var(--sidebar-header-bg);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    border-bottom: 1px solid var(--sidebar-border);
+}
+
+.sidebar-header i {
+    color: var(--sidebar-text);
+    font-size: 18px;
+}
+
+.sidebar-header span {
+    color: var(--sidebar-text-active);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.sidebar.collapsed .sidebar-header span {
+    display: none;
+}
+
+.sidebar-search {
+    padding: 12px;
+    border-bottom: 1px solid var(--sidebar-border);
+}
+
+.sidebar-search input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--sidebar-border);
+    border-radius: var(--border-radius-small);
+    background: var(--navy-darker);
+    color: var(--sidebar-text);
+    font-size: var(--font-size-small);
+}
+
+.sidebar-search input::placeholder {
+    color: var(--sidebar-text);
+    opacity: 0.6;
+}
+
+.sidebar.collapsed .sidebar-search {
+    display: none;
+}
+
+.sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+/* Custom Scrollbar for Sidebar */
+.sidebar-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+    background: var(--navy-darker);
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: var(--navy-light);
+    border-radius: 3px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-active);
+}
+
+.sidebar-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-menu-item:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text-active);
+}
+
+.sidebar-menu-item.active {
+    background: var(--navy-darker);
+    border-left-color: var(--sidebar-active);
+    color: var(--sidebar-text-active);
+}
+
+.sidebar-menu-item i {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar.collapsed .sidebar-menu-item span {
+    display: none;
+}
+
+.sidebar-menu-divider {
+    height: 1px;
+    background: var(--sidebar-border);
+    margin: 8px 16px;
+}
+
+.sidebar-menu-header {
+    padding: 12px 16px 6px;
+    color: var(--sidebar-text);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+}
+
+.sidebar.collapsed .sidebar-menu-header {
+    display: none;
+}
+
+.sidebar-toggle {
+    padding: 12px;
+    border-top: 1px solid var(--sidebar-border);
+    text-align: center;
+}
+
+.sidebar-toggle button {
+    background: transparent;
+    border: 1px solid var(--sidebar-border);
+    color: var(--sidebar-text);
+    padding: 6px 12px;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    width: 100%;
+}
+
+.sidebar-toggle button:hover {
+    background: var(--sidebar-hover);
+    color: var(--sidebar-text-active);
+}
+
+/* ============================================
+   8. CONTENT AREA (Main Content - Flex)
+   ============================================ */
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--content-bg);
+}
+
+.content-header {
+    padding: 20px;
+    background: white;
+    border-bottom: 1px solid var(--toolbar-border);
+}
+
+.content-header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--navy-primary);
+    margin-bottom: 4px;
+}
+
+.content-header p {
+    font-size: var(--font-size-small);
+    color: #6c757d;
+}
+
+.content-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* Custom Scrollbar for Content */
+.content-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.content-body::-webkit-scrollbar-track {
+    background: var(--content-bg);
+}
+
+.content-body::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 5px;
+}
+
+.content-body::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* ============================================
+   9. STATUS BAR (Bottom - 36px)
+   ============================================ */
+.statusbar {
+    height: var(--statusbar-height);
+    background: var(--statusbar-bg);
+    border-top: 1px solid var(--statusbar-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    color: var(--statusbar-text);
+    font-size: var(--font-size-small);
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.statusbar-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.statusbar-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.statusbar-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--statusbar-border);
+}
+
+/* ============================================
+   10. VB BUTTONS (Flat, Bordered)
+   ============================================ */
+.vb-button {
+    padding: 7px 16px;
+    border: 1px solid var(--button-border);
+    border-radius: var(--border-radius-small);
+    background: var(--button-default);
+    color: #333;
+    font-size: var(--font-size-base);
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.vb-button:hover {
+    background: var(--button-hover);
+    border-color: #adb5bd;
+}
+
+.vb-button:active {
+    transform: translateY(1px);
+}
+
+.vb-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.vb-button-primary {
+    background: var(--button-primary);
+    border-color: var(--button-primary);
+    color: white;
+}
+
+.vb-button-primary:hover {
+    background: var(--button-primary-hover);
+    border-color: var(--button-primary-hover);
+}
+
+.vb-button-success {
+    background: var(--button-success);
+    border-color: var(--button-success);
+    color: white;
+}
+
+.vb-button-success:hover {
+    background: var(--button-success-hover);
+    border-color: var(--button-success-hover);
+}
+
+.vb-button-danger {
+    background: var(--button-danger);
+    border-color: var(--button-danger);
+    color: white;
+}
+
+.vb-button-danger:hover {
+    background: var(--button-danger-hover);
+    border-color: var(--button-danger-hover);
+}
+
+.vb-button-warning {
+    background: var(--button-warning);
+    border-color: var(--button-warning);
+    color: white;
+}
+
+.vb-button-warning:hover {
+    background: var(--button-warning-hover);
+    border-color: var(--button-warning-hover);
+}
+
+.vb-button-icon {
+    padding: 7px 10px;
+    min-width: auto;
+}
+
+.vb-button i {
+    font-size: 16px; /* referans ikon boyutu */
+}
+
+/* ============================================
+   11. VB FORM CONTROLS
+   ============================================ */
+/* REZERVASYON STANDARDI - Tüm modüllerde kullanılacak */
+.vb-input,
+.vb-select,
+.vb-textarea,
+.form-control,
+input.form-control,
+select.form-control,
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: var(--border-radius-small) !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: var(--font-size-base) !important;
+    font-family: var(--font-family) !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    min-height: 32px !important;
+    -webkit-box-shadow: inset 0 0 0 1px #6c757d !important;
+    -moz-box-shadow: inset 0 0 0 1px #6c757d !important;
+    box-shadow: inset 0 0 0 1px #6c757d !important;
+}
+
+.vb-input:focus,
+.vb-select:focus,
+.vb-textarea:focus,
+.form-control:focus,
+input.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus {
+    outline: none !important;
+    border-color: var(--button-primary) !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+.vb-input[disabled],
+.vb-select[disabled],
+.vb-textarea[disabled],
+.form-control[disabled],
+input.form-control[disabled],
+select.form-control[disabled],
+textarea.form-control[disabled] {
+    background: #e9ecef;
+    cursor: not-allowed;
+    color: #6c757d;
+}
+
+/* Form control için özel stiller - !important ile güçlendir */
+/* REZERVASYON STANDARDI - Input tipleri */
+input[type="text"].form-control,
+input[type="email"].form-control,
+input[type="number"].form-control,
+input[type="date"].form-control,
+input[type="time"].form-control,
+input[type="url"].form-control,
+input[type="password"].form-control,
+input.form-control[type="text"],
+input.form-control[type="email"],
+input.form-control[type="number"],
+input.form-control[type="date"],
+input.form-control[type="time"],
+input.form-control[type="url"],
+input.form-control[type="password"] {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: 3px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    min-height: 32px !important;
+}
+
+input[type="text"].form-control:focus,
+input[type="email"].form-control:focus,
+input[type="number"].form-control:focus,
+input[type="date"].form-control:focus,
+input[type="time"].form-control:focus,
+input[type="url"].form-control:focus,
+input[type="password"].form-control:focus,
+input.form-control[type="text"]:focus,
+input.form-control[type="email"]:focus,
+input.form-control[type="number"]:focus,
+input.form-control[type="date"]:focus,
+input.form-control[type="time"]:focus,
+input.form-control[type="url"]:focus,
+input.form-control[type="password"]:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+/* REZERVASYON STANDARDI - Select/Dropdown */
+select.form-control,
+select.form-control option {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: 3px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    min-height: 32px !important;
+}
+
+select.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+/* REZERVASYON STANDARDI - Textarea */
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #6c757d !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: #6c757d !important;
+    border-radius: 3px !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    font-family: var(--font-family) !important;
+    resize: vertical !important;
+    min-height: 80px !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+textarea.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+.vb-label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: var(--font-size-small);
+    color: #495057;
+}
+
+.vb-form-group {
+    margin-bottom: 16px;
+}
+
+/* ============================================
+   12. VB GROUPBOX (Panel)
+   ============================================ */
+.vb-groupbox {
+    border: 1px solid var(--grid-border);
+    border-radius: var(--border-radius-small);
+    padding: 16px;
+    background: white;
+    margin-bottom: 16px;
+}
+
+.vb-groupbox-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--navy-primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--grid-border);
+}
+
+/* ============================================
+   12.a. VB TITLE (Global Utility)
+   ============================================ */
+.vb-title {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+    font-size: 20px;
+    font-weight: 600; /* semi-bold */
+    line-height: 28px;
+    letter-spacing: 0.01em;
+    color: inherit;
+}
+
+/* Global Subtitle (Section Subheading) */
+.vb-subtitle {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+    font-size: 16px;
+    font-weight: 500; /* medium */
+    line-height: 24px;
+    letter-spacing: 0.005em;
+    color: inherit;
+}
+
+/* Global Section Title */
+.vb-section-title {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+    font-size: 18px;
+    font-weight: 600; /* semi-bold */
+    line-height: 26px;
+    letter-spacing: 0.01em;
+    color: inherit;
+}
+
+/* ============================================
+   13. VB DATAGRIDVIEW (Main Component)
+   ============================================ */
+.vb-datagrid {
+    width: 100%;
+    border: 1px solid var(--grid-border);
+    border-radius: var(--border-radius-small);
+    background: white;
+    overflow: hidden;
+}
+
+.vb-datagrid-container {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+}
+
+.vb-datagrid table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-base);
+}
+
+.vb-datagrid thead {
+    background: var(--grid-header);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.vb-datagrid th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid var(--grid-border);
+    border-right: 1px solid var(--grid-border);
+    white-space: nowrap;
+}
+
+.vb-datagrid th:last-child {
+    border-right: none;
+}
+
+.vb-datagrid tbody tr {
+    border-bottom: 1px solid var(--grid-border);
+    transition: background 0.15s;
+}
+
+.vb-datagrid tbody tr:nth-child(even) {
+    background: var(--grid-row-even);
+}
+
+.vb-datagrid tbody tr:nth-child(odd) {
+    background: var(--grid-row-odd);
+}
+
+.vb-datagrid tbody tr:hover {
+    background: var(--grid-row-hover);
+}
+
+.vb-datagrid tbody tr.selected {
+    background: var(--grid-row-selected) !important;
+}
+
+.vb-datagrid td {
+    padding: 8px 12px;
+    border-right: 1px solid var(--grid-border);
+}
+
+.vb-datagrid td:last-child {
+    border-right: none;
+}
+
+/* Dense mode for pixel-level compact tables */
+.vb-datagrid.dense th {
+    padding: 5px 8px; /* bir tık daha sıkı */
+    font-size: 12px;
+}
+.vb-datagrid.dense td {
+    padding: 5px 8px; /* bir tık daha sıkı */
+    font-size: 11px;
+}
+
+/* DataGrid Actions Column */
+.vb-datagrid-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.vb-datagrid-actions button {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* ============================================
+   14. ROOM RACK (Card-based View)
+   ============================================ */
+.room-rack-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.room-card {
+    background: white;
+    border: 2px solid var(--grid-border);
+    border-radius: var(--border-radius-medium);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.room-card:hover {
+    border-color: var(--button-primary);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
+}
+
+.room-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.room-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy-primary);
+}
+
+.room-type {
+    font-size: var(--font-size-small);
+    color: #6c757d;
+}
+
+.room-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+}
+
+.room-status.clean {
+    background: var(--status-clean);
+    color: white;
+}
+
+.room-status.dirty {
+    background: var(--status-dirty);
+    color: white;
+}
+
+.room-status.occupied {
+    background: var(--status-occupied);
+    color: white;
+}
+
+.room-status.reserved {
+    background: var(--status-reserved);
+    color: #333;
+}
+
+.room-card.selected {
+    background: var(--status-highlight);
+    border-color: var(--button-warning);
+}
+
+.room-card-body {
+    font-size: var(--font-size-small);
+    color: #495057;
+}
+
+.room-guest {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.room-dates {
+    display: flex;
+    justify-content: space-between;
+    color: #6c757d;
+}
+
+/* ============================================
+   15. STATS CARDS (Dashboard)
+   ============================================ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid var(--grid-border);
+    border-radius: var(--border-radius-medium);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--border-radius-medium);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.stat-icon.primary {
+    background: var(--button-primary);
+}
+
+.stat-icon.success {
+    background: var(--button-success);
+}
+
+.stat-icon.warning {
+    background: var(--button-warning);
+}
+
+.stat-icon.danger {
+    background: var(--button-danger);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: var(--font-size-small);
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--navy-primary);
+}
+
+/* ============================================
+   16. FILTERS BAR
+   ============================================ */
+.filters-bar {
+    background: white;
+    border: 1px solid var(--toolbar-border);
+    border-radius: var(--border-radius-small);
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-group label {
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: #495057;
+}
+
+/* ============================================
+   17. UTILITIES
+   ============================================ */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mt-3 { margin-top: 24px; }
+
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 16px; }
+.mb-3 { margin-bottom: 24px; }
+
+.p-1 { padding: 8px; }
+.p-2 { padding: 16px; }
+.p-3 { padding: 24px; }
+
+.d-flex {
+    display: flex;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.gap-1 { gap: 8px; }
+.gap-2 { gap: 16px; }
+.gap-3 { gap: 24px; }
+
+/* ============================================
+   18. RESPONSIVE (Optional for Desktop App)
+   ============================================ */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 60px;
+    }
+    
+    .sidebar-header span,
+    .sidebar-menu-item span,
+    .sidebar-search,
+    .sidebar-menu-header {
+        display: none;
+    }
+    
+    .titlebar-modules {
+        display: none;
+    }
+    
+    .room-rack-container {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+/* ============================================
+   19. PRINT STYLES
+   ============================================ */
+@media print {
+    .sidebar,
+    .titlebar,
+    .toolbar,
+    .statusbar {
+        display: none !important;
+    }
+    
+    .content-area {
+        width: 100%;
+    }
+}
+
+

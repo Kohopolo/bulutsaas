@@ -1,0 +1,156 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Ödeme Gateway Yönetimi{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-credit-card"></i> Ödeme Gateway Yönetimi
+            <div style="float: right;">
+                <a href="{% url 'payment_management:gateway_create' %}" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Yeni Gateway Ekle
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Otel Filtreleme -->
+            {% if accessible_hotels|length > 1 %}
+            <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <form method="get" style="display: flex; gap: 10px; align-items: end;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 12px;">Otel</label>
+                        <select name="hotel" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">Tüm Oteller</option>
+                            <option value="0" {% if request.GET.hotel == '0' %}selected{% endif %}>Genel Gateway'ler</option>
+                            {% for hotel in accessible_hotels %}
+                            <option value="{{ hotel.id }}" {% if request.GET.hotel == hotel.id|stringformat:"s" or selected_hotel_id == hotel.id %}selected{% endif %}>
+                                {{ hotel.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="vb-button primary" style="padding: 8px 15px;">
+                        <i class="fas fa-filter"></i> Filtrele
+                    </button>
+                    <a href="{% url 'payment_management:gateway_list' %}" class="vb-button secondary" style="padding: 8px 15px;">
+                        <i class="fas fa-times"></i> Temizle
+                    </a>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Yapılandırılmış Gateway'ler -->
+            {% if tenant_gateways %}
+            <h3 style="margin-bottom: 15px; color: #333; font-size: 14px; font-weight: bold;">Yapılandırılmış Gateway'ler</h3>
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Otel</th>
+                                <th>Gateway Adı</th>
+                                <th>Tip</th>
+                                <th>Durum</th>
+                                <th>Test Modu</th>
+                                <th>3D Secure</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tg in tenant_gateways %}
+                            <tr>
+                                <td>
+                                    {% if tg.hotel %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #007bff; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">{{ tg.hotel.name }}</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #6c757d; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Genel</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ tg.gateway.name }}</strong>
+                                    {% if tg.gateway.description %}
+                                    <br><small style="color: #666; font-size: 11px;">{{ tg.gateway.description|truncatewords:15 }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ tg.gateway.get_gateway_type_display }}</td>
+                                <td>
+                                    {% if tg.is_active %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Aktif</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #6c757d; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Pasif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if tg.is_test_mode %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #ffc107; color: #333; border-radius: 3px; font-size: 11px; font-weight: bold;">Test</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #17a2b8; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Canlı</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if tg.use_3d_secure %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">✓</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #6c757d; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">✗</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'payment_management:gateway_update' tg.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; margin-right: 5px;">
+                                        <i class="fas fa-edit"></i> Düzenle
+                                    </a>
+                                    <a href="{% url 'payment_management:gateway_toggle_active' tg.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; margin-right: 5px; background: {% if tg.is_active %}#dc3545{% else %}#28a745{% endif %}; color: white; border-color: {% if tg.is_active %}#c82333{% else %}#218838{% endif %};">
+                                        <i class="fas fa-{% if tg.is_active %}ban{% else %}check{% endif %}"></i> {% if tg.is_active %}Pasif{% else %}Aktif{% endif %}
+                                    </a>
+                                    <a href="{% url 'payment_management:gateway_delete' tg.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; background: #dc3545; color: white; border-color: #c82333;" onclick="return confirm('Bu gateway yapılandırmasını silmek istediğinizden emin misiniz?');">
+                                        <i class="fas fa-trash"></i> Sil
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <p style="text-align: center; color: #666; padding: 20px;">Henüz yapılandırılmış gateway bulunmamaktadır.</p>
+            {% endif %}
+            
+            <!-- Yapılandırılmamış Gateway'ler -->
+            {% if unconfigured_gateways %}
+            <h3 style="margin-bottom: 15px; color: #333; margin-top: 30px; font-size: 14px; font-weight: bold;">Yapılandırılabilir Gateway'ler</h3>
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Gateway Adı</th>
+                                <th>Tip</th>
+                                <th>Açıklama</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gw in unconfigured_gateways %}
+                            <tr>
+                                <td><strong>{{ gw.name }}</strong></td>
+                                <td>{{ gw.get_gateway_type_display }}</td>
+                                <td>{{ gw.description|truncatewords:20|default:"-" }}</td>
+                                <td>
+                                    <a href="{% url 'payment_management:gateway_create' %}?gateway_id={{ gw.pk }}" class="vb-button primary" style="padding: 4px 8px; font-size: 11px;">
+                                        <i class="fas fa-plus"></i> Yapılandır
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

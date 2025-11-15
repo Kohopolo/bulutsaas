@@ -1,0 +1,98 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bilet İade{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-undo-alt"></i> Bilet İade
+            <div style="float: right;">
+                <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Bilet Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Bilet Kodu:</span>
+                            <span class="voucher-value">{{ ticket.ticket_code }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Toplam Tutar:</span>
+                            <span class="voucher-value">{{ ticket.total_amount|floatformat:2 }} {{ ticket.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Ödenen:</span>
+                            <span class="voucher-value">{{ ticket.total_paid|floatformat:2 }} {{ ticket.currency }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">İade Edilebilir Tutar:</span>
+                            <span class="voucher-value" style="color: green; font-weight: bold;">{{ ticket.total_paid|floatformat:2 }} {{ ticket.currency }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox" style="margin-top: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-money-bill-wave"></i> İade Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-grid">
+                            <div class="form-label">İade Tutarı *</div>
+                            <div>
+                                <input type="number" name="refund_amount" 
+                                       step="0.01" 
+                                       max="{{ ticket.total_paid }}" 
+                                       value="{{ ticket.total_paid }}" 
+                                       class="form-control" 
+                                       required>
+                                <small style="color: #666;">Maksimum: {{ ticket.total_paid|floatformat:2 }} {{ ticket.currency }}</small>
+                            </div>
+                            
+                            <div class="form-label">İade Yöntemi *</div>
+                            <div>
+                                <select name="refund_method" class="form-control" required>
+                                    <option value="transfer">Havale/EFT</option>
+                                    <option value="cash">Nakit</option>
+                                    <option value="credit_card">Kredi Kartına İade</option>
+                                    <option value="check">Çek</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-label">İade Referansı</div>
+                            <div>
+                                <input type="text" name="refund_reference" 
+                                       class="form-control" 
+                                       placeholder="Banka referans numarası, işlem ID vb.">
+                            </div>
+                            
+                            <div class="form-label">İade Nedeni *</div>
+                            <div>
+                                <textarea name="refund_reason" class="form-control" rows="4" required placeholder="İade nedenini açıklayın..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-check"></i> İade İşlemini Tamamla
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

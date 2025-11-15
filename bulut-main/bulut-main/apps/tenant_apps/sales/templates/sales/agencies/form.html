@@ -1,0 +1,71 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if agency %}Acente Düzenle{% else %}Yeni Acente{% endif %} - Satış Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-handshake mr-2 text-vb-primary"></i>
+            {% if agency %}Acente Düzenle{% else %}Yeni Acente{% endif %}
+        </h2>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <form method="post">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.code.label }}</label>
+                    {{ form.code }}
+                    {% if form.code.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.code.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.commission_rate.label }}</label>
+                    {{ form.commission_rate }}
+                    {% if form.commission_rate.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.commission_rate.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.commission_type.label }}</label>
+                    {{ form.commission_type }}
+                    {% if form.commission_type.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.commission_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="flex items-center">
+                        {{ form.is_active }}
+                        <span class="ml-2 text-sm text-gray-700">{{ form.is_active.label }}</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+                <a href="{% url 'sales:agency_list' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    İptal
+                </a>
+                <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

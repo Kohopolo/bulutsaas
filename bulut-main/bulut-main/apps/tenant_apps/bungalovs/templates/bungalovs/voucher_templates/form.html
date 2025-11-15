@@ -1,0 +1,118 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if template %}Voucher Şablonu Düzenle{% else %}Yeni Voucher Şablonu{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-{% if template %}edit{% else %}plus{% endif %}"></i> 
+            {% if template %}Voucher Şablonu Düzenle{% else %}Yeni Voucher Şablonu{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'bungalovs:voucher_template_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Temel Bilgiler -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.name.label }} <span style="color: red;">*</span></label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="error-message">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.code.label }} <span style="color: red;">*</span></label>
+                                {{ form.code }}
+                                {% if form.code.errors %}
+                                <div class="error-message">{{ form.code.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label>{{ form.description.label }}</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                <div class="error-message">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- HTML Şablon -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-code"></i> HTML Şablon
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-group">
+                            <label>{{ form.template_html.label }} <span style="color: red;">*</span></label>
+                            {{ form.template_html }}
+                            {% if form.template_html.errors %}
+                            <div class="error-message">{{ form.template_html.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">Jinja2 template syntax kullanın. Örnek: {{ "{{ reservation.reservation_code }}" }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Durum -->
+                <div class="form-groupbox" style="margin-bottom: 20px;">
+                    <div class="groupbox-header">
+                        <i class="fas fa-cog"></i> Durum
+                    </div>
+                    <div class="groupbox-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div class="form-group">
+                                <label>{{ form.is_active.label }}</label>
+                                <div style="margin-top: 8px;">
+                                    {{ form.is_active }}
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>{{ form.is_default.label }}</label>
+                                <div style="margin-top: 8px;">
+                                    {{ form.is_default }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Hataları -->
+                {% if form.non_field_errors %}
+                <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 3px; margin-bottom: 20px; color: #721c24;">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <!-- Butonlar -->
+                <div style="text-align: right; margin-top: 20px;">
+                    <a href="{% url 'bungalovs:voucher_template_list' %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

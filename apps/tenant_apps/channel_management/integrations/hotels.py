@@ -239,3 +239,7 @@ class HotelsIntegration(BaseChannelIntegration):
             self.log_error("Hotels.com: Rezervasyon değiştirme hatası", e)
             return {'success': False, 'message': str(e)}
 
+
+
+
+

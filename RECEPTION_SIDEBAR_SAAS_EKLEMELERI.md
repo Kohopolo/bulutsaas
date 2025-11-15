@@ -200,3 +200,7 @@ python manage.py migrate_schemas
 - Reception modülü `is_core=False` olarak tanımlı, yani paket bazlı aktifleştirme gerekiyor
 - Migration'lar tüm tenant schema'larında çalıştırılmalı
 
+
+
+
+

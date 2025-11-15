@@ -1,0 +1,75 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Temizlik Listesi{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-broom"></i> Temizlik Listesi
+            <div style="float: right;">
+                <a href="{% url 'bungalovs:cleaning_create' %}" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Yeni Temizlik Kaydı
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            {% if cleanings %}
+            <table class="vb-datagrid">
+                <thead>
+                    <tr>
+                        <th>Bungalov</th>
+                        <th>Temizlik Tipi</th>
+                        <th>Temizlik Tarihi</th>
+                        <th>Durum</th>
+                        <th>Atanan Personel</th>
+                        <th>Tamamlayan</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cleaning in cleanings %}
+                    <tr>
+                        <td><strong>{{ cleaning.bungalov.code }}</strong> - {{ cleaning.bungalov.name }}</td>
+                        <td>{{ cleaning.get_cleaning_type_display }}</td>
+                        <td>{{ cleaning.cleaning_date|date:"d.m.Y" }}</td>
+                        <td>
+                            <span class="badge badge-{% if cleaning.status == 'clean' %}success{% elif cleaning.status == 'dirty' %}danger{% elif cleaning.status == 'preparing' or cleaning.status == 'inspecting' %}warning{% else %}secondary{% endif %}">
+                                {{ cleaning.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ cleaning.assigned_to.get_full_name|default:"-" }}</td>
+                        <td>
+                            {% if cleaning.completed_by %}
+                                {{ cleaning.completed_by.get_full_name }}
+                                <br><small>{{ cleaning.completed_at|date:"d.m.Y H:i" }}</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'bungalovs:cleaning_update' cleaning.pk %}" class="vb-button small">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if cleaning.status != 'clean' %}
+                            <a href="{% url 'bungalovs:cleaning_complete' cleaning.pk %}" class="vb-button small success" onclick="return confirm('Temizliği tamamlandı olarak işaretlemek istediğinize emin misiniz?');">
+                                <i class="fas fa-check"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 15px; display: block;"></i>
+                Temizlik kaydı bulunamadı.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

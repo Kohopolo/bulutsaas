@@ -5,3 +5,7 @@ OTA (Online Travel Agency) entegrasyonları için kapsamlı kanal yönetim siste
 
 default_app_config = 'apps.tenant_apps.channel_management.apps.ChannelManagementConfig'
 
+
+
+
+

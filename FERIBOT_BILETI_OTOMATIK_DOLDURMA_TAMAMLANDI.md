@@ -208,3 +208,7 @@ Feribot bileti ekleme formu artık reception modülündeki gibi profesyonel bir 
 **Tarih:** 14 Kasım 2025  
 **Versiyon:** 1.0.0
 
+
+
+
+

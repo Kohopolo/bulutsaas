@@ -1,0 +1,152 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}İade Politikaları - İade Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-vb-navy-500">
+            <i class="fas fa-file-contract mr-2 text-vb-primary"></i>İade Politikaları
+        </h1>
+        <a href="{% url 'refunds:policy_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+            <i class="fas fa-plus mr-2"></i>Yeni Politika Ekle
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {% if accessible_hotels|length > 1 %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Otel</label>
+                <select name="hotel" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Tüm Oteller</option>
+                    <option value="0" {% if request.GET.hotel == '0' %}selected{% endif %}>Genel Politikalar</option>
+                    {% for hotel in accessible_hotels %}
+                    <option value="{{ hotel.id }}" {% if request.GET.hotel == hotel.id|stringformat:"s" or selected_hotel_id == hotel.id %}selected{% endif %}>
+                        {{ hotel.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Modül</label>
+                <input type="text" name="module" value="{{ request.GET.module }}" placeholder="tours, reservations..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Politika Tipi</label>
+                <select name="policy_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Tümü</option>
+                    {% for value, label in policy_types %}
+                    <option value="{{ value }}" {% if request.GET.policy_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Durum</label>
+                <select name="is_active" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Tümü</option>
+                    <option value="1" {% if request.GET.is_active == '1' %}selected{% endif %}>Aktif</option>
+                    <option value="0" {% if request.GET.is_active == '0' %}selected{% endif %}>Pasif</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Arama</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Politika adı, kodu..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="md:col-span-5 flex gap-2">
+                <button type="submit" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-search mr-2"></i>Filtrele
+                </button>
+                <a href="{% url 'refunds:policy_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    <i class="fas fa-redo mr-2"></i>Temizle
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <table class="w-full border-collapse">
+            <thead class="bg-vb-navy-500 text-white">
+                <tr>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Politika Adı</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Otel</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Modül</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Tip</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">İade %</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Durum</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for policy in policies %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <div class="font-medium">{{ policy.name }}</div>
+                        <div class="text-sm text-gray-500">{{ policy.code }}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if policy.hotel %}
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{{ policy.hotel.name }}</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Genel</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if policy.module %}
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{{ policy.module }}</span>
+                        {% else %}
+                        <span class="text-gray-400">Tüm Modüller</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">
+                            {{ policy.get_policy_type_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold">
+                        {% if policy.policy_type == 'percentage' %}
+                        %{{ policy.refund_percentage|floatformat:0 }}
+                        {% elif policy.policy_type == 'fixed' %}
+                        {{ policy.refund_amount|floatformat:2 }} TL
+                        {% elif policy.policy_type == 'full' %}
+                        %100
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if policy.is_active %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">Aktif</span>
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">Pasif</span>
+                        {% endif %}
+                        {% if policy.is_default %}
+                        <span class="ml-2 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-semibold">Varsayılan</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-center gap-2">
+                            <a href="{% url 'refunds:policy_detail' policy.pk %}" class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm">
+                                Detay
+                            </a>
+                            <a href="{% url 'refunds:policy_update' policy.pk %}" class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 text-sm">
+                                Düzenle
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">Henüz politika bulunmamaktadır.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

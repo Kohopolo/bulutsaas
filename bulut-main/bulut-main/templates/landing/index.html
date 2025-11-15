@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bulut Acente - Modern otel ve tur yönetim sistemi. Online rezervasyon, kanal yönetimi, muhasebe ve daha fazlası.">
+    <title>Bulut Acente - Otel ve Tur Yönetim Sistemi | Modern SaaS Çözümü</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        :root {
+            --vb-primary: #2563eb;
+            --vb-primary-dark: #1e40af;
+            --vb-navy: #1e293b;
+            --vb-success: #10b981;
+            --vb-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        body {
+            background: #ffffff;
+            overflow-x: hidden;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            position: relative;
+        }
+        .hero-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1920&q=80') center/cover;
+            opacity: 0.15;
+            z-index: 0;
+        }
+        .hero-gradient > * {
+            position: relative;
+            z-index: 1;
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .package-card {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .package-card.featured {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+        .package-card.featured h3,
+        .package-card.featured .text-gray-700,
+        .package-card.featured .text-gray-600 {
+            color: white !important;
+        }
+        .package-card.featured .text-vb-primary {
+            color: #ffd700 !important;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            margin: 0 auto 24px;
+            font-size: 36px;
+        }
+        .testimonial-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .testimonial-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px);
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .mobile-menu {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-menu.active {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                        <i class="fas fa-cloud text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-bold text-gray-900">Bulut Acente</span>
+                        <p class="text-xs text-gray-500 hidden sm:block">Otel & Tur Yönetim Sistemi</p>
+                    </div>
+                </div>
+                <div class="hidden lg:flex items-center space-x-8">
+                    <a href="#ozellikler" class="text-gray-700 hover:text-blue-600 transition font-medium">Özellikler</a>
+                    <a href="#paketler" class="text-gray-700 hover:text-blue-600 transition font-medium">Paketler</a>
+                    <a href="#nasil-calisir" class="text-gray-700 hover:text-blue-600 transition font-medium">Nasıl Çalışır</a>
+                    <a href="#referanslar" class="text-gray-700 hover:text-blue-600 transition font-medium">Referanslar</a>
+                    <a href="/admin/login/" class="px-4 py-2 text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition font-semibold">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap
+                    </a>
+                    <a href="#paketler" class="px-6 py-2 btn-primary text-white rounded-lg font-semibold shadow-lg">
+                        <i class="fas fa-rocket mr-2"></i>Ücretsiz Dene
+                    </a>
+                </div>
+                <div class="lg:hidden">
+                    <button class="text-gray-700 p-2" id="mobile-menu-btn" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div class="mobile-menu lg:hidden bg-white border-t border-gray-200" id="mobile-menu">
+            <div class="px-4 py-4 space-y-3">
+                <a href="#ozellikler" class="block py-2 text-gray-700 hover:text-blue-600 transition">Özellikler</a>
+                <a href="#paketler" class="block py-2 text-gray-700 hover:text-blue-600 transition">Paketler</a>
+                <a href="#nasil-calisir" class="block py-2 text-gray-700 hover:text-blue-600 transition">Nasıl Çalışır</a>
+                <a href="#referanslar" class="block py-2 text-gray-700 hover:text-blue-600 transition">Referanslar</a>
+                <a href="/admin/login/" class="block py-2 text-blue-600 font-semibold">Giriş Yap</a>
+                <a href="#paketler" class="block py-3 text-center btn-primary text-white rounded-lg font-semibold">Ücretsiz Dene</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white py-32 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center animate-fade-in">
+                <div class="inline-block mb-6 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-full text-sm font-semibold">
+                    <i class="fas fa-star mr-2 text-yellow-300"></i>
+                    Türkiye'nin En Modern Otel Yönetim Sistemi
+                </div>
+                <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+                    Otelinizi<br/>
+                    <span class="text-yellow-300">Dijitalleştirin</span>
+                </h1>
+                <p class="text-xl sm:text-2xl mb-10 text-gray-100 max-w-4xl mx-auto leading-relaxed">
+                    Bulut tabanlı otel ve tur yönetim sistemi ile rezervasyonlarınızı online alın, 
+                    tüm operasyonlarınızı tek panelden yönetin ve gelirlerinizi artırın.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-12">
+                    <a href="#paketler" class="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:bg-gray-100 transition shadow-2xl text-lg w-full sm:w-auto">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Paketleri İncele
+                    </a>
+                    <a href="#demo-form" class="px-8 py-4 bg-yellow-400 text-gray-900 rounded-xl font-bold hover:bg-yellow-300 transition shadow-2xl text-lg w-full sm:w-auto">
+                        <i class="fas fa-play-circle mr-2"></i>
+                        Ücretsiz Demo İzle
+                    </a>
+                </div>
+                <div class="flex flex-wrap justify-center items-center gap-6 text-sm">
+                    <div class="flex items-center bg-white bg-opacity-10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                        <i class="fas fa-check-circle mr-2 text-green-300"></i>
+                        <span>14 Gün Ücretsiz Deneme</span>
+                    </div>
+                    <div class="flex items-center bg-white bg-opacity-10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                        <i class="fas fa-check-circle mr-2 text-green-300"></i>
+                        <span>Kredi Kartı Gerektirmez</span>
+                    </div>
+                    <div class="flex items-center bg-white bg-opacity-10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                        <i class="fas fa-check-circle mr-2 text-green-300"></i>
+                        <span>7/24 Destek</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Floating Elements -->
+        <div class="absolute top-20 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full blur-xl animate-pulse"></div>
+        <div class="absolute bottom-20 right-10 w-32 h-32 bg-yellow-300 bg-opacity-20 rounded-full blur-xl animate-pulse delay-300"></div>
+    </section>
+
+    <!-- Statistics Section -->
+    <section class="py-16 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center p-6 bg-white rounded-xl shadow-lg">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">500+</div>
+                    <div class="text-gray-600 font-medium">Aktif Otel</div>
+                </div>
+                <div class="text-center p-6 bg-white rounded-xl shadow-lg">
+                    <div class="text-4xl font-bold text-purple-600 mb-2">50K+</div>
+                    <div class="text-gray-600 font-medium">Aylık Rezervasyon</div>
+                </div>
+                <div class="text-center p-6 bg-white rounded-xl shadow-lg">
+                    <div class="text-4xl font-bold text-green-600 mb-2">99.9%</div>
+                    <div class="text-gray-600 font-medium">Uptime</div>
+                </div>
+                <div class="text-center p-6 bg-white rounded-xl shadow-lg">
+                    <div class="text-4xl font-bold text-orange-600 mb-2">24/7</div>
+                    <div class="text-gray-600 font-medium">Destek</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="ozellikler" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">Neden Bulut Acente?</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Otel ve tur işletmeniz için ihtiyacınız olan tüm özellikler tek platformda
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="text-center p-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Online Rezervasyon</h3>
+                    <p class="text-gray-600 leading-relaxed">Web sitenizden ve tüm kanallardan eş zamanlı rezervasyon alın. Otomatik takvim yönetimi ile hiçbir rezervasyonu kaçırmayın.</p>
+                </div>
+                <div class="text-center p-8 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border-2 border-green-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Kanal Yönetimi</h3>
+                    <p class="text-gray-600 leading-relaxed">Booking.com, Expedia, Airbnb ve 50+ kanal ile otomatik senkronizasyon. Tüm rezervasyonlarınız tek panelde.</p>
+                </div>
+                <div class="text-center p-8 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl border-2 border-purple-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Raporlama & Analiz</h3>
+                    <p class="text-gray-600 leading-relaxed">Detaylı gelir raporları, doluluk oranları, müşteri analizleri ve daha fazlası. Kararlarınızı veri ile alın.</p>
+                </div>
+                <div class="text-center p-8 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl border-2 border-orange-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Mobil Uyumlu</h3>
+                    <p class="text-gray-600 leading-relaxed">Her cihazdan erişim. Tablet, telefon veya bilgisayardan otelinizi yönetin. iOS ve Android uygulamaları.</p>
+                </div>
+                <div class="text-center p-8 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl border-2 border-indigo-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">E-Fatura Entegrasyonu</h3>
+                    <p class="text-gray-600 leading-relaxed">E-fatura sistemleri ile otomatik entegrasyon. Faturalarınız otomatik kesilir ve müşterilerinize iletilir.</p>
+                </div>
+                <div class="text-center p-8 bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl border-2 border-pink-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-pink-500 to-pink-600 text-white shadow-lg">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Kullanıcı Yönetimi</h3>
+                    <p class="text-gray-600 leading-relaxed">Rol bazlı yetkilendirme sistemi. Her kullanıcıya özel yetkiler tanımlayın. Güvenli ve esnek yapı.</p>
+                </div>
+                <div class="text-center p-8 bg-gradient-to-br from-teal-50 to-teal-100 rounded-2xl border-2 border-teal-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-lg">
+                        <i class="fas fa-sms"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">SMS & Email</h3>
+                    <p class="text-gray-600 leading-relaxed">Otomatik bildirimler. Rezervasyon onayları, hatırlatmalar ve özel mesajlar. NetGSM ve Verimor entegrasyonu.</p>
+                </div>
+                <div class="text-center p-8 bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-2xl border-2 border-cyan-200 card-hover">
+                    <div class="feature-icon bg-gradient-to-br from-cyan-500 to-cyan-600 text-white shadow-lg">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Güvenlik</h3>
+                    <p class="text-gray-600 leading-relaxed">SSL şifreleme, yedekleme, veri koruma. Verileriniz güvende. GDPR uyumlu sistem.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="nasil-calisir" class="py-24 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">Nasıl Çalışır?</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    3 basit adımda başlayın
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center p-8 bg-white rounded-2xl shadow-lg">
+                    <div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">1</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Paket Seçin</h3>
+                    <p class="text-gray-600 leading-relaxed">İhtiyacınıza uygun paketi seçin. Küçük otellerden büyük zincirlere kadar her ihtiyaca uygun çözümler.</p>
+                </div>
+                <div class="text-center p-8 bg-white rounded-2xl shadow-lg">
+                    <div class="w-16 h-16 bg-purple-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">2</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Hesap Oluşturun</h3>
+                    <p class="text-gray-600 leading-relaxed">Birkaç dakika içinde hesabınızı oluşturun. Kredi kartı gerektirmez. 14 gün ücretsiz deneme.</p>
+                </div>
+                <div class="text-center p-8 bg-white rounded-2xl shadow-lg">
+                    <div class="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">3</div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Yönetmeye Başlayın</h3>
+                    <p class="text-gray-600 leading-relaxed">Otel bilgilerinizi girin, kanalları bağlayın ve rezervasyon almaya başlayın. Her şey hazır!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Packages Section -->
+    <section id="paketler" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">Paketlerimiz</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    İhtiyacınıza uygun paketi seçin, hemen başlayın
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for package in packages %}
+                <div class="package-card {% if package.is_featured %}featured{% endif %} rounded-2xl p-8 card-hover shadow-xl">
+                    {% if package.is_featured %}
+                    <div class="bg-yellow-400 text-gray-900 text-xs font-bold px-4 py-2 rounded-full inline-block mb-4 shadow-md">
+                        <i class="fas fa-star mr-1"></i>
+                        EN POPÜLER
+                    </div>
+                    {% endif %}
+                    <h3 class="text-3xl font-bold mb-2">{{ package.name }}</h3>
+                    <div class="mb-6">
+                        <span class="text-5xl font-bold {% if package.is_featured %}text-yellow-300{% else %}text-blue-600{% endif %}">{{ package.price_monthly|floatformat:0 }}</span>
+                        <span class="text-gray-600 ml-2 text-lg"> {{ package.currency }}/ay</span>
+                    </div>
+                    <p class="text-gray-600 mb-6 min-h-[60px] leading-relaxed">{{ package.description|truncatewords:30|default:"Profesyonel otel yönetimi için ideal paket" }}</p>
+                    
+                    <div class="mb-6 space-y-3">
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-check-circle {% if package.is_featured %}text-yellow-300{% else %}text-green-600{% endif %} mr-3 text-lg"></i>
+                            <span>{{ package.max_rooms }} Oda</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-check-circle {% if package.is_featured %}text-yellow-300{% else %}text-green-600{% endif %} mr-3 text-lg"></i>
+                            <span>{{ package.max_users }} Kullanıcı</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-check-circle {% if package.is_featured %}text-yellow-300{% else %}text-green-600{% endif %} mr-3 text-lg"></i>
+                            <span>{{ package.max_reservations_per_month }} Rezervasyon/ay</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <p class="text-sm font-semibold mb-3 {% if package.is_featured %}text-yellow-200{% else %}text-gray-700{% endif %}">Dahil Modüller:</p>
+                        <ul class="space-y-2 text-sm">
+                            {% for module in package.modules.all|slice:":5" %}
+                            <li class="flex items-center">
+                                <i class="fas fa-check {% if package.is_featured %}text-yellow-300{% else %}text-green-600{% endif %} mr-2 text-xs"></i>
+                                <span>{{ module.name }}</span>
+                            </li>
+                            {% endfor %}
+                            {% if package.modules.count > 5 %}
+                            <li class="text-xs {% if package.is_featured %}text-yellow-200{% else %}text-gray-500{% endif %} italic">
+                                +{{ package.modules.count|add:"-5" }} modül daha
+                            </li>
+                            {% endif %}
+                            {% if package.modules.count == 0 %}
+                            <li class="text-xs {% if package.is_featured %}text-yellow-200{% else %}text-gray-500{% endif %} italic">
+                                Tüm temel modüller dahil
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <a href="{% url 'payments:initiate' package.id %}" class="block w-full text-center px-6 py-4 {% if package.is_featured %}bg-yellow-400 text-gray-900 hover:bg-yellow-300{% else %}bg-blue-600 text-white hover:bg-blue-700{% endif %} rounded-xl font-bold transition shadow-lg">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        Paketi Seç
+                    </a>
+                </div>
+                {% empty %}
+                <div class="col-span-3 text-center py-16">
+                    <div class="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-box-open text-6xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-700 mb-2">Henüz Paket Eklenmemiş</h3>
+                    <p class="text-gray-600 mb-6">Admin panelinden paket ekleyerek başlayabilirsiniz.</p>
+                    <a href="/admin/" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+                        <i class="fas fa-plus mr-2"></i>
+                        Paket Ekle
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-24 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">Müşterilerimiz Ne Diyor?</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Binlerce mutlu müşterimizden bazıları
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="testimonial-card">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                            AY
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-900">Ahmet Yılmaz</div>
+                            <div class="text-sm text-gray-600">Otel Sahibi, İstanbul</div>
+                        </div>
+                    </div>
+                    <div class="text-yellow-400 mb-3">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">
+                        "Bulut Acente sayesinde rezervasyonlarımız %300 arttı. Kanal yönetimi özelliği harika, tüm rezervasyonlar tek panelde. Kesinlikle tavsiye ederim!"
+                    </p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                            MÖ
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-900">Mehmet Özkan</div>
+                            <div class="text-sm text-gray-600">Tur Operatörü, Antalya</div>
+                        </div>
+                    </div>
+                    <div class="text-yellow-400 mb-3">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">
+                        "Tur yönetimi modülü tam ihtiyacımız olan şey. Rezervasyon takibi, müşteri yönetimi, ödeme sistemi her şey tek yerde. Çok memnunuz!"
+                    </p>
+                </div>
+                <div class="testimonial-card">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
+                            ZK
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-900">Zeynep Kaya</div>
+                            <div class="text-sm text-gray-600">Otel Müdürü, Bodrum</div>
+                        </div>
+                    </div>
+                    <div class="text-yellow-400 mb-3">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="text-gray-700 leading-relaxed">
+                        "Muhasebe ve kasa yönetimi özellikleri sayesinde işlerimiz çok kolaylaştı. Raporlama sistemi harika, her şeyi detaylı görebiliyoruz."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- References Section -->
+    <section id="referanslar" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Bize Güvenen İşletmeler</h2>
+                <p class="text-xl text-gray-600">Türkiye genelinde 500+ işletme Bulut Acente kullanıyor</p>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                {% for i in "123456789012"|make_list %}
+                <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 flex items-center justify-center h-32 card-hover border-2 border-gray-200">
+                    <div class="text-center">
+                        <i class="fas fa-hotel text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-xs text-gray-600 font-semibold">Otel {{ i }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold mb-4">Hemen Başlayın, 14 Gün Ücretsiz Deneyin!</h2>
+            <p class="text-xl text-blue-100 mb-6">Kredi kartı gerektirmez. İstediğiniz zaman iptal edebilirsiniz.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#paketler" class="px-8 py-4 bg-white text-blue-600 rounded-xl font-bold hover:bg-gray-100 transition shadow-xl">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Paketleri İncele
+                </a>
+                <a href="tel:+908505512701" class="px-8 py-4 bg-yellow-400 text-gray-900 rounded-xl font-bold hover:bg-yellow-300 transition shadow-xl">
+                    <i class="fas fa-phone mr-2"></i>
+                    (850) 551-2701
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Form Section -->
+    <section id="demo-form" class="py-24 bg-gradient-to-br from-gray-50 to-blue-50">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Ücretsiz Demo Talebinde Bulunun</h2>
+                <p class="text-xl text-gray-600">Sistemimizi denemek için formu doldurun, size ulaşalım</p>
+            </div>
+            <div class="bg-white rounded-2xl p-8 shadow-2xl">
+                <form class="space-y-6" method="POST" action="#">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Adınız Soyadınız *</label>
+                        <input type="text" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white text-gray-900 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Email Adresiniz *</label>
+                        <input type="email" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white text-gray-900 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Telefon Numaranız *</label>
+                        <input type="tel" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white text-gray-900 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">İşletme Adı</label>
+                        <input type="text" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white text-gray-900 transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Mesajınız</label>
+                        <textarea rows="4" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white text-gray-900 transition"></textarea>
+                    </div>
+                    <button type="submit" class="w-full px-6 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-lg">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        Demo Talebi Gönder
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="iletisim" class="bg-gray-900 text-gray-300 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-cloud text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold text-white">Bulut Acente</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-4">Otel ve tur işletmeleri için modern yönetim sistemi. Bulut tabanlı, güvenli ve ölçeklenebilir.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-400 transition">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-pink-600 transition">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-green-500 transition">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">Ürün</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#ozellikler" class="hover:text-white transition">Özellikler</a></li>
+                        <li><a href="#paketler" class="hover:text-white transition">Paketler</a></li>
+                        <li><a href="#nasil-calisir" class="hover:text-white transition">Nasıl Çalışır</a></li>
+                        <li><a href="#referanslar" class="hover:text-white transition">Referanslar</a></li>
+                        <li><a href="/admin/" class="hover:text-white transition">Demo</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">Hesap</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="/admin/login/" class="hover:text-white transition"><i class="fas fa-sign-in-alt mr-2"></i>Giriş Yap</a></li>
+                        <li><a href="#paketler" class="hover:text-white transition"><i class="fas fa-user-plus mr-2"></i>Ücretsiz Üye Ol</a></li>
+                        <li><a href="#demo-form" class="hover:text-white transition"><i class="fas fa-envelope mr-2"></i>Demo Talebi</a></li>
+                        <li><a href="#" class="hover:text-white transition"><i class="fas fa-question-circle mr-2"></i>Yardım Merkezi</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-white font-bold text-lg mb-4">İletişim</h3>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mr-3 text-blue-500 mt-1"></i>
+                            <span>Ankara, Türkiye</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-3 text-blue-500"></i>
+                            <a href="tel:+908505512701" class="hover:text-white transition">(850) 551-2701</a>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fab fa-whatsapp mr-3 text-green-400"></i>
+                            <a href="https://wa.me/905346940133" class="hover:text-white transition">(534) 694-0133</a>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-3 text-blue-500"></i>
+                            <a href="mailto:info@bulutacente.com" class="hover:text-white transition">info@bulutacente.com</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-sm">
+                <p class="text-gray-400">© 2025 Bulut Acente. Tüm hakları saklıdır. | <a href="#" class="hover:text-white transition">Kişisel Verileri Koruma Politikası</a> | <a href="#" class="hover:text-white transition">Kullanım Koşulları</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('active');
+        }
+        
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    // Close mobile menu if open
+                    const menu = document.getElementById('mobile-menu');
+                    if (menu.classList.contains('active')) {
+                        menu.classList.remove('active');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

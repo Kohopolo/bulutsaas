@@ -266,3 +266,7 @@ Artık:
 **Düzeltme Tarihi:** 2025-01-27  
 **Durum:** ✅ Güvenlik Açığı Kapatıldı
 
+
+
+
+

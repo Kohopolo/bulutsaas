@@ -1,0 +1,106 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Acente Listesi - Satış Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-handshake mr-2 text-vb-primary"></i>
+            Acente Listesi
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'sales:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ana Ekran
+            </a>
+            <a href="{% url 'sales:agency_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni Acente
+            </a>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% if accessible_hotels|length > 1 %}
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Otel</label>
+                <select name="hotel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tüm Oteller</option>
+                    {% for hotel in accessible_hotels %}
+                    <option value="{{ hotel.id }}" {% if request.GET.hotel == hotel.id|stringformat:"s" or selected_hotel_id == hotel.id %}selected{% endif %}>
+                        {{ hotel.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Arama</label>
+                <input type="text" name="search" value="{{ search_query }}" placeholder="Acente adı, kod..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Ara
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if agencies %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Otel</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Acente Adı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kod</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Komisyon Oranı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agency in agencies %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            {% if agency.hotel %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{{ agency.hotel.name }}</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Genel</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-900">{{ agency.name }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">{{ agency.code }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 font-semibold">{{ agency.commission_rate }}%</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if agency.is_active %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if agency.is_active %}Aktif{% else %}Pasif{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <a href="#" class="text-vb-primary hover:text-blue-600 mr-3">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-gray-500">
+            <i class="fas fa-inbox text-4xl mb-4"></i>
+            <p>Henüz acente bulunmuyor</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

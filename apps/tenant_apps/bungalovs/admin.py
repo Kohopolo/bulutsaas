@@ -170,3 +170,7 @@ class BungalovVoucherAdmin(admin.ModelAdmin):
     search_fields = ['reservation__reservation_code', 'voucher_code', 'voucher_token']
     readonly_fields = ['voucher_code', 'voucher_token', 'created_at', 'updated_at']
 
+
+
+
+

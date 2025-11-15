@@ -122,3 +122,7 @@ class BaseChannelIntegration(ABC):
         """Bilgi logla"""
         logger.info(f"[{self.configuration.name}] {message}")
 
+
+
+
+

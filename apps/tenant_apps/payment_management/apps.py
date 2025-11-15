@@ -9,3 +9,7 @@ class PaymentManagementConfig(AppConfig):
     name = 'apps.tenant_apps.payment_management'
     verbose_name = 'Ödeme Yönetimi'
 
+
+
+
+

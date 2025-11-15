@@ -1,0 +1,184 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Oda Yönetimi - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Oda Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Başlık ve Aksiyonlar -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-bed mr-2 text-vb-primary"></i>
+            Odalar
+        </h2>
+        <div class="flex space-x-3">
+            {% if active_hotel %}
+            <a href="{% url 'hotels:room_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni Oda Ekle
+            </a>
+            {% else %}
+            <span class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed text-sm">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Önce bir otel seçin
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Oda Tipi</label>
+                <select name="room_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    {% for room_type in room_types %}
+                    <option value="{{ room_type.id }}" {% if request.GET.room_type == room_type.id|stringformat:"s" %}selected{% endif %}>{{ room_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Durum</label>
+                <select name="is_active" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    <option value="1" {% if request.GET.is_active == "1" %}selected{% endif %}>Aktif</option>
+                    <option value="0" {% if request.GET.is_active == "0" %}selected{% endif %}>Pasif</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Arama</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Oda adı veya kodu..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Oda Listesi -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if rooms %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Oda</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Otel</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tip</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kapasite</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Oda Sayısı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for room in rooms %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center">
+                                {% if room.main_image %}
+                                <img src="{{ room.main_image.url }}" alt="{{ room.name }}" class="w-12 h-12 rounded-lg object-cover mr-3">
+                                {% else %}
+                                <div class="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center mr-3">
+                                    <i class="fas fa-bed text-gray-400"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <a href="{% url 'hotels:room_detail' room.pk %}" class="font-semibold text-gray-900 hover:text-vb-primary">
+                                        {{ room.name }}
+                                    </a>
+                                    <p class="text-xs text-gray-500">{{ room.code }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {{ room.hotel.name }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {{ room.room_type.name|default:"-" }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            <div class="text-xs">
+                                <span class="text-gray-600">Yetişkin: {{ room.max_adults }}</span><br>
+                                <span class="text-gray-600">Çocuk: {{ room.max_children }}</span><br>
+                                <span class="text-gray-600">Toplam: {{ room.max_total_capacity }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {{ room.room_count }}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if room.is_active %}
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Aktif</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'hotels:room_detail' room.pk %}" class="text-vb-primary hover:text-blue-600" title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'hotels:room_price_detail' room.pk %}" class="text-green-600 hover:text-green-700" title="Fiyatlama">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </a>
+                                <a href="{% url 'hotels:room_update' room.pk %}" class="text-yellow-600 hover:text-yellow-700" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'hotels:room_delete' room.pk %}" class="text-red-600 hover:text-red-700" title="Sil" onclick="return confirm('Bu odayı silmek istediğinize emin misiniz?');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sayfalama -->
+        {% if rooms.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                Sayfa {{ rooms.number }} / {{ rooms.paginator.num_pages }}
+            </div>
+            <div class="flex space-x-2">
+                {% if rooms.has_previous %}
+                <a href="?page={{ rooms.previous_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+                {% if rooms.has_next %}
+                <a href="?page={{ rooms.next_page_number }}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-bed text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-600 mb-4">Henüz oda eklenmemiş.</p>
+            {% if active_hotel %}
+            <a href="{% url 'hotels:room_create' %}" class="inline-block px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                İlk Odayı Ekle
+            </a>
+            {% else %}
+            <a href="{% url 'hotels:select_hotel' %}" class="inline-block px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-hotel mr-2"></i>
+                Otel Seç
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

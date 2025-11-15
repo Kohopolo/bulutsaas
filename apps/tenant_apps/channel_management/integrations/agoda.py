@@ -234,3 +234,7 @@ class AgodaIntegration(BaseChannelIntegration):
             self.log_error("Agoda: Rezervasyon değiştirme hatası", e)
             return {'success': False, 'message': str(e)}
 
+
+
+
+

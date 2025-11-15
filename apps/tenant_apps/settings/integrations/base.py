@@ -41,10 +41,10 @@ class BaseSMSGateway(ABC):
         Returns:
             {
                 'success': bool,
-                'message_id': str (gateway'den dönen mesaj ID),
+                'message_id': str (gateway\'den dönen mesaj ID),
                 'message': str,
                 'error': str (hata varsa),
-                'gateway_response': dict (gateway'den dönen ham yanıt)
+                'gateway_response': dict (gateway\'den dönen ham yanıt)
             }
         """
         pass
@@ -117,4 +117,8 @@ class BaseSMSGateway(ABC):
     def log_info(self, message: str):
         """Bilgi logla"""
         logger.info(f"[{self.gateway.name}] {message}")
+
+
+
+
 

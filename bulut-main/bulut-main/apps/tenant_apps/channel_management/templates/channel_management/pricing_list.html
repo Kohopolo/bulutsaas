@@ -1,0 +1,154 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Kanal Fiyatları{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-tags"></i> Kanal Fiyatları
+            <div style="float: right;">
+                <a href="{% url 'channel_management:pricing_create' %}" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Yeni Fiyat
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Filtreler -->
+            <div style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px;">
+                <form method="get">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto auto; gap: 10px; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Kanal</label>
+                            <select name="configuration" class="form-control">
+                                <option value="">Tüm Kanallar</option>
+                                {% for config in configurations %}
+                                <option value="{{ config.id }}" {% if config_filter == config.id|stringformat:"s" %}selected{% endif %}>{{ config.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Oda</label>
+                            <select name="room" class="form-control">
+                                <option value="">Tüm Odalar</option>
+                                <!-- Oda listesi buraya eklenecek -->
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Başlangıç Tarihi</label>
+                            <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Bitiş Tarihi</label>
+                            <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+                        </div>
+                        <div>
+                            <button type="submit" class="vb-button primary" style="width: 100%;">
+                                <i class="fas fa-filter"></i> Filtrele
+                            </button>
+                        </div>
+                        <div>
+                            <a href="{% url 'channel_management:pricing_list' %}" class="vb-button" style="width: 100%;">
+                                <i class="fas fa-times"></i> Temizle
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Fiyatlar Tablosu -->
+            {% if pricings %}
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kanal</th>
+                                <th>Oda</th>
+                                <th>Tarih Aralığı</th>
+                                <th>Temel Fiyat</th>
+                                <th>Kanal Fiyatı</th>
+                                <th>Müsaitlik</th>
+                                <th>Durum</th>
+                                <th>Son Senkronizasyon</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pricing in pricings %}
+                            <tr>
+                                <td>
+                                    <i class="{{ pricing.configuration.template.icon }}"></i> {{ pricing.configuration.name }}
+                                </td>
+                                <td><strong>{{ pricing.room.name }}</strong></td>
+                                <td>{{ pricing.start_date|date:"d.m.Y" }} - {{ pricing.end_date|date:"d.m.Y" }}</td>
+                                <td>{{ pricing.base_price|floatformat:2 }} {{ pricing.currency }}</td>
+                                <td><strong>{{ pricing.channel_price|floatformat:2 }} {{ pricing.currency }}</strong></td>
+                                <td>
+                                    {% if pricing.availability > 0 %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">{{ pricing.availability }}</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #dc3545; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if pricing.is_active %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Aktif</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #6c757d; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Pasif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if pricing.last_synced_at %}
+                                    {{ pricing.last_synced_at|date:"d.m.Y H:i" }}
+                                    {% else %}
+                                    <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'channel_management:pricing_update' pricing.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; margin-right: 5px;">
+                                        <i class="fas fa-edit"></i> Düzenle
+                                    </a>
+                                    <a href="{% url 'channel_management:pricing_delete' pricing.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; background: #dc3545; color: white; border-color: #c82333;">
+                                        <i class="fas fa-trash"></i> Sil
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Sayfalama -->
+            {% if pricings.has_other_pages %}
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 12px; color: #666;">
+                    Sayfa {{ pricings.number }} / {{ pricings.paginator.num_pages }}
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    {% if pricings.has_previous %}
+                    <a href="?page={{ pricings.previous_page_number }}{% if config_filter %}&configuration={{ config_filter }}{% endif %}{% if room_filter %}&room={{ room_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="vb-button" style="padding: 4px 8px; font-size: 11px;">
+                        <i class="fas fa-chevron-left"></i> Önceki
+                    </a>
+                    {% endif %}
+                    {% if pricings.has_next %}
+                    <a href="?page={{ pricings.next_page_number }}{% if config_filter %}&configuration={{ config_filter }}{% endif %}{% if room_filter %}&room={{ room_filter }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="vb-button" style="padding: 4px 8px; font-size: 11px;">
+                        Sonraki <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <p style="text-align: center; color: #666; padding: 20px;">
+                <i class="fas fa-inbox" style="font-size: 32px; color: #ccc; display: block; margin-bottom: 10px;"></i>
+                Henüz kanal fiyatı bulunmuyor.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

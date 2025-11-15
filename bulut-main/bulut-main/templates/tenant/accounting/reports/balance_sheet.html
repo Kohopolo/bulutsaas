@@ -1,0 +1,120 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bilanço Raporu - Muhasebe{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <h1 class="text-2xl font-bold text-vb-navy-500 mb-6">
+        <i class="fas fa-file-invoice-dollar mr-2 text-vb-primary"></i>Bilanço Raporu
+    </h1>
+
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <form method="get" class="grid grid-cols-1 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tarih</label>
+                <input type="date" name="date" value="{{ date }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <button type="submit" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-search mr-2"></i>Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Aktifler -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Aktifler</h2>
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-sm font-semibold">Hesap</th>
+                        <th class="px-4 py-2 text-right text-sm font-semibold">Tutar</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for item in asset_details %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">{{ item.account.code }} - {{ item.account.name }}</td>
+                        <td class="px-4 py-2 text-right font-semibold">{{ item.balance|floatformat:2 }} TL</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="px-4 py-4 text-center text-gray-500">Aktif hesap bulunmamaktadır.</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="bg-blue-50 font-bold">
+                        <td class="px-4 py-2">TOPLAM AKTİF</td>
+                        <td class="px-4 py-2 text-right">{{ asset_total|floatformat:2 }} TL</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pasifler ve Özsermaye -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Pasifler</h2>
+            <table class="w-full border-collapse mb-6">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-sm font-semibold">Hesap</th>
+                        <th class="px-4 py-2 text-right text-sm font-semibold">Tutar</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for item in liability_details %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">{{ item.account.code }} - {{ item.account.name }}</td>
+                        <td class="px-4 py-2 text-right font-semibold">{{ item.balance|floatformat:2 }} TL</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="px-4 py-4 text-center text-gray-500">Pasif hesap bulunmamaktadır.</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="bg-red-50 font-bold">
+                        <td class="px-4 py-2">TOPLAM PASİF</td>
+                        <td class="px-4 py-2 text-right">{{ liability_total|floatformat:2 }} TL</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">Özsermaye</h2>
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-sm font-semibold">Hesap</th>
+                        <th class="px-4 py-2 text-right text-sm font-semibold">Tutar</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for item in equity_details %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2">{{ item.account.code }} - {{ item.account.name }}</td>
+                        <td class="px-4 py-2 text-right font-semibold">{{ item.balance|floatformat:2 }} TL</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="px-4 py-4 text-center text-gray-500">Özsermaye hesabı bulunmamaktadır.</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="bg-purple-50 font-bold">
+                        <td class="px-4 py-2">TOPLAM ÖZSERMAYE</td>
+                        <td class="px-4 py-2 text-right">{{ equity_total|floatformat:2 }} TL</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="mt-6 pt-6 border-t">
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-bold">TOPLAM PASİF + ÖZSERMAYE</span>
+                    <span class="text-xl font-bold">{{ liability_total|add:equity_total|floatformat:2 }} TL</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

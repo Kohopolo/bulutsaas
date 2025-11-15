@@ -1,0 +1,68 @@
+/* Galeri Yöneticisi Stilleri */
+
+.gallery-item {
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.gallery-item:hover {
+    transform: scale(1.02);
+}
+
+.gallery-item.dragging {
+    opacity: 0.5;
+}
+
+#hotel-gallery-dropzone,
+#room-gallery-dropzone {
+    transition: all 0.3s ease;
+}
+
+#hotel-gallery-dropzone.drag-over,
+#room-gallery-dropzone.drag-over {
+    border-color: #3498db;
+    background-color: #ebf5ff;
+    transform: scale(1.02);
+}
+
+.gallery-item .cursor-move {
+    cursor: grab;
+}
+
+.gallery-item .cursor-move:active {
+    cursor: grabbing;
+}
+
+/* Sortable placeholder */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f0f0f0;
+}
+
+/* Progress bar animation */
+#hotel-gallery-progress-bar,
+#room-gallery-progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 640px) {
+    #hotel-gallery-grid,
+    #room-gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    #hotel-gallery-grid,
+    #room-gallery-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 1025px) {
+    #hotel-gallery-grid,
+    #room-gallery-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+

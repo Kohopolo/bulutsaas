@@ -1,0 +1,173 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Vardiya Listesi - Personel Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-calendar-alt mr-2 text-vb-primary"></i>
+            Vardiya Listesi
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'staff:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ana Ekran
+            </a>
+            <a href="{% url 'staff:shift_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni Vardiya
+            </a>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {% if accessible_hotels|length > 1 %}
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Otel</label>
+                <select name="hotel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tüm Oteller</option>
+                    {% for hotel in accessible_hotels %}
+                    <option value="{{ hotel.id }}" {% if request.GET.hotel == hotel.id|stringformat:"s" or selected_hotel_id == hotel.id %}selected{% endif %}>
+                        {{ hotel.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Başlangıç Tarihi</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Bitiş Tarihi</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Durum</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-vb-primary">
+                    <option value="">Tümü</option>
+                    <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Planlandı</option>
+                    <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Onaylandı</option>
+                    <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>Devam Ediyor</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Tamamlandı</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>İptal Edildi</option>
+                    <option value="no_show" {% if status_filter == 'no_show' %}selected{% endif %}>Gelmedi</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if shifts %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Otel</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tarih</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Personel</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Vardiya Tipi</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Başlangıç</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Bitiş</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shift in shifts %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            {% if shift.hotel %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{{ shift.hotel.name }}</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Genel</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ shift.shift_date|date:"d.m.Y" }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                            {{ shift.staff.full_name }}
+                            <span class="text-gray-500 text-xs block">{{ shift.staff.employee_id }}</span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-1 rounded text-xs font-semibold
+                                {% if shift.shift_type == 'morning' %}bg-yellow-100 text-yellow-800
+                                {% elif shift.shift_type == 'afternoon' %}bg-orange-100 text-orange-800
+                                {% elif shift.shift_type == 'evening' %}bg-purple-100 text-purple-800
+                                {% elif shift.shift_type == 'night' %}bg-indigo-100 text-indigo-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ shift.get_shift_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ shift.start_time|time:"H:i" }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ shift.end_time|time:"H:i" }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-1 rounded text-xs font-semibold
+                                {% if shift.status == 'scheduled' %}bg-blue-100 text-blue-800
+                                {% elif shift.status == 'confirmed' %}bg-green-100 text-green-800
+                                {% elif shift.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                                {% elif shift.status == 'completed' %}bg-gray-100 text-gray-800
+                                {% elif shift.status == 'cancelled' %}bg-red-100 text-red-800
+                                {% else %}bg-orange-100 text-orange-800{% endif %}">
+                                {{ shift.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="flex space-x-2">
+                                <a href="#" class="text-vb-primary hover:text-blue-600" title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="text-yellow-600 hover:text-yellow-700" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if shifts.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Sayfa {{ shifts.number }} / {{ shifts.paginator.num_pages }} (Toplam {{ shifts.paginator.count }} kayıt)
+                </div>
+                <div class="flex space-x-2">
+                    {% if shifts.has_previous %}
+                    <a href="?page={{ shifts.previous_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+                    {% if shifts.has_next %}
+                    <a href="?page={{ shifts.next_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="p-8 text-center">
+            <i class="fas fa-calendar-alt text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg">Henüz vardiya kaydı bulunmamaktadır.</p>
+            <a href="{% url 'staff:shift_create' %}" class="mt-4 inline-block px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                İlk Vardiyayı Oluştur
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

@@ -92,3 +92,7 @@ class FerryAPISyncAdmin(admin.ModelAdmin):
     date_hierarchy = 'started_at'
     ordering = ['-started_at']
 
+
+
+
+

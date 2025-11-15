@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Çoklu Oda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .tc-digit {
+            width: 40px !important;
+            height: 50px !important;
+            text-align: center !important;
+            font-size: 20px !important;
+            font-weight: bold !important;
+            border: 2px solid #ddd !important;
+            border-radius: 8px !important;
+            padding: 0 !important;
+        }
+        .tc-digit:focus {
+            border-color: #0d6efd !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+        }
+        .tc-digit.filled {
+            background-color: #d4edda !important;
+            border-color: #28a745 !important;
+        }
+        .tc-kimlik-container {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Test 1: TC Kimlik Otomatik Geçiş</h2>
+        <div class="card p-4 mb-4">
+            <label class="form-label fw-bold">TC Kimlik No</label>
+            <div class="tc-kimlik-container">
+                <?php for ($i = 0; $i < 11; $i++): ?>
+                    <input type="text" 
+                           class="form-control tc-digit" 
+                           id="tc_digit_<?php echo $i; ?>" 
+                           name="tc_digit_<?php echo $i; ?>" 
+                           maxlength="1" 
+                           pattern="[0-9]"
+                           data-index="<?php echo $i; ?>">
+                <?php endfor; ?>
+            </div>
+            <div id="tc-result" class="mt-3"></div>
+        </div>
+        
+        <h2>Test 2: Oda Ekleme</h2>
+        <div class="card p-4">
+            <button type="button" class="btn btn-primary" id="addRoomBtn">
+                <i class="fas fa-plus me-1"></i>Yeni Oda Ekle
+            </button>
+            <div id="roomsContainer" class="mt-3"></div>
+            <div id="room-count" class="mt-3 alert alert-info"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    let roomCounter = 0;
+    
+    // TC Kimlik test
+    $(document).on('input', '.tc-digit', function() {
+        const $this = $(this);
+        const val = $this.val();
+        
+        console.log('TC digit input:', val, 'Index:', $this.data('index'));
+        
+        // Sadece rakam kontrolü
+        if (val && !/^[0-9]$/.test(val)) {
+            console.log('Geçersiz karakter, siliniyor');
+            $this.val('');
+            return;
+        }
+        
+        // Filled class ekle
+        if (val) {
+            $this.addClass('filled');
+            
+            // Bir sonraki input'a geç
+            const index = parseInt($this.data('index'));
+            console.log('Sonraki kutucuğa geçiliyor. Index:', index);
+            
+            if (index < 10) {
+                const nextId = '#tc_digit_' + (index + 1);
+                console.log('Sonraki ID:', nextId);
+                $(nextId).focus();
+            } else {
+                // Son digit
+                console.log('Son digit girildi!');
+                let tc = '';
+                for (let i = 0; i < 11; i++) {
+                    tc += $('#tc_digit_' + i).val();
+                }
+                $('#tc-result').html('<div class="alert alert-success">TC Kimlik: ' + tc + '</div>');
+            }
+        } else {
+            $this.removeClass('filled');
+        }
+    });
+    
+    // Backspace
+    $(document).on('keydown', '.tc-digit', function(e) {
+        if (e.key === 'Backspace' && !$(this).val()) {
+            const index = parseInt($(this).data('index'));
+            if (index > 0) {
+                $('#tc_digit_' + (index - 1)).focus().val('').removeClass('filled');
+            }
+        }
+    });
+    
+    // Oda ekleme test
+    $(document).on('click', '#addRoomBtn', function(e) {
+        e.preventDefault();
+        console.log('=== BUTON TIKLANDI ===');
+        console.log('Room counter:', roomCounter);
+        addRoom();
+    });
+    
+    function addRoom() {
+        const roomId = roomCounter++;
+        const roomNumber = roomCounter;
+        
+        console.log('addRoom çağrıldı. ID:', roomId, 'Number:', roomNumber);
+        
+        const html = `
+            <div class="card mb-2 p-3" data-room-id="${roomId}">
+                <strong>Oda ${roomNumber}</strong> (ID: ${roomId})
+                <button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeRoom(${roomId})">Kaldır</button>
+            </div>
+        `;
+        
+        $('#roomsContainer').append(html);
+        updateRoomCount();
+    }
+    
+    function removeRoom(roomId) {
+        $(`.card[data-room-id="${roomId}"]`).remove();
+        updateRoomCount();
+    }
+    
+    function updateRoomCount() {
+        const count = $('.card[data-room-id]').length;
+        $('#room-count').text('Toplam oda sayısı: ' + count);
+    }
+    
+    // Sayfa yüklendiğinde
+    $(document).ready(function() {
+        console.log('=== TEST SAYFASI YÜKLENDI ===');
+        console.log('jQuery versiyonu:', $.fn.jquery);
+        addRoom(); // İlk odayı ekle
+    });
+    </script>
+</body>
+</html>
+

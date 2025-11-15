@@ -236,3 +236,7 @@ else:
 **📅 Güncelleme Tarihi:** 2025-11-13  
 **✍️ Hazırlayan:** AI Assistant
 
+
+
+
+

@@ -1,0 +1,35 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}SMS Şablonu Sil{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-trash"></i> SMS Şablonu Sil
+        </div>
+        <div class="groupbox-body">
+            <div style="padding: 20px; text-align: center;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 64px; color: #ffc107; margin-bottom: 20px;"></i>
+                <h3 style="margin-bottom: 15px;">SMS Şablonunu Silmek İstediğinizden Emin misiniz?</h3>
+                <p style="color: #6c757d; margin-bottom: 30px;">
+                    <strong>{{ template.name }}</strong> adlı SMS şablonunu silmek üzeresiniz.<br>
+                    Bu işlem geri alınamaz. Şablon silindiğinde, bu şablon ile gönderilen SMS logları korunacaktır.
+                </p>
+                
+                <form method="post" style="display: inline-block;">
+                    {% csrf_token %}
+                    <a href="{% url 'settings:sms_template_detail' template.pk %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button" style="background: #dc3545; color: white;">
+                        <i class="fas fa-trash"></i> Evet, Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

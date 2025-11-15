@@ -1,0 +1,78 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Bulut Acente{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-vb-navy-500">
+                <i class="fas fa-user-tag mr-2 text-vb-primary"></i>{{ title }}
+            </h1>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Kullanıcı Tipi Adı <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.name }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Kod <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.code }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">İkon</label>
+                        {{ form.icon }}
+                        <p class="text-xs text-gray-500 mt-1">Emoji veya Font Awesome class</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Varsayılan Rol</label>
+                        {{ form.default_role }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dashboard URL</label>
+                        {{ form.dashboard_url }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Panel Template</label>
+                        {{ form.panel_template }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sıralama</label>
+                        {{ form.sort_order }}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Açıklama</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="flex items-center">
+                    {{ form.is_active }}
+                    <label class="ml-2 text-sm text-gray-700">Aktif mi?</label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <a href="{% url 'tenant:user_type_list' %}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        İptal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                        <i class="fas fa-save mr-2"></i>Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

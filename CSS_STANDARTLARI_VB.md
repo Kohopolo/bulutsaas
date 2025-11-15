@@ -360,3 +360,7 @@ Bu dokümanda **VB tarzı masaüstü uygulama** görünümü için CSS standartl
 
 **🎯 HEDEF:** Tüm proje Visual Basic masaüstü uygulama görünümünde olmalı!
 
+
+
+
+

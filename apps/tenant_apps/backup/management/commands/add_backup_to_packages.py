@@ -61,3 +61,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f'\n[ÖZET] {added_count} pakete eklendi, {skipped_count} pakette zaten mevcuttu.')
         )
 
+
+
+
+

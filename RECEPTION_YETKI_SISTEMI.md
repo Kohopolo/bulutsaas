@@ -281,3 +281,7 @@ python manage.py create_reception_permissions
 - "{Otel Adı} oteline erişim yetkiniz bulunmamaktadır." → Otel yetkisi yok
 - "Bu işlem için yeterli yetkiniz bulunmamaktadır." → İşlem seviyesi yetkisi yetersiz
 
+
+
+
+

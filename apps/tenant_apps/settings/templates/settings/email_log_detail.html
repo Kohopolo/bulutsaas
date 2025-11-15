@@ -156,3 +156,165 @@
 </div>
 {% endblock %}
 
+
+
+{% load static %}
+
+{% block title %}Email Log Detayı{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-envelope"></i> Email Log Detayı
+            <div style="float: right;">
+                <a href="{% url 'settings:email_log_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Temel Bilgiler</h3>
+                    <table class="vb-table">
+                        <tr>
+                            <td style="width: 150px;"><strong>Alıcı Email:</strong></td>
+                            <td>{{ log.recipient_email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Alıcı Adı:</strong></td>
+                            <td>{{ log.recipient_name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Konu:</strong></td>
+                            <td>{{ log.subject }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gateway:</strong></td>
+                            <td>{{ log.gateway.name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Şablon:</strong></td>
+                            <td>{{ log.template.name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Durum:</strong></td>
+                            <td>
+                                {% if log.status == 'sent' %}
+                                    <span class="badge badge-info">Gönderildi</span>
+                                {% elif log.status == 'delivered' %}
+                                    <span class="badge badge-success">Teslim Edildi</span>
+                                {% elif log.status == 'failed' %}
+                                    <span class="badge badge-danger">Başarısız</span>
+                                {% elif log.status == 'pending' %}
+                                    <span class="badge badge-warning">Beklemede</span>
+                                {% elif log.status == 'bounced' %}
+                                    <span class="badge badge-danger">Geri Döndü</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ log.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mesaj ID:</strong></td>
+                            <td><code>{{ log.message_id|default:"-" }}</code></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Zaman Bilgileri</h3>
+                    <table class="vb-table">
+                        <tr>
+                            <td style="width: 150px;"><strong>Oluşturulma:</strong></td>
+                            <td>{{ log.created_at|date:"d.m.Y H:i:s" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gönderim:</strong></td>
+                            <td>{{ log.sent_at|date:"d.m.Y H:i:s"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Teslim:</strong></td>
+                            <td>{{ log.delivered_at|date:"d.m.Y H:i:s"|default:"-" }}</td>
+                        </tr>
+                    </table>
+                    
+                    {% if log.error_message %}
+                    <div style="margin-top: 20px;">
+                        <h4 style="font-size: 14px; margin-bottom: 10px; color: #dc3545;">Hata Mesajı</h4>
+                        <div style="padding: 10px; background: #f8d7da; border-radius: 5px; border: 1px solid #f5c6cb; color: #721c24; font-size: 12px;">
+                            {{ log.error_message|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Email İçeriği</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    {% if log.message_html %}
+                    <div>
+                        <h4 style="font-size: 14px; margin-bottom: 10px; color: #495057;">HTML İçerik</h4>
+                        <div style="padding: 15px; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; max-height: 400px; overflow-y: auto;">
+                            {{ log.message_html|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if log.message_text %}
+                    <div>
+                        <h4 style="font-size: 14px; margin-bottom: 10px; color: #495057;">Metin İçerik</h4>
+                        <div style="padding: 15px; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; white-space: pre-wrap; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto;">
+                            {{ log.message_text }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if log.context_data %}
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Context Verisi</h3>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+                    <pre style="margin: 0; font-size: 12px; color: #495057;">{{ log.context_data|pprint }}</pre>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if log.smtp_response %}
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">SMTP Yanıtı</h3>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+                    <pre style="margin: 0; font-size: 12px; color: #495057;">{{ log.smtp_response|pprint }}</pre>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if log.related_module %}
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">İlişkili Kayıt</h3>
+                <table class="vb-table">
+                    <tr>
+                        <td style="width: 150px;"><strong>Modül:</strong></td>
+                        <td>{{ log.related_module }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kayıt Tipi:</strong></td>
+                        <td>{{ log.related_object_type }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kayıt ID:</strong></td>
+                        <td>{{ log.related_object_id }}</td>
+                    </tr>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+

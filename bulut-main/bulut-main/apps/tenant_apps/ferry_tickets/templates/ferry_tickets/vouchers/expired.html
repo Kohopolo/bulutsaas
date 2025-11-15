@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voucher Süresi Doldu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .error-icon {
+            font-size: 64px;
+            color: #ffc107;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            font-size: 24px;
+            color: #856404;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">⏰</div>
+        <div class="error-message">Voucher Süresi Doldu</div>
+        <p>Bu voucher'ın erişim süresi dolmuştur.</p>
+        <p><strong>Voucher Kodu:</strong> {{ voucher.voucher_code }}</p>
+        <p>Yeni bir voucher oluşturmak için lütfen iletişime geçin.</p>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,65 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}API Senkronizasyonu{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-sync"></i> API Senkronizasyonu - {{ config.name }}
+            <div style="float: right;">
+                <a href="{% url 'ferry_tickets:api_configuration_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Senkronizasyon Ayarları
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-grid">
+                            <div class="form-label">Senkronizasyon Tipi *</div>
+                            <div>
+                                <select name="sync_type" class="form-control" required>
+                                    <option value="schedules">Seferler</option>
+                                    <option value="prices">Fiyatlar</option>
+                                    <option value="tickets">Biletler</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-label">Rota (Opsiyonel)</div>
+                            <div>
+                                <select name="route_id" class="form-control">
+                                    <option value="">Tüm Rotalar</option>
+                                    {% for route in routes %}
+                                    <option value="{{ route.pk }}">{{ route.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-label">Kalkış Tarihi (Opsiyonel)</div>
+                            <div>
+                                <input type="date" name="departure_date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'ferry_tickets:api_configuration_list' %}" class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-sync"></i> Senkronizasyonu Başlat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

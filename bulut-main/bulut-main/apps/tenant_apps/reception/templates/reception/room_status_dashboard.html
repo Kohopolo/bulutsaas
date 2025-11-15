@@ -1,0 +1,524 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Oda Durum Panosu{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-chart-line"></i> Oda Durum Panosu - {{ hotel.name }}
+            <div style="float: right;">
+                <a href="{% url 'reception:room_plan' %}" class="vb-button">
+                    <i class="fas fa-building"></i> Oda Planı
+                </a>
+                <a href="{% url 'reception:room_calendar' %}" class="vb-button">
+                    <i class="fas fa-calendar"></i> Takvim Görünümü
+                </a>
+                <a href="{% url 'reception:dashboard' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Dashboard
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Filtreler ve Forecast Ayarları -->
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-filter"></i> Filtreler ve Forecast
+                </div>
+                <div class="groupbox-body">
+                    <form method="get" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px;">Kat</label>
+                            <select name="floor" class="vb-select" style="width: 100%;">
+                                <option value="">Tüm Katlar</option>
+                                {% for floor in floors %}
+                                <option value="{{ floor.id }}" {% if current_floor == floor.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ floor.name }} ({{ floor.floor_number }}. Kat)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px;">Oda Tipi</label>
+                            <select name="room_type" class="vb-select" style="width: 100%;">
+                                <option value="">Tüm Oda Tipleri</option>
+                                {% for room_type in room_types %}
+                                <option value="{{ room_type.id }}" {% if current_room_type == room_type.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ room_type.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px;">Durum</label>
+                            <select name="status" class="vb-select" style="width: 100%;">
+                                <option value="">Tüm Durumlar</option>
+                                <option value="available" {% if current_status == "available" %}selected{% endif %}>Müsait</option>
+                                <option value="occupied" {% if current_status == "occupied" %}selected{% endif %}>Dolu</option>
+                                <option value="cleaning" {% if current_status == "cleaning" %}selected{% endif %}>Temizlik</option>
+                                <option value="maintenance" {% if current_status == "maintenance" %}selected{% endif %}>Bakım</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px;">Forecast Günü</label>
+                            <input type="number" name="forecast_days" value="{{ forecast_days }}" min="7" max="365" class="form-control" style="width: 100%;">
+                        </div>
+                        <div>
+                            <button type="submit" class="vb-button primary" style="width: 100%;">
+                                <i class="fas fa-search"></i> Filtrele
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Genel İstatistikler -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-door-open"></i> Toplam Oda
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #2c5f8d;">{{ total_rooms }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-bed"></i> Dolu
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #dc3545;">{{ occupied_rooms }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-check-circle"></i> Müsait
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #28a745;">{{ available_rooms }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-broom"></i> Temizlik
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #0d6efd;">{{ cleaning_rooms }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-tools"></i> Bakım
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 32px; font-weight: bold; color: #ffc107;">{{ maintenance_rooms }}</div>
+                    </div>
+                </div>
+                <div class="form-groupbox">
+                    <div class="groupbox-header" style="font-size: 12px;">
+                        <i class="fas fa-calendar-alt"></i> Forecast
+                    </div>
+                    <div class="groupbox-body" style="text-align: center; padding: 15px;">
+                        <div style="font-size: 24px; font-weight: bold; color: #2c5f8d;">{{ forecast_reservations }}</div>
+                        <div style="font-size: 12px; color: #666;">{{ forecast_days }} gün</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Oda Detayları Tablosu -->
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Oda No</th>
+                                <th>Oda Tipi</th>
+                                <th>Kat</th>
+                                <th>Durum</th>
+                                <th>Doluluk Oranı</th>
+                                <th>Mevcut Rezervasyon</th>
+                                <th>Yaklaşan Rezervasyonlar</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room_data in rooms_data %}
+                            {% with room=room_data.room %}
+                            <tr>
+                                <td><strong>{{ room.number }}</strong></td>
+                                <td>{{ room.room.name|default:"-" }}</td>
+                                <td>{{ room.floor.name|default:"-" }} ({{ room.floor.floor_number|default:"-" }}. Kat)</td>
+                                <td>
+                                    <span class="badge badge-{{ room.status }}">
+                                        {{ room.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="flex: 1; background: #e0e0e0; height: 20px; border-radius: 3px; position: relative;">
+                                            <div style="background: {% if room_data.occupancy_rate >= 80 %}#28a745{% elif room_data.occupancy_rate >= 50 %}#ffc107{% else %}#dc3545{% endif %}; height: 100%; width: {{ room_data.occupancy_rate }}%; border-radius: 3px;"></div>
+                                        </div>
+                                        <span style="font-weight: bold; min-width: 50px; text-align: right;">{{ room_data.occupancy_rate }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if room_data.current_reservation %}
+                                        <div style="font-size: 12px;">
+                                            <strong>{{ room_data.current_reservation.reservation_code }}</strong><br>
+                                            <small>{{ room_data.current_reservation.customer.get_full_name }}</small><br>
+                                            <small>{{ room_data.current_reservation.check_in_date|date:"d.m.Y" }} - {{ room_data.current_reservation.check_out_date|date:"d.m.Y" }}</small>
+                                        </div>
+                                    {% else %}
+                                        <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if room_data.upcoming_reservations %}
+                                        <div style="font-size: 11px;">
+                                            {% for res in room_data.upcoming_reservations %}
+                                            <div style="margin-bottom: 5px; padding: 3px 6px; background: #e8f4f8; border-radius: 2px;">
+                                                <strong>{{ res.reservation_code }}</strong><br>
+                                                <small>{{ res.check_in_date|date:"d.m.Y" }}</small>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button onclick="showRoomDetails({{ room.id }})" class="vb-button small">
+                                        <i class="fas fa-eye"></i> Detay
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endwith %}
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
+                                    <i class="fas fa-inbox" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                                    Oda bulunamadı.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Oda Detay Modal (room_plan.html'den kopyalanacak) -->
+<div id="roomDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; overflow-y: auto;">
+    <div style="position: relative; max-width: 900px; margin: 50px auto; background: white; border: 2px solid #0078d4; border-radius: 3px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div style="background: #0078d4; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 18px;">
+                <i class="fas fa-door-open"></i> Oda Detayları
+            </h2>
+            <button onclick="closeRoomDetailModal()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 0; width: 30px; height: 30px;">&times;</button>
+        </div>
+        <div id="roomDetailContent" style="padding: 20px; max-height: calc(100vh - 150px); overflow-y: auto;">
+            <div style="text-align: center; padding: 40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #0078d4;"></i>
+                <p style="margin-top: 15px; color: #666;">Yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Oda detay modal fonksiyonları
+function showRoomDetails(roomId) {
+    const modal = document.getElementById('roomDetailModal');
+    const content = document.getElementById('roomDetailContent');
+    
+    if (!modal || !content) {
+        console.error('Modal elementleri bulunamadı!');
+        return;
+    }
+    
+    modal.style.display = 'block';
+    content.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #0078d4;"></i>
+            <p style="margin-top: 15px; color: #666;">Yükleniyor...</p>
+        </div>
+    `;
+    
+    fetch(`/reception/api/room-detail/${roomId}/`, {
+        method: 'GET',
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            renderRoomDetails(data);
+        } else {
+            content.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #d13438;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-bottom: 15px;"></i>
+                    <p>${data.error || 'Oda bilgileri yüklenemedi.'}</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Oda detay yükleme hatası:', error);
+        content.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #d13438;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-bottom: 15px;"></i>
+                <p>Oda bilgileri yüklenirken bir hata oluştu: ${error.message}</p>
+            </div>
+        `;
+    });
+}
+
+function renderRoomDetails(data) {
+    const content = document.getElementById('roomDetailContent');
+    if (!content) return;
+    
+    const room = data.room;
+    const reservation = data.current_reservation;
+    const pastReservations = data.past_reservations || [];
+    
+    let html = '';
+    
+    // Oda Bilgileri
+    html += `
+        <div class="form-groupbox">
+            <div class="groupbox-header">
+                <i class="fas fa-door-open"></i> Oda Bilgileri
+            </div>
+            <div class="groupbox-body">
+                <div class="form-grid">
+                    <div class="form-label">Oda Numarası:</div>
+                    <div class="form-value"><strong>${room.number}</strong></div>
+                    
+                    <div class="form-label">Durum:</div>
+                    <div class="form-value">
+                        <span class="badge badge-${room.status}">${room.status_display}</span>
+                    </div>
+                    
+                    ${room.room_type ? `
+                        <div class="form-label">Oda Tipi:</div>
+                        <div class="form-value">${room.room_type.name || '-'}</div>
+                    ` : ''}
+                    
+                    ${room.floor ? `
+                        <div class="form-label">Kat:</div>
+                        <div class="form-value">${room.floor.name || '-'} ${room.floor.floor_number ? '(' + room.floor.floor_number + '. Kat)' : ''}</div>
+                    ` : ''}
+                    
+                    ${room.block ? `
+                        <div class="form-label">Blok:</div>
+                        <div class="form-value">${room.block.name || '-'}${room.block.code ? ' (' + room.block.code + ')' : ''}</div>
+                    ` : ''}
+                    
+                    ${room.notes ? `
+                        <div class="form-label">Notlar:</div>
+                        <div class="form-value">${room.notes}</div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Mevcut Rezervasyon
+    if (reservation && !reservation.error) {
+        // Sayısal değerleri güvenli şekilde formatla
+        const formatCurrency = (value) => {
+            if (value === null || value === undefined) return '0.00';
+            const num = typeof value === 'string' ? parseFloat(value) : value;
+            return isNaN(num) ? '0.00' : num.toFixed(2);
+        };
+        
+        const totalAmount = formatCurrency(reservation.total_amount);
+        const totalPaid = formatCurrency(reservation.total_paid);
+        const remainingAmount = formatCurrency(reservation.remaining_amount);
+        const currency = reservation.currency || '₺';
+        
+        html += `
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-calendar-check"></i> Mevcut Rezervasyon
+                </div>
+                <div class="groupbox-body">
+                    <div class="form-grid">
+                        <div class="form-label">Rezervasyon Kodu:</div>
+                        <div class="form-value"><strong>${reservation.reservation_code || '-'}</strong></div>
+                        
+                        <div class="form-label">Müşteri:</div>
+                        <div class="form-value">
+                            ${reservation.customer && reservation.customer.full_name ? `
+                                <strong>${reservation.customer.full_name || reservation.customer.first_name + ' ' + reservation.customer.last_name || '-'}</strong><br>
+                                ${reservation.customer.phone ? '<small>Tel: ' + reservation.customer.phone + '</small><br>' : ''}
+                                ${reservation.customer.email ? '<small>Email: ' + reservation.customer.email + '</small>' : ''}
+                            ` : 'Müşteri Yok'}
+                        </div>
+                        
+                        <div class="form-label">Check-in:</div>
+                        <div class="form-value">${reservation.check_in_date || '-'} ${reservation.check_in_time ? reservation.check_in_time : ''}</div>
+                        
+                        <div class="form-label">Check-out:</div>
+                        <div class="form-value">${reservation.check_out_date || '-'} ${reservation.check_out_time ? reservation.check_out_time : ''}</div>
+                        
+                        <div class="form-label">Geceleme:</div>
+                        <div class="form-value">${reservation.total_nights || 0} gece</div>
+                        
+                        <div class="form-label">Misafir:</div>
+                        <div class="form-value">${reservation.adult_count || 0} yetişkin, ${reservation.child_count || 0} çocuk</div>
+                        
+                        <div class="form-label">Toplam Tutar:</div>
+                        <div class="form-value"><strong>${totalAmount} ${currency}</strong></div>
+                        
+                        <div class="form-label">Ödenen:</div>
+                        <div class="form-value" style="color: #28a745;"><strong>${totalPaid} ${currency}</strong></div>
+                        
+                        <div class="form-label">Kalan:</div>
+                        <div class="form-value" style="color: #dc3545;"><strong>${remainingAmount} ${currency}</strong></div>
+                        
+                        <div class="form-label">Durum:</div>
+                        <div class="form-value">
+                            <span class="badge badge-${reservation.status || 'unknown'}">${reservation.status_display || '-'}</span>
+                        </div>
+                    </div>
+                    
+                    ${reservation.guests && Array.isArray(reservation.guests) && reservation.guests.length > 0 ? `
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #d4d4d4;">
+                            <h4 style="margin-bottom: 10px; font-size: 14px;">Misafirler:</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                                ${reservation.guests.map(guest => `
+                                    <div style="padding: 8px; background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px;">
+                                        <strong>${guest.first_name || ''} ${guest.last_name || ''}</strong><br>
+                                        <small>${guest.is_adult ? 'Yetişkin' : 'Çocuk'}${guest.age ? ' (' + guest.age + ' yaş)' : ''}</small>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-calendar-check"></i> Mevcut Rezervasyon
+                </div>
+                <div class="groupbox-body">
+                    <p style="text-align: center; color: #999; padding: 20px;">Bu oda için aktif rezervasyon bulunmamaktadır.</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Geçmiş Rezervasyonlar
+    if (pastReservations.length > 0) {
+        html += `
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-history"></i> Geçmiş Rezervasyonlar (Son 10)
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid" style="width: 100%; font-size: 12px;">
+                        <thead>
+                            <tr>
+                                <th>Rezervasyon Kodu</th>
+                                <th>Müşteri</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Geceleme</th>
+                                <th>Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pastReservations.map(res => `
+                                <tr>
+                                    <td><strong>${res.reservation_code || '-'}</strong></td>
+                                    <td>${res.customer ? res.customer.full_name : '-'}</td>
+                                    <td>${res.check_in_date || '-'}</td>
+                                    <td>${res.check_out_date || '-'}</td>
+                                    <td>${res.total_nights || 0} gece</td>
+                                    <td>${(res.total_amount || 0).toFixed(2)} ${res.currency || '₺'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = html;
+}
+
+function closeRoomDetailModal() {
+    const modal = document.getElementById('roomDetailModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('roomDetailModal');
+    if (event.target === modal) {
+        closeRoomDetailModal();
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeRoomDetailModal();
+    }
+});
+</script>
+
+<style>
+.form-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.form-label {
+    font-weight: bold;
+    color: #333;
+    font-size: 13px;
+}
+
+.form-value {
+    color: #666;
+    font-size: 13px;
+}
+
+.form-groupbox {
+    background: #f8f9fa;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    margin-bottom: 15px;
+}
+
+.groupbox-header {
+    background: #e8f4f8;
+    border-bottom: 1px solid #c0d4e0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c5f8d;
+}
+
+.groupbox-body {
+    padding: 12px;
+}
+</style>
+{% endblock %}
+

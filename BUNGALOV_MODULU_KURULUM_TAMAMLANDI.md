@@ -204,3 +204,7 @@ python manage.py add_bungalovs_to_packages
 **Durum:** ✅ TAMAMLANDI  
 **Son Güncelleme:** 2025-01-XX
 
+
+
+
+

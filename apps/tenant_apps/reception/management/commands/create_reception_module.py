@@ -41,3 +41,7 @@ class Command(BaseCommand):
                 self.style.WARNING(f'[SKIP] Reception modülü zaten mevcut: {module.name}')
             )
 
+
+
+
+

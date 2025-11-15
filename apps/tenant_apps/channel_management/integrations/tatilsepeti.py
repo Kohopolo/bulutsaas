@@ -233,3 +233,7 @@ class TatilsepetiIntegration(BaseChannelIntegration):
             self.log_error("Tatilsepeti: Rezervasyon değiştirme hatası", e)
             return {'success': False, 'message': str(e)}
 
+
+
+
+

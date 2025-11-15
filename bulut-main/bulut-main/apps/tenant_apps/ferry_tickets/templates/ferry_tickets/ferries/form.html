@@ -1,0 +1,57 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if ferry %}Feribot Düzenle{% else %}Yeni Feribot{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-ship"></i> {% if ferry %}Feribot Düzenle{% else %}Yeni Feribot{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'ferry_tickets:ferry_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div style="padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 3px; margin-bottom: 15px; color: #721c24;">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-grid">
+                            {% for field in form %}
+                            <div class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</div>
+                            <div>
+                                {{ field }}
+                                {% if field.errors %}
+                                <div style="color: #d13438; font-size: 12px; margin-top: 5px;">{{ field.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'ferry_tickets:ferry_list' %}" class="vb-button">İptal</a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

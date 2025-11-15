@@ -62,3 +62,7 @@ python manage.py add_reception_to_packages --required
 2. Django server'ı yeniden başlatın
 3. Kullanıcının reception modülü için yetkisi olduğundan emin olun
 
+
+
+
+

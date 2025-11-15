@@ -168,3 +168,7 @@ try {
 Write-Host ""
 Write-Host "İşlem tamamlandı!" -ForegroundColor Cyan
 
+
+
+
+

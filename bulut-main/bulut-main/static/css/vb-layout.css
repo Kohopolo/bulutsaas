@@ -1,0 +1,554 @@
+/**
+ * SaaS 2026 - VB Tarzı Layout CSS
+ * Visual Basic masaüstü uygulama görünümü
+ * 
+ * ⚠️ UYARI: Bu dosya DESIGN_STANDARD.md'ye göre hazırlanmıştır.
+ * Layout yapısını değiştirmeyin!
+ */
+
+/* ================================
+   GENEL RESETLER
+   ================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    background: #f5f5f5;
+}
+
+/* ================================
+   VB TARZΙ ANA KONTEYNER
+   ================================ */
+.desktop-app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #ffffff;
+}
+
+/* ================================
+   TITLE BAR (Üst Başlık Çubuğu)
+   ================================ */
+.titlebar {
+    background: linear-gradient(to bottom, #0078d4, #0063b1);
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #005a9e;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.app-icon {
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #0078d4;
+    font-size: 18px;
+}
+
+.app-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.titlebar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 15px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0078d4;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* ================================
+   TOOLBAR (Menü & Araç Çubuğu)
+   ================================ */
+.toolbar {
+    background: #f3f3f3;
+    border-bottom: 1px solid #d4d4d4;
+    padding: 8px 15px;
+    display: flex;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.toolbar-button {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #adadad;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.toolbar-button:hover {
+    background: #e5f3ff;
+    border-color: #0078d4;
+}
+
+.toolbar-button:active {
+    background: #cce8ff;
+}
+
+.toolbar-separator {
+    width: 1px;
+    background: #d4d4d4;
+    margin: 0 5px;
+}
+
+/* ================================
+   MAIN CONTAINER (Ana İçerik)
+   ================================ */
+.main-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ================================
+   SIDEBAR (Sol Menü)
+   ================================ */
+.sidebar {
+    width: 260px;
+    background: #2d2d30;
+    color: white;
+    border-right: 1px solid #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    padding: 15px;
+    background: #252526;
+    border-bottom: 1px solid #1e1e1e;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.menu-group {
+    margin-top: 10px;
+}
+
+.menu-group-title {
+    padding: 10px 15px;
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.menu-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #cccccc;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.menu-item:hover {
+    background: #37373d;
+    color: white;
+}
+
+.menu-item.active {
+    background: #094771;
+    color: white;
+    border-left-color: #0078d4;
+}
+
+.menu-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* ================================
+   CONTENT AREA (Sağ İçerik)
+   ================================ */
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #f5f5f5;
+    overflow: hidden;
+}
+
+.content-header {
+    background: white;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.content-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.content-subtitle {
+    font-size: 13px;
+    color: #666;
+}
+
+.content-body {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ================================
+   GROUPBOX (VB Panel)
+   ================================ */
+.groupbox {
+    background: white;
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.groupbox-header {
+    background: #f7f7f7;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+}
+
+.groupbox-body {
+    padding: 20px;
+}
+
+/* ================================
+   DATAGRID (VB DataGridView)
+   ================================ */
+.datagrid {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    font-size: 13px;
+}
+
+.datagrid thead {
+    background: #f0f0f0;
+}
+
+.datagrid th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border: 1px solid #d4d4d4;
+}
+
+.datagrid td {
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    color: #333;
+}
+
+.datagrid tr:hover {
+    background: #f5f5f5;
+}
+
+.datagrid tr.selected {
+    background: #cce8ff;
+}
+
+/* ================================
+   VB BUTTONS
+   ================================ */
+.vb-button {
+    padding: 8px 20px;
+    background: #e1e1e1;
+    border: 1px solid #adadad;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vb-button:hover {
+    background: #bee6fd;
+    border-color: #0078d4;
+}
+
+.vb-button:active {
+    background: #98d8fc;
+}
+
+.vb-button.primary {
+    background: #0078d4;
+    color: white;
+    border-color: #005a9e;
+}
+
+.vb-button.primary:hover {
+    background: #005a9e;
+}
+
+.vb-button.success {
+    background: #107c10;
+    color: white;
+    border-color: #0e6b0e;
+}
+
+.vb-button.success:hover {
+    background: #0e6b0e;
+}
+
+.vb-button.danger {
+    background: #d13438;
+    color: white;
+    border-color: #a52a2d;
+}
+
+.vb-button.danger:hover {
+    background: #a52a2d;
+}
+
+/* ================================
+   VB TEXTBOX (Input Fields)
+   ================================ */
+.vb-textbox {
+    padding: 8px 10px;
+    border: 1px solid #adadad;
+    border-radius: 2px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    width: 100%;
+    background: white;
+}
+
+.vb-textbox:focus {
+    outline: none;
+    border-color: #0078d4;
+    box-shadow: 0 0 0 1px #0078d4;
+}
+
+/* ================================
+   FORM GRID
+   ================================ */
+.form-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 15px;
+    align-items: center;
+}
+
+.form-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+}
+
+/* ================================
+   STATUS BAR (Alt Durum Çubuğu)
+   ================================ */
+.statusbar {
+    background: #007acc;
+    color: white;
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    border-top: 1px solid #005a9e;
+}
+
+.statusbar-section {
+    display: flex;
+    gap: 20px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ================================
+   STATISTICS CARDS
+   ================================ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stat-icon.blue { background: #e6f2ff; color: #0078d4; }
+.stat-icon.green { background: #e6f7e6; color: #107c10; }
+.stat-icon.orange { background: #fff4e5; color: #ff8c00; }
+.stat-icon.red { background: #ffe6e6; color: #d13438; }
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* ================================
+   BADGES
+   ================================ */
+.badge {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge.success { background: #107c10; color: white; }
+.badge.warning { background: #ff8c00; color: white; }
+.badge.danger { background: #d13438; color: white; }
+.badge.info { background: #0078d4; color: white; }
+
+/* ================================
+   SCROLLBAR STYLING
+   ================================ */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* ================================
+   RESPONSIVE (Tablet & Mobile)
+   ================================ */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 220px;
+    }
+    
+    .form-grid {
+        grid-template-columns: 120px 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -260px;
+        height: 100%;
+        z-index: 1000;
+        transition: left 0.3s;
+    }
+    
+    .sidebar.open {
+        left: 0;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .datagrid {
+        display: block;
+        overflow-x: auto;
+    }
+}
+
+
+

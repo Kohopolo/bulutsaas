@@ -107,3 +107,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'Hatalı: {error_count}'))
         self.stdout.write('='*50 + '\n')
 
+
+
+
+

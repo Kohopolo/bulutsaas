@@ -234,3 +234,7 @@ class TatilbudurIntegration(BaseChannelIntegration):
             self.log_error("Tatilbudur: Rezervasyon değiştirme hatası", e)
             return {'success': False, 'message': str(e)}
 
+
+
+
+

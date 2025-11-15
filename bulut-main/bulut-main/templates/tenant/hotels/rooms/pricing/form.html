@@ -1,0 +1,156 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{{ room.name }} - Fiyatlama{% endblock %}
+{% block page_title %}{{ room.name }} - Fiyatlama{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+            <h2 class="text-2xl font-bold text-vb-navy mb-6">
+                <i class="fas fa-dollar-sign mr-2 text-vb-primary"></i>
+                {{ room.name }} - Fiyatlama
+            </h2>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Temel Fiyat Bilgileri -->
+                <div class="border-b border-gray-200 pb-6">
+<h3 class="vb-section-title text-gray-900 mb-4">Temel Fiyat Bilgileri</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Fiyatlama Tipi *</label>
+                            {{ form.pricing_type }}
+                            {% if form.pricing_type.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ form.pricing_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Para Birimi</label>
+                            {{ form.currency }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Basic Gecelik Fiyat *</label>
+                            {{ form.basic_nightly_price }}
+                            {% if form.basic_nightly_price.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ form.basic_nightly_price.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Toplam İndirim Oranı (%)</label>
+                            {{ form.total_discount_rate }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kişi Çarpanı (Eğer PER_PERSON ise) -->
+                <div id="per-person-section" class="border-b border-gray-200 pb-6" style="display: none;">
+<h3 class="vb-section-title text-gray-900 mb-4">Kişi Çarpanı Ayarları</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Yetişkin Çarpanları</label>
+                            {{ form.adult_multipliers_json }}
+                            {% if form.adult_multipliers_json.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.adult_multipliers_json.help_text }}</p>
+                            {% endif %}
+                            {% if form.adult_multipliers_json.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ form.adult_multipliers_json.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Çocuk Sabit Çarpan</label>
+                            {{ form.child_fixed_multiplier }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Çocuk Yaş Aralığı</label>
+                            {{ form.child_age_range }}
+                            <p class="text-xs text-gray-500 mt-1">Örnek: 0-12</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Ücretsiz Çocuk Sayısı</label>
+                            {{ form.free_children_count }}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Ücretsiz Çocuk Kuralları</label>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                <p class="text-xs text-blue-800 mb-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    <strong>Nasıl Kullanılır?</strong>
+                                </p>
+                                <ul class="text-xs text-blue-700 space-y-1 list-disc list-inside">
+                                    <li><strong>Çocuk Yaş Aralığı:</strong> Ücretsiz olacak çocukların yaş aralığı (örn: 0-6, 0-12)</li>
+                                    <li><strong>Ücretsiz Çocuk Sayısı:</strong> Bu yaş aralığında kaç çocuk ücretsiz olacak (örn: 2)</li>
+                                    <li><strong>Minimum Yetişkin Sayısı:</strong> Bu kuralın aktif olması için gereken minimum yetişkin sayısı (örn: 2 yetişkin yanında)</li>
+                                </ul>
+                                <p class="text-xs text-blue-800 mt-2">
+                                    <strong>Örnek:</strong> "0-6 yaş arası 2 çocuk, en az 2 yetişkin yanında ücretsiz" için:
+                                    <br>Yaş Aralığı: <code>0-6</code>, Sayı: <code>2</code>, Minimum Yetişkin: <code>2</code>
+                                </p>
+                            </div>
+                            {{ form.free_children_rules_json }}
+                            {% if form.free_children_rules_json.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.free_children_rules_json.help_text }}</p>
+                            {% endif %}
+                            {% if form.free_children_rules_json.errors %}
+                            <p class="text-red-600 text-xs mt-1">{{ form.free_children_rules_json.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <a href="{% url 'hotels:room_price_detail' room.pk %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                        <i class="fas fa-save mr-2"></i>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pricingType = document.getElementById('id_pricing_type');
+    const perPersonSection = document.getElementById('per-person-section');
+    
+    function togglePerPersonSection() {
+        if (pricingType.value === 'per_person') {
+            perPersonSection.style.display = 'block';
+        } else {
+            perPersonSection.style.display = 'none';
+        }
+    }
+    
+    pricingType.addEventListener('change', togglePerPersonSection);
+    togglePerPersonSection();
+});
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #ffffff;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+</style>
+{% endblock %}
+

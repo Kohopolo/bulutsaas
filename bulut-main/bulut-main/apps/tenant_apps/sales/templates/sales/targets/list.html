@@ -1,0 +1,138 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Satış Hedefleri - Satış Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-bullseye mr-2 text-vb-primary"></i>
+            Satış Hedefleri
+        </h2>
+        <div class="flex space-x-3">
+            <a href="{% url 'sales:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Ana Ekran
+            </a>
+            <a href="{% url 'sales:sales_target_create' %}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                <i class="fas fa-plus mr-2"></i>
+                Yeni Satış Hedefi
+            </a>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        {% if targets %}
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Otel</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hedef Adı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hedef Tipi</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Dönem</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Başlangıç</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Bitiş</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hedef Tutar/Sayı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Atanan</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for target in targets %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            {% if target.hotel %}
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{{ target.hotel.name }}</span>
+                            {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Genel</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">{{ target.target_name }}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="px-2 py-1 rounded text-xs font-semibold
+                                {% if target.target_type == 'revenue' %}bg-green-100 text-green-800
+                                {% elif target.target_type == 'reservations' %}bg-blue-100 text-blue-800
+                                {% else %}bg-purple-100 text-purple-800{% endif %}">
+                                {{ target.get_target_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ target.get_period_type_display }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ target.start_date|date:"d.m.Y" }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-700">{{ target.end_date|date:"d.m.Y" }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-gray-900">
+                            {% if target.target_type == 'revenue' %}
+                                {{ target.target_amount|floatformat:2 }} ₺
+                            {% elif target.target_type == 'reservations' %}
+                                {{ target.target_count|default:"-" }}
+                            {% else %}
+                                {{ target.target_amount|floatformat:2 }}%
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">
+                            {% if target.assigned_to %}
+                                {{ target.assigned_to.get_full_name|default:target.assigned_to.username }}
+                            {% else %}
+                                <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            {% if target.is_active %}
+                                <span class="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">Aktif</span>
+                            {% else %}
+                                <span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">Pasif</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="flex space-x-2">
+                                <a href="#" class="text-vb-primary hover:text-blue-600" title="Detay">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="text-yellow-600 hover:text-yellow-700" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if targets.has_other_pages %}
+        <div class="px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Sayfa {{ targets.number }} / {{ targets.paginator.num_pages }} (Toplam {{ targets.paginator.count }} kayıt)
+                </div>
+                <div class="flex space-x-2">
+                    {% if targets.has_previous %}
+                    <a href="?page={{ targets.previous_page_number }}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    {% endif %}
+                    {% if targets.has_next %}
+                    <a href="?page={{ targets.next_page_number }}" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="p-8 text-center">
+            <i class="fas fa-bullseye text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-lg">Henüz satış hedefi bulunmamaktadır.</p>
+            <a href="{% url 'sales:sales_target_create' %}" class="mt-4 inline-block px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                İlk Satış Hedefini Oluştur
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

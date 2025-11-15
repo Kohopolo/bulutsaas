@@ -212,3 +212,6 @@ class TwilioSMSGateway(BaseSMSGateway):
                 'message': f'Durum sorgulanırken hata oluştu: {str(e)}'
             }
 
+
+
+

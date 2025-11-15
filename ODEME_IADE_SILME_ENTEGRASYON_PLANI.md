@@ -214,3 +214,7 @@ Bu entegrasyon ile:
 
 **Durum:** Planlama Tamamlandı - Uygulama Bekliyor
 
+
+
+
+

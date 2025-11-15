@@ -247,3 +247,7 @@ class ETSIntegration(BaseChannelIntegration):
             self.log_error("ETS: Rezervasyon değiştirme hatası", e)
             return {'success': False, 'message': str(e)}
 
+
+
+
+

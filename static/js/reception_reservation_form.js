@@ -51,9 +51,11 @@ function openReservationModal(reservationId = null) {
         }
         
         // Event listener'ları bağla (modal açıldığında)
+        // Daha uzun bir gecikme ile çalıştır (form alanları render olana kadar bekle)
         setTimeout(() => {
+            console.log('Event listener\'lar bağlanıyor...');
             attachEventListeners();
-        }, 100);
+        }, 300);
         
         // İlk hesaplamaları yap (sadece yeni rezervasyon için)
         if (!form || !form.action.includes('/edit/')) {
@@ -401,6 +403,8 @@ function filterRoomNumbers() {
 
 // Fiyat Hesaplama (Global Pricing Utility)
 function calculatePrice() {
+    console.log('=== Fiyat Hesaplama Başlatılıyor ===');
+    
     const roomId = document.getElementById('id_room')?.value;
     const checkInDate = document.getElementById('id_check_in_date')?.value;
     const checkOutDate = document.getElementById('id_check_out_date')?.value;
@@ -409,8 +413,24 @@ function calculatePrice() {
     const agencyId = document.getElementById('id_reservation_agent')?.value;
     const channelId = document.getElementById('id_reservation_channel')?.value;
     
+    console.log('Fiyat hesaplama parametreleri:', {
+        roomId,
+        checkInDate,
+        checkOutDate,
+        adultCount,
+        childCount,
+        agencyId,
+        channelId
+    });
+    
     if (!roomId || !checkInDate || !checkOutDate) {
-        console.log('Fiyat hesaplama için gerekli alanlar eksik:', { roomId, checkInDate, checkOutDate });
+        const missingFields = [];
+        if (!roomId) missingFields.push('Oda');
+        if (!checkInDate) missingFields.push('Check-in Tarihi');
+        if (!checkOutDate) missingFields.push('Check-out Tarihi');
+        
+        console.warn('⚠ Fiyat hesaplama için gerekli alanlar eksik:', missingFields.join(', '));
+        alert('Lütfen ' + missingFields.join(', ') + ' alanlarını doldurun.');
         return;
     }
     
@@ -472,14 +492,27 @@ function calculatePrice() {
         return response.json();
     })
     .then(data => {
+        console.log('API yanıtı alındı:', data);
+        
         if (data.success) {
             const price = data.avg_nightly_price || data.price || 0;
+            const totalPrice = data.total_price || 0;
+            const nights = data.nights || 0;
+            
+            console.log('✓ Fiyat hesaplandı:', {
+                avg_nightly_price: price,
+                total_price: totalPrice,
+                nights: nights
+            });
+            
             const roomRateField = document.getElementById('id_room_rate');
             if (roomRateField) {
                 // Readonly özelliğini geçici olarak kaldır
                 const wasReadonly = roomRateField.readOnly;
                 roomRateField.readOnly = false;
                 roomRateField.value = price.toFixed(2);
+                console.log('✓ Oda fiyatı güncellendi:', price.toFixed(2));
+                
                 // Readonly özelliğini geri ekle (eğer manuel fiyat işaretli değilse)
                 const isManualPrice = document.getElementById('id_is_manual_price');
                 if (isManualPrice && !isManualPrice.checked) {
@@ -487,16 +520,27 @@ function calculatePrice() {
                 } else if (wasReadonly) {
                     roomRateField.readOnly = true;
                 }
+            } else {
+                console.error('✗ id_room_rate alanı bulunamadı!');
             }
-            calculateTotalAmount();
+            
+            // Toplam tutarı güncelle
+            if (typeof calculateTotalAmount === 'function') {
+                calculateTotalAmount();
+            } else {
+                console.warn('⚠ calculateTotalAmount fonksiyonu bulunamadı!');
+            }
+            
+            console.log('=== Fiyat Hesaplama Başarılı ===');
         } else {
-            console.error('Fiyat hesaplama hatası:', data.error || 'Bilinmeyen hata');
+            const errorMsg = data.error || 'Bilinmeyen hata';
+            console.error('✗ Fiyat hesaplama hatası:', errorMsg);
+            alert('Fiyat hesaplanamadı: ' + errorMsg);
         }
     })
     .catch(error => {
-        console.error('Fiyat hesaplama hatası:', error.message || error);
-        // Kullanıcıya sessizce hata göster (sürekli alert göstermemek için)
-        // Sadece console'da log tutuyoruz
+        console.error('✗ Fiyat hesaplama hatası:', error.message || error);
+        alert('Fiyat hesaplama sırasında bir hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
     });
 }
 
@@ -580,8 +624,18 @@ function attachEventListeners() {
     // Fiyat hesaplama butonu
     const calculateBtn = document.getElementById('calculatePriceBtn');
     if (calculateBtn) {
+        // Önceki listener'ları kaldır
         calculateBtn.removeEventListener('click', calculatePrice);
-        calculateBtn.addEventListener('click', calculatePrice);
+        // Yeni listener ekle
+        calculateBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Fiyat hesaplama butonu tıklandı');
+            calculatePrice();
+        });
+        console.log('✓ Fiyat hesaplama butonu event listener eklendi');
+    } else {
+        console.warn('⚠ calculatePriceBtn butonu bulunamadı!');
     }
     
     // Comp rezervasyon checkbox

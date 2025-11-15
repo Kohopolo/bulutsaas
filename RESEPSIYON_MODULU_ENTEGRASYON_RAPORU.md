@@ -163,3 +163,7 @@ def reservation_list(request):
 ✅ Customer modeli ile entegrasyon  
 ✅ Hotel ve Room modelleri ile entegrasyon  
 
+
+
+
+

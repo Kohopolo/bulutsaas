@@ -1,0 +1,14 @@
+# Tüm yedek dosyalarını git'e ekleme
+*.sql
+*.sql.gz
+*.gz
+*.backup
+*.bak
+
+# Sadece güvenlik dosyalarını tut
+!.htaccess
+!web.config
+!index.html
+!.gitkeep
+!.gitignore
+

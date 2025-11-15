@@ -344,3 +344,7 @@ CLEAN (Temiz) veya AVAILABLE (Müsait)
 **📅 Analiz Tarihi:** 2025-11-13  
 **✍️ Analiz Eden:** AI Assistant
 
+
+
+
+

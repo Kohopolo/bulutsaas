@@ -18,3 +18,7 @@ urlpatterns = [
     path('transactions/', views.transaction_list, name='transaction_list'),
 ]
 
+
+
+
+

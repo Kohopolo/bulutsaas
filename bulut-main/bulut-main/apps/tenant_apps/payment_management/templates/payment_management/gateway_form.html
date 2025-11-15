@@ -1,0 +1,250 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if tenant_gateway %}Gateway Düzenle{% else %}Yeni Gateway Ekle{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+/* Form Control Stilleri - Payment Management için */
+.form-control,
+input.form-control,
+select.form-control,
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.form-control:focus,
+input.form-control:focus,
+select.form-control:focus,
+textarea.form-control:focus {
+    outline: none !important;
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+    background: white !important;
+}
+
+input[type="text"].form-control,
+input[type="email"].form-control,
+input[type="number"].form-control,
+input[type="date"].form-control,
+input[type="time"].form-control,
+input[type="url"].form-control,
+input[type="password"].form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+select.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    cursor: pointer !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+textarea.form-control {
+    padding: 6px 10px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    background: white !important;
+    font-size: 13px !important;
+    color: #333 !important;
+    width: 100% !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    resize: vertical !important;
+    min-height: 80px !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+</style>
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-credit-card"></i> {% if tenant_gateway %}Gateway Düzenle: {{ gateway.name }}{% else %}Yeni Gateway Yapılandırması{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'payment_management:gateway_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    {% if gateway %}
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><strong>Gateway:</strong></label>
+                        <p style="padding: 6px 10px; background: #f8f9fa; border: 1px solid #ced4da; border-radius: 3px; font-size: 13px;">
+                            {{ gateway.name }} ({{ gateway.get_gateway_type_display }})
+                        </p>
+                        <input type="hidden" name="gateway" value="{{ gateway.pk }}">
+                    </div>
+                    {% else %}
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.gateway.id_for_label }}">{{ form.gateway.label }}</label>
+                        {{ form.gateway }}
+                        {% if form.gateway.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.gateway.help_text }}</small>
+                        {% endif %}
+                        {% if form.gateway.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.gateway.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group">
+                        <label for="{{ form.api_key.id_for_label }}">{{ form.api_key.label }}</label>
+                        {{ form.api_key }}
+                        {% if form.api_key.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.api_key.help_text }}</small>
+                        {% endif %}
+                        {% if form.api_key.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.api_key.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.secret_key.id_for_label }}">{{ form.secret_key.label }}</label>
+                        {{ form.secret_key }}
+                        {% if form.secret_key.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.secret_key.help_text }}</small>
+                        {% endif %}
+                        {% if form.secret_key.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.secret_key.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.merchant_id.id_for_label }}">{{ form.merchant_id.label }}</label>
+                        {{ form.merchant_id }}
+                        {% if form.merchant_id.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.merchant_id.help_text }}</small>
+                        {% endif %}
+                        {% if form.merchant_id.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.merchant_id.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.store_key.id_for_label }}">{{ form.store_key.label }}</label>
+                        {{ form.store_key }}
+                        {% if form.store_key.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.store_key.help_text }}</small>
+                        {% endif %}
+                        {% if form.store_key.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.store_key.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.callback_url.id_for_label }}">{{ form.callback_url.label }}</label>
+                        {{ form.callback_url }}
+                        {% if form.callback_url.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.callback_url.help_text }}</small>
+                        {% endif %}
+                        {% if form.callback_url.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.callback_url.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.use_3d_secure }}
+                            <span>{{ form.use_3d_secure.label }}</span>
+                        </label>
+                        {% if form.use_3d_secure.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.use_3d_secure.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.enable_installment }}
+                            <span>{{ form.enable_installment.label }}</span>
+                        </label>
+                        {% if form.enable_installment.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.enable_installment.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.max_installment.id_for_label }}">{{ form.max_installment.label }}</label>
+                        {{ form.max_installment }}
+                        {% if form.max_installment.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.max_installment.help_text }}</small>
+                        {% endif %}
+                        {% if form.max_installment.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.max_installment.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.is_active }}
+                            <span>{{ form.is_active.label }}</span>
+                        </label>
+                        {% if form.is_active.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.is_active.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.is_test_mode }}
+                            <span>{{ form.is_test_mode.label }}</span>
+                        </label>
+                        {% if form.is_test_mode.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.is_test_mode.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if form.settings %}
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.settings.id_for_label }}">{{ form.settings.label }}</label>
+                        {{ form.settings }}
+                        {% if form.settings.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.settings.help_text }}</small>
+                        {% endif %}
+                        {% if form.settings.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.settings.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'payment_management:gateway_list' %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

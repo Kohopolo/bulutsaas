@@ -63,3 +63,7 @@ class Command(BaseCommand):
                 self.style.WARNING(f'[UPDATE] Kanal Yönetimi modülü güncellendi: {module.name}')
             )
 
+
+
+
+

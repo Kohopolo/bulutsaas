@@ -919,3 +919,7 @@ class BungalovVoucher(TimeStampedModel, SoftDeleteModel):
     def __str__(self):
         return f"{self.voucher_code} - {self.reservation.reservation_code}"
 
+
+
+
+

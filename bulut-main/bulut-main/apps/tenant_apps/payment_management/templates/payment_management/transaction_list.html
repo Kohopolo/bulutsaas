@@ -1,0 +1,204 @@
+{% extends 'tenant/base.html' %}
+{% load static %}
+
+{% block title %}Ödeme İşlemleri - Ödeme Yönetimi{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-list"></i> Ödeme İşlemleri
+            <div style="float: right;">
+                <a href="{% url 'payment_management:gateway_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Gateway Yönetimi
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Filtreler -->
+            <div style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px;">
+                <form method="get">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; align-items: end;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Durum</label>
+                            <select name="status" class="form-control">
+                                <option value="">Tümü</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Beklemede</option>
+                                <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>İşleniyor</option>
+                                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Tamamlandı</option>
+                                <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Başarısız</option>
+                                <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>İptal Edildi</option>
+                                <option value="refunded" {% if status_filter == 'refunded' %}selected{% endif %}>İade Edildi</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold;">Gateway</label>
+                            <select name="gateway" class="form-control">
+                                <option value="">Tümü</option>
+                                {% for gateway in gateways %}
+                                <option value="{{ gateway.id }}" {% if gateway_filter == gateway.id|stringformat:"s" %}selected{% endif %}>{{ gateway.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <button type="submit" class="vb-button primary" style="width: 100%;">
+                                <i class="fas fa-filter"></i> Filtrele
+                            </button>
+                        </div>
+                        <div>
+                            <a href="{% url 'payment_management:transaction_list' %}" class="vb-button" style="width: 100%;">
+                                <i class="fas fa-times"></i> Temizle
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- İşlemler Tablosu -->
+            {% if transactions %}
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>İşlem ID</th>
+                                <th>Tarih</th>
+                                <th>Gateway</th>
+                                <th>Tutar</th>
+                                <th>Para Birimi</th>
+                                <th>Durum</th>
+                                <th>Kaynak</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>
+                                    <span style="font-family: monospace; font-size: 11px;">{{ transaction.transaction_id|truncatechars:20 }}</span>
+                                </td>
+                                <td>{{ transaction.created_at|date:"d.m.Y H:i" }}</td>
+                                <td>
+                                    {% if transaction.gateway %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #17a2b8; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        {{ transaction.gateway.name }}
+                                    </span>
+                                    {% else %}
+                                    <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-weight: bold;">{{ transaction.amount|floatformat:2 }}</td>
+                                <td>{{ transaction.currency }}</td>
+                                <td>
+                                    {% if transaction.status == 'completed' %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #28a745; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        <i class="fas fa-check-circle"></i> Tamamlandı
+                                    </span>
+                                    {% elif transaction.status == 'pending' %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #ffc107; color: #333; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        <i class="fas fa-clock"></i> Beklemede
+                                    </span>
+                                    {% elif transaction.status == 'processing' %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #17a2b8; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        <i class="fas fa-spinner"></i> İşleniyor
+                                    </span>
+                                    {% elif transaction.status == 'failed' %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #dc3545; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        <i class="fas fa-times-circle"></i> Başarısız
+                                    </span>
+                                    {% elif transaction.status == 'cancelled' %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #6c757d; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        <i class="fas fa-ban"></i> İptal Edildi
+                                    </span>
+                                    {% elif transaction.status == 'refunded' %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #fd7e14; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        <i class="fas fa-undo"></i> İade Edildi
+                                    </span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #6c757d; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">
+                                        {{ transaction.get_status_display }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if transaction.source_module %}
+                                    <span style="font-size: 11px; color: #666;">
+                                        {{ transaction.source_module|upper }}
+                                        {% if transaction.source_reference %}
+                                        <br><span style="color: #999; font-size: 10px;">{{ transaction.source_reference|truncatechars:30 }}</span>
+                                        {% endif %}
+                                    </span>
+                                    {% else %}
+                                    <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button onclick="showTransactionDetail({{ transaction.id }})" class="vb-button" style="padding: 4px 8px; font-size: 11px;" title="Detay">
+                                        <i class="fas fa-eye"></i> Detay
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sayfalama -->
+            {% if transactions.has_other_pages %}
+            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 12px; color: #666;">
+                    Sayfa {{ transactions.number }} / {{ transactions.paginator.num_pages }}
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    {% if transactions.has_previous %}
+                    <a href="?page={{ transactions.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if gateway_filter %}&gateway={{ gateway_filter }}{% endif %}" class="vb-button" style="padding: 4px 8px; font-size: 11px;">
+                        <i class="fas fa-chevron-left"></i> Önceki
+                    </a>
+                    {% endif %}
+                    {% if transactions.has_next %}
+                    <a href="?page={{ transactions.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if gateway_filter %}&gateway={{ gateway_filter }}{% endif %}" class="vb-button" style="padding: 4px 8px; font-size: 11px;">
+                        Sonraki <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <p style="text-align: center; color: #666; padding: 20px;">
+                <i class="fas fa-inbox" style="font-size: 32px; color: #ccc; display: block; margin-bottom: 10px;"></i>
+                Henüz ödeme işlemi bulunmuyor.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- İşlem Detay Modal -->
+<div id="transactionDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border: 2px solid #c0d4e0; border-radius: 3px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative;">
+        <div style="background: #e8f4f8; border-bottom: 1px solid #c0d4e0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="font-size: 16px; font-weight: bold; color: #2c5f8d; margin: 0;">İşlem Detayı</h2>
+            <button onclick="closeTransactionDetail()" style="background: none; border: none; font-size: 20px; color: #666; cursor: pointer; padding: 5px 10px;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div style="padding: 20px;">
+            <div id="transactionDetailContent">
+                <p style="color: #666;">Yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTransactionDetail(transactionId) {
+    // TODO: AJAX ile işlem detayını yükle
+    document.getElementById('transactionDetailModal').style.display = 'flex';
+}
+
+function closeTransactionDetail() {
+    document.getElementById('transactionDetailModal').style.display = 'none';
+}
+</script>
+{% endblock %}

@@ -1,4 +1,0 @@
-"""
-SMS Gateway Entegrasyonları
-"""
-

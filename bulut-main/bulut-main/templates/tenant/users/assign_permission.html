@@ -1,0 +1,147 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Yetki Ata - Bulut Acente{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tenant:user_detail' tenant_user.pk %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Kullanıcı Detayına Dön
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <h2 class="text-2xl font-bold text-vb-navy mb-6">
+            <i class="fas fa-key mr-2 text-vb-primary"></i>
+            Yetki Ata
+        </h2>
+        <p class="text-gray-600 mb-6">Kullanıcı: <strong>{{ tenant_user.user.get_full_name|default:tenant_user.user.username }}</strong></p>
+        
+        <!-- Modül Bazlı Toplu Atama -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+<h3 class="vb-section-title text-blue-900 mb-3">
+                <i class="fas fa-layer-group mr-2"></i>
+                Modül Bazlı Toplu Yetki Atama
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {% for module_item in module_list %}
+                <div class="bg-white rounded-lg border border-blue-200 p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center">
+                            <i class="{{ module_item.data.icon }} mr-2 text-blue-600"></i>
+                            <span class="font-semibold text-gray-900">{{ module_item.name }}</span>
+                        </div>
+                        {% if module_item.stats.available > 0 %}
+                        <form method="post" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="assign_module" value="{{ module_item.data.id }}">
+                            <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-check-double mr-1"></i>
+                                Tümünü Ata ({{ module_item.stats.available }})
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded font-semibold">
+                            <i class="fas fa-check mr-1"></i>Tamamı Atanmış
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="text-xs text-gray-600 space-y-1">
+                        <div>Toplam: <strong>{{ module_item.stats.total }}</strong></div>
+                        <div>Atanmış: <strong class="text-green-600">{{ module_item.stats.assigned }}</strong></div>
+                        <div>Rol Üzerinden: <strong class="text-blue-600">{{ module_item.stats.from_role }}</strong></div>
+                        <div>Atanabilir: <strong class="text-orange-600">{{ module_item.stats.available }}</strong></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Tek Tek Yetki Atama -->
+        <div class="border-t border-gray-200 pt-6">
+<h3 class="vb-section-title text-gray-900 mb-4">
+                <i class="fas fa-key mr-2"></i>
+                Tek Tek Yetki Atama
+            </h3>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                {% for module_name, permissions in permissions_by_module.items %}
+                <div class="border-b border-gray-200 pb-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-gray-900">
+                            {% for mod_name, mod_data in modules_info.items %}
+                                {% if mod_name == module_name %}
+                                    <i class="{{ mod_data.icon|default:'fas fa-cube' }} mr-2"></i>
+                                {% endif %}
+                            {% endfor %}
+                            {{ module_name }}
+                        </h4>
+                        <span class="text-sm text-gray-500">
+                            {{ permissions|length }} yetki
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for permission in permissions %}
+                        <div class="flex items-center">
+                            {% if permission.pk in assigned_permissions %}
+                            <span class="px-3 py-2 bg-green-100 text-green-700 rounded text-sm font-semibold w-full">
+                                <i class="fas fa-check-circle mr-2"></i>{{ permission.name }} (Zaten Atanmış)
+                            </span>
+                            {% elif permission.pk in role_permission_ids %}
+                            <span class="px-3 py-2 bg-blue-100 text-blue-700 rounded text-sm font-semibold w-full">
+                                <i class="fas fa-info-circle mr-2"></i>{{ permission.name }} (Rol Üzerinden)
+                            </span>
+                            {% else %}
+                            <label class="flex items-center cursor-pointer w-full">
+                                <input type="radio" name="permission" value="{{ permission.pk }}" class="mr-3 w-4 h-4 text-vb-primary border-gray-300 rounded focus:ring-vb-primary">
+                                <span class="text-sm text-gray-700">{{ permission.name }}</span>
+                            </label>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            
+                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <a href="{% url 'tenant:user_detail' tenant_user.pk %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                        <i class="fas fa-check mr-2"></i>
+                        Yetki Ata
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extrajs %}
+<script>
+// Template filter'ı için JavaScript (Django template'de get_item filter'ı yoksa)
+// Bu kısım template tag ile de yapılabilir ama şimdilik JavaScript ile çözelim
+document.addEventListener('DOMContentLoaded', function() {
+    // Modül bazlı toplu atama formlarını kontrol et
+    const moduleForms = document.querySelectorAll('form[action=""]');
+    moduleForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const moduleId = form.querySelector('input[name="assign_module"]').value;
+            const button = form.querySelector('button[type="submit"]');
+            if (!confirm('Bu modüldeki tüm yetkileri atamak istediğinize emin misiniz?')) {
+                e.preventDefault();
+                return false;
+            }
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Atanıyor...';
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}
+

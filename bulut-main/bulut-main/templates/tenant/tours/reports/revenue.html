@@ -1,0 +1,141 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Gelir Raporları - Tur Raporlama{% endblock %}
+{% block page_title %}Gelir Raporları{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:reports_dashboard' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Raporlama Dashboard'a Dön
+        </a>
+    </div>
+    
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Başlangıç Tarihi</label>
+                <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Bitiş Tarihi</label>
+                <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-filter mr-2"></i>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Toplam Gelir -->
+    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 mb-6 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-green-100 mb-1">Toplam Gelir</p>
+                <p class="text-4xl font-bold">{{ total_revenue|floatformat:2 }} TRY</p>
+            </div>
+            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                <i class="fas fa-lira-sign text-3xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ödeme Yöntemleri Bazlı Gelir -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6 shadow-sm">
+        <h3 class="text-lg font-bold text-vb-navy mb-4">
+            <i class="fas fa-credit-card mr-2 text-vb-primary"></i>
+            Ödeme Yöntemleri Bazlı Gelir
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ödeme Yöntemi</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">İşlem Sayısı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Toplam Tutar</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Oran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for method in payment_method_revenue %}
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900">
+                            {% if method.payment_method == 'cash' %}Nakit
+                            {% elif method.payment_method == 'bank_transfer' %}Banka Havalesi
+                            {% elif method.payment_method == 'credit_card' %}Kredi Kartı
+                            {% elif method.payment_method == 'iyzico' %}İyzico
+                            {% elif method.payment_method == 'paytr' %}PayTR
+                            {% elif method.payment_method == 'nestpay' %}NestPay
+                            {% elif method.payment_method == 'garanti' %}Garanti Sanal Pos
+                            {% elif method.payment_method == 'akbank' %}Akbank Sanal Pos
+                            {% else %}{{ method.payment_method }}{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ method.count }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-green-600">{{ method.total|floatformat:2 }} TRY</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            {% if total_revenue > 0 %}
+                                {% widthratio method.total 1 100 as percentage %}
+                                {% widthratio percentage total_revenue 1 %}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>Ödeme verisi bulunamadı.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Tur Bazlı Gelir -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <h3 class="text-lg font-bold text-vb-navy mb-4">
+            <i class="fas fa-route mr-2 text-vb-primary"></i>
+            Tur Bazlı Gelir
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tur</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ödeme Sayısı</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Toplam Gelir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tour in tour_revenue %}
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900">{{ tour.name }}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ tour.payment_count }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-green-600">{{ tour.total_revenue|floatformat:2 }} TRY</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>Tur bazlı gelir verisi bulunamadı.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

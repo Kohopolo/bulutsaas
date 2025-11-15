@@ -1,0 +1,72 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if inspection %}Kontrol Düzenle{% else %}Yeni Kalite Kontrolü{% endif %} - Kalite Kontrol{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-vb-navy">
+            <i class="fas fa-search mr-2 text-vb-primary"></i>
+            {% if inspection %}Kontrol Düzenle{% else %}Yeni Kalite Kontrolü{% endif %}
+        </h2>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+        <form method="post">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.room_number.label }}</label>
+                    {{ form.room_number }}
+                    {% if form.room_number.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.room_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.inspection_type.label }}</label>
+                    {{ form.inspection_type }}
+                    {% if form.inspection_type.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.inspection_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.overall_score.label }}</label>
+                    {{ form.overall_score }}
+                    {% if form.overall_score.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.overall_score.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.status.label }}</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.notes.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+                <a href="{% url 'quality_control:inspection_list' %}" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    İptal
+                </a>
+                <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

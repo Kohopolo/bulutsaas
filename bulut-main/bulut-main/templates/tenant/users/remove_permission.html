@@ -1,0 +1,44 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Yetki Kaldır - Bulut Acente{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tenant:user_detail' tenant_user.pk %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Kullanıcı Detayına Dön
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm max-w-2xl">
+        <h2 class="text-2xl font-bold text-vb-navy mb-6">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i>
+            Yetki Kaldır
+        </h2>
+        
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p class="text-yellow-800 font-semibold mb-2">Uyarı!</p>
+            <p class="text-yellow-700 text-sm">
+                <strong>{{ user_permission.permission.module.name }} - {{ user_permission.permission.name }}</strong> yetkisini 
+                <strong>{{ tenant_user.user.get_full_name|default:tenant_user.user.username }}</strong> kullanıcısından kaldırmak istediğinize emin misiniz?
+            </p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <a href="{% url 'tenant:user_detail' tenant_user.pk %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                    İptal
+                </a>
+                <button type="submit" class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                    <i class="fas fa-times mr-2"></i>
+                    Yetkiyi Kaldır
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

@@ -46,3 +46,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f'\n[OK] Toplam {total_created} tenant\'da permission\'lar oluşturuldu')
         )
 
+
+
+
+

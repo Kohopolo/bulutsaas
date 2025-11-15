@@ -1,0 +1,163 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Personel Yönetimi Ayarları{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-vb-navy">
+            <i class="fas fa-cog mr-2 text-vb-primary"></i>
+            Personel Yönetimi Ayarları - {{ hotel.name }}
+        </h1>
+        <p class="text-gray-600 mt-2">Personel yönetimi modülü genel ayarları</p>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div class="p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                        <div class="text-red-700">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-clock mr-2"></i>
+                        Vardiya Ayarları
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-group">
+                            <label for="{{ form.default_shift_duration.id_for_label }}" class="form-label">
+                                {{ form.default_shift_duration.label }}
+                                {% if form.default_shift_duration.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            {{ form.default_shift_duration }}
+                            {% if form.default_shift_duration.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.default_shift_duration.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.default_shift_duration.help_text %}
+                                <p class="text-gray-500 text-sm mt-1">{{ form.default_shift_duration.help_text }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-hourglass-half mr-2"></i>
+                        Mesai Ayarları
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-group">
+                            <label for="{{ form.overtime_threshold.id_for_label }}" class="form-label">
+                                {{ form.overtime_threshold.label }}
+                                {% if form.overtime_threshold.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            {{ form.overtime_threshold }}
+                            {% if form.overtime_threshold.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.overtime_threshold.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.overtime_threshold.help_text %}
+                                <p class="text-gray-500 text-sm mt-1">{{ form.overtime_threshold.help_text }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.default_overtime_rate.id_for_label }}" class="form-label">
+                                {{ form.default_overtime_rate.label }}
+                                {% if form.default_overtime_rate.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            {{ form.default_overtime_rate }}
+                            {% if form.default_overtime_rate.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.default_overtime_rate.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.default_overtime_rate.help_text %}
+                                <p class="text-gray-500 text-sm mt-1">{{ form.default_overtime_rate.help_text }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-calendar-check mr-2"></i>
+                        İzin Ayarları
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="form-group">
+                            <label for="{{ form.annual_leave_days.id_for_label }}" class="form-label">
+                                {{ form.annual_leave_days.label }}
+                                {% if form.annual_leave_days.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            {{ form.annual_leave_days }}
+                            {% if form.annual_leave_days.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.annual_leave_days.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.annual_leave_days.help_text %}
+                                <p class="text-gray-500 text-sm mt-1">{{ form.annual_leave_days.help_text }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.sick_leave_days.id_for_label }}" class="form-label">
+                                {{ form.sick_leave_days.label }}
+                                {% if form.sick_leave_days.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            {{ form.sick_leave_days }}
+                            {% if form.sick_leave_days.errors %}
+                                <div class="text-red-600 text-sm mt-1">
+                                    {% for error in form.sick_leave_days.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.sick_leave_days.help_text %}
+                                <p class="text-gray-500 text-sm mt-1">{{ form.sick_leave_days.help_text }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{% url 'staff:dashboard' %}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-times mr-2"></i>
+                        İptal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-vb-primary-dark transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

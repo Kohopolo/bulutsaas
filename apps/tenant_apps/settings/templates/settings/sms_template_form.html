@@ -306,3 +306,315 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 {% endblock %}
 
+
+
+{% load static %}
+
+{% block title %}{% if template %}SMS Şablonu Düzenle{% else %}Yeni SMS Şablonu{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-{% if template %}edit{% else %}plus{% endif %}"></i>
+            {% if template %}SMS Şablonu Düzenle{% else %}Yeni SMS Şablonu{% endif %}
+            <div style="float: right;">
+                <a href="{% url 'settings:sms_template_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.code.id_for_label }}">{{ form.code.label }}</label>
+                        {{ form.code }}
+                        {% if form.code.help_text %}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">{{ form.code.help_text }}</small>
+                        {% endif %}
+                        {% if form.code.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.code.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.category.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.module_usage.id_for_label }}">{{ form.module_usage.label }}</label>
+                        {{ form.module_usage }}
+                        {% if form.module_usage.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.module_usage.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.template_text.id_for_label }}">{{ form.template_text.label }}</label>
+                        {{ form.template_text }}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">
+                            <i class="fas fa-info-circle"></i> Değişkenler için <code>{{"{{"}}değişken_adı{{"}}"}}</code> formatını kullanın.
+                            Örnek: <code>{{"{{"}}guest_name{{"}}"}}</code>, <code>{{"{{"}}check_in_date{{"}}"}}</code>
+                        </small>
+                        {% if form.template_text.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.template_text.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><strong>Kullanılabilir Değişkenler</strong></label>
+                        <div id="variables-container" style="background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">
+                            <div id="variables-list">
+                                <!-- JavaScript ile dinamik olarak doldurulacak -->
+                            </div>
+                            <button type="button" onclick="addVariable()" class="vb-button small" style="margin-top: 10px;">
+                                <i class="fas fa-plus"></i> Değişken Ekle
+                            </button>
+                        </div>
+                        {{ form.available_variables }}
+                        <small style="font-size: 11px; color: #666; display: block; margin-top: 4px;">
+                            Şablonda kullanılabilecek değişkenler ve açıklamaları
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.max_length.id_for_label }}">{{ form.max_length.label }}</label>
+                        {{ form.max_length }}
+                        {% if form.max_length.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.max_length.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            {{ form.is_active }}
+                            <span>{{ form.is_active.label }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="error-message" style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if template %}
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label><strong>Önizleme</strong></label>
+                        <div style="padding: 15px; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; min-height: 60px;">
+                            <div id="preview-text" style="color: #495057;">
+                                {% if preview %}
+                                    {{ preview }}
+                                {% else %}
+                                    <em style="color: #6c757d;">Şablon metnini giriniz...</em>
+                                {% endif %}
+                            </div>
+                            <div id="preview-length" style="margin-top: 10px; font-size: 12px; color: #6c757d;">
+                                Uzunluk: <span id="length-value">0</span> / {{ template.max_length|default:160 }} karakter
+                            </div>
+                        </div>
+                        <button type="button" onclick="updatePreview()" class="vb-button small" style="margin-top: 10px;">
+                            <i class="fas fa-eye"></i> Önizlemeyi Güncelle
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <a href="{% url 'settings:sms_template_list' %}" class="vb-button">
+                        <i class="fas fa-times"></i> İptal
+                    </a>
+                    <button type="submit" class="vb-button primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const templateText = document.getElementById('id_template_text');
+    const availableVariablesInput = document.getElementById('id_available_variables');
+    const variablesList = document.getElementById('variables-list');
+    const maxLength = {{ template.max_length|default:160 }};
+    
+    // Mevcut değişkenleri yükle
+    function loadVariables() {
+        if (availableVariablesInput && availableVariablesInput.value) {
+            try {
+                const variables = JSON.parse(availableVariablesInput.value);
+                renderVariables(variables);
+            } catch (e) {
+                console.error('Variables parse hatası:', e);
+            }
+        } else {
+            // Şablondan değişkenleri otomatik bul
+            if (templateText && templateText.value) {
+                const matches = templateText.value.match(/\{\{(\w+)\}\}/g);
+                if (matches) {
+                    const variables = {};
+                    matches.forEach(match => {
+                        const varName = match.replace(/\{\{|\}\}/g, '');
+                        if (!variables[varName]) {
+                            variables[varName] = varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        }
+                    });
+                    renderVariables(variables);
+                    updateVariablesInput();
+                }
+            }
+        }
+    }
+    
+    // Değişkenleri render et
+    function renderVariables(variables) {
+        if (!variables || Object.keys(variables).length === 0) {
+            variablesList.innerHTML = '<p style="color: #6c757d; font-size: 13px;">Henüz değişken eklenmemiş.</p>';
+            return;
+        }
+        
+        let html = '';
+        for (const [key, value] of Object.entries(variables)) {
+            html += `
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; padding: 10px; background: #fff; border-radius: 3px; border: 1px solid #dee2e6;">
+                    <div style="flex: 1;">
+                        <input type="text" class="form-control variable-key" value="${key}" placeholder="Değişken adı" style="font-size: 12px; font-family: monospace;" readonly>
+                    </div>
+                    <div style="flex: 2;">
+                        <input type="text" class="form-control variable-value" value="${value}" placeholder="Açıklama" style="font-size: 12px;">
+                    </div>
+                    <div>
+                        <button type="button" onclick="removeVariable(this)" class="vb-button small" style="background: #dc3545; color: white;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        variablesList.innerHTML = html;
+    }
+    
+    // Değişken ekle
+    window.addVariable = function() {
+        const key = prompt('Değişken adı giriniz (örn: guest_name):');
+        if (!key || !/^[a-z_][a-z0-9_]*$/.test(key)) {
+            alert('Geçersiz değişken adı! Sadece küçük harf, rakam ve alt çizgi kullanılabilir.');
+            return;
+        }
+        
+        const value = prompt('Değişken açıklaması giriniz (örn: Misafir Adı):', key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+        if (!value) return;
+        
+        const currentVariables = getVariables();
+        currentVariables[key] = value;
+        renderVariables(currentVariables);
+        updateVariablesInput();
+    };
+    
+    // Değişken sil
+    window.removeVariable = function(button) {
+        if (confirm('Bu değişkeni silmek istediğinizden emin misiniz?')) {
+            button.closest('div[style*="display: flex"]').remove();
+            updateVariablesInput();
+        }
+    };
+    
+    // Değişkenleri al
+    function getVariables() {
+        const variables = {};
+        document.querySelectorAll('#variables-list > div').forEach(div => {
+            const keyInput = div.querySelector('.variable-key');
+            const valueInput = div.querySelector('.variable-value');
+            if (keyInput && valueInput && keyInput.value) {
+                variables[keyInput.value] = valueInput.value;
+            }
+        });
+        return variables;
+    }
+    
+    // Variables input'u güncelle
+    function updateVariablesInput() {
+        const variables = getVariables();
+        if (availableVariablesInput) {
+            availableVariablesInput.value = JSON.stringify(variables);
+        }
+    }
+    
+    // Önizleme güncelle
+    window.updatePreview = function() {
+        const text = templateText ? templateText.value : '';
+        const variables = getVariables();
+        
+        let preview = text;
+        for (const [key, value] of Object.entries(variables)) {
+            const placeholder = `{{${key}}}`;
+            preview = preview.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value || `[${key}]`);
+        }
+        
+        const previewText = document.getElementById('preview-text');
+        const lengthValue = document.getElementById('length-value');
+        
+        if (previewText) {
+            previewText.textContent = preview || 'Şablon metnini giriniz...';
+        }
+        
+        if (lengthValue) {
+            const length = preview.length;
+            lengthValue.textContent = length;
+            lengthValue.style.color = length > maxLength ? '#dc3545' : '#6c757d';
+        }
+    };
+    
+    // Değişken değerleri değiştiğinde input'u güncelle
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('variable-value') || e.target.classList.contains('variable-key')) {
+            updateVariablesInput();
+        }
+        if (e.target === templateText) {
+            // Şablondan değişkenleri otomatik bul
+            const matches = templateText.value.match(/\{\{(\w+)\}\}/g);
+            if (matches) {
+                const currentVariables = getVariables();
+                matches.forEach(match => {
+                    const varName = match.replace(/\{\{|\}\}/g, '');
+                    if (!currentVariables[varName]) {
+                        currentVariables[varName] = varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    }
+                });
+                renderVariables(currentVariables);
+                updateVariablesInput();
+            }
+        }
+    });
+    
+    // İlk yükleme
+    loadVariables();
+    if (templateText) {
+        updatePreview();
+    }
+});
+</script>
+{% endblock %}
+
+
+
+

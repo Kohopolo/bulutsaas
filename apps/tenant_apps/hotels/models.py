@@ -820,9 +820,15 @@ class RoomPrice(TimeStampedModel, SoftDeleteModel):
         if self.adult_multipliers:
             multipliers = {int(k): Decimal(str(v)) for k, v in self.adult_multipliers.items()}
         
+        # check_out_date hesapla (check_date + nights)
+        from datetime import timedelta
+        check_out_date = check_date + timedelta(days=nights) if check_date else None
+        
         # Global utility fonksiyonunu çağır
         result = calculate_dynamic_price(
             base_price=self.basic_nightly_price,
+            check_in_date=check_date,
+            check_out_date=check_out_date,
             pricing_type='fixed' if self.pricing_type == RoomPricingType.FIXED_ROOM else 'per_person',
             adults=adults,
             children=children,
@@ -835,7 +841,6 @@ class RoomPrice(TimeStampedModel, SoftDeleteModel):
             campaign_prices=campaign_prices,
             agency_prices=agency_prices,
             channel_prices=channel_prices,
-            check_date=check_date,
             agency_id=agency_id,
             channel_name=channel_name,
             discount_rate=self.total_discount_rate / Decimal('100') if self.total_discount_rate else None,

@@ -243,3 +243,7 @@ GitHub 100MB'dan büyük dosyaları kabul etmez. Çözüm:
 
 **🎉 Başarılar! Veritabanı yapınız GitHub'da!**
 
+
+
+
+

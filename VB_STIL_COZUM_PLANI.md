@@ -195,3 +195,7 @@ Bu class'ları kullanabilirsiniz:
 **📅 Oluşturulma:** 2025-11-12  
 **🔄 Son Güncelleme:** 2025-11-12
 
+
+
+
+

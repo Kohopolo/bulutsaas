@@ -280,3 +280,7 @@ sudo apt-get install postgresql-client
 
 **Son Güncelleme:** 2025-01-27
 
+
+
+
+

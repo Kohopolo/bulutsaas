@@ -57,3 +57,7 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f'[OK] Yedekleme modülü güncellendi: {module.name}')
             )
 
+
+
+
+

@@ -1,0 +1,96 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{% if region %}Bölge Düzenle{% else %}Yeni Bölge Ekle{% endif %} - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}{% if region %}Bölge Düzenle{% else %}Yeni Bölge Ekle{% endif %}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:region_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Bölge Listesine Dön
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm max-w-2xl">
+        <h2 class="text-2xl font-bold text-vb-navy mb-6">
+            {% if region %}Bölge Düzenle{% else %}Yeni Bölge Ekle{% endif %}
+        </h2>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Bölge Adı *</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Kod *</label>
+                {{ form.code }}
+                {% if form.code.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.code.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Açıklama</label>
+                {{ form.description }}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">İkon</label>
+                {{ form.icon }}
+                <p class="text-xs text-gray-500 mt-1">Font Awesome icon class (örn: fas fa-map)</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="flex items-center">
+                        {{ form.is_active }}
+                        <span class="ml-2 text-sm font-semibold text-gray-700">Aktif mi?</span>
+                    </label>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Sıralama</label>
+                    {{ form.sort_order }}
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-4">
+                <a href="{% url 'tours:region_list' %}" class="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                    İptal
+                </a>
+                <button type="submit" class="px-6 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                    <i class="fas fa-save mr-2"></i>
+                    Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extrastyle %}
+<style>
+    .form-control {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #ffffff;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+</style>
+{% endblock %}
+{% endblock %}
+

@@ -305,3 +305,7 @@ Tailwind kullanımını kaldır, VB tarzı standartlar ekle.
 
 **🎯 HEDEF:** Tüm proje Visual Basic masaüstü uygulama görünümünde olmalı!
 
+
+
+
+

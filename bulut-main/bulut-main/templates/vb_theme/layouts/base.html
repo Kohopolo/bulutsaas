@@ -1,0 +1,337 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}SaaS 2026{% endblock %} - ElektraWeb</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'vb_theme/images/favicon.png' %}">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- VB Theme CSS -->
+    <link rel="stylesheet" href="{% static 'vb_theme/css/vb-style.css' %}">
+    
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Override or additional inline styles */
+        {% block inline_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <!-- Desktop Application Container -->
+    <div class="desktop-app">
+        
+        <!-- ==========================================
+             TITLE BAR (Top - 56px)
+             ========================================== -->
+        <div class="titlebar">
+            <!-- Brand/Logo -->
+            <div class="titlebar-brand">
+                <i class="fas fa-hotel"></i>
+                <span>{% block brand_name %}SaaS 2026{% endblock %}</span>
+            </div>
+            
+            <!-- Module Icons (Center) -->
+            <div class="titlebar-modules">
+                <a href="{% url 'vb:dashboard' %}" class="module-icon" data-module="dashboard" data-tooltip="Ana Sayfa">
+                    <i class="fas fa-home"></i>
+                    <span>Ana Sayfa</span>
+                </a>
+                <a href="{% url 'vb:rezervasyon-list' %}" class="module-icon" data-module="rezervasyon" data-tooltip="Rezervasyonlar">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Rezervasyon</span>
+                </a>
+                <a href="{% url 'vb:room-rack' %}" class="module-icon" data-module="room-rack" data-tooltip="Oda Durumu">
+                    <i class="fas fa-door-open"></i>
+                    <span>Rack</span>
+                </a>
+                <a href="#" class="module-icon" data-module="raporlar" data-tooltip="Raporlar">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Raporlar</span>
+                </a>
+                <a href="#" class="module-icon" data-module="pos" data-tooltip="Ön Kasa">
+                    <i class="fas fa-cash-register"></i>
+                    <span>Ön Kasa</span>
+                </a>
+                <a href="#" class="module-icon" data-module="channels" data-tooltip="Kanallar">
+                    <i class="fas fa-globe"></i>
+                    <span>Kanallar</span>
+                </a>
+            </div>
+            
+            <!-- User Menu & Actions (Right) -->
+            <div class="titlebar-actions">
+                <!-- Notifications -->
+                <button class="vb-button vb-button-icon" data-tooltip="Bildirimler">
+                    <i class="fas fa-bell"></i>
+                </button>
+                
+                <!-- User Menu -->
+                <div class="user-menu">
+                    <div class="user-avatar">
+                        {% if user.is_authenticated %}
+                            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                        {% else %}
+                            ?
+                        {% endif %}
+                    </div>
+                    <span>
+                        {% if user.is_authenticated %}
+                            {{ user.get_full_name|default:user.username }}
+                        {% else %}
+                            Misafir
+                        {% endif %}
+                    </span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                
+                <!-- Logout -->
+                <a href="{% url 'admin:logout' %}" class="vb-button vb-button-danger vb-button-icon" data-tooltip="Çıkış">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TOOLBAR (Below Title Bar - 48px)
+             ========================================== -->
+        <div class="toolbar">
+            <div class="toolbar-section">
+                {% block toolbar_left %}
+                <button class="vb-button vb-button-primary" data-action="new">
+                    <i class="fas fa-plus"></i> Yeni
+                </button>
+                <button class="vb-button" data-action="edit">
+                    <i class="fas fa-edit"></i> Düzenle
+                </button>
+                <button class="vb-button vb-button-danger" data-action="delete">
+                    <i class="fas fa-trash"></i> Sil
+                </button>
+                {% endblock %}
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-section">
+                {% block toolbar_center %}
+                <button class="vb-button" data-action="print">
+                    <i class="fas fa-print"></i> Yazdır
+                </button>
+                <button class="vb-button" data-action="export">
+                    <i class="fas fa-file-excel"></i> Dışa Aktar
+                </button>
+                <button class="vb-button" data-action="refresh">
+                    <i class="fas fa-sync"></i> Yenile
+                </button>
+                {% endblock %}
+            </div>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-section" style="margin-left: auto;">
+                {% block toolbar_right %}
+                <button class="vb-button" data-action="help">
+                    <i class="fas fa-question-circle"></i> Yardım
+                </button>
+                {% endblock %}
+            </div>
+        </div>
+
+        <!-- ==========================================
+             MAIN CONTAINER (Sidebar + Content)
+             ========================================== -->
+        <div class="main-container">
+            
+            <!-- ==========================================
+                 SIDEBAR (Left - 260px)
+                 ========================================== -->
+            <aside class="sidebar">
+                <!-- Sidebar Header -->
+                <div class="sidebar-header">
+                    <i class="fas fa-bars"></i>
+                    <span>Menü</span>
+                </div>
+                
+                <!-- Sidebar Search -->
+                <div class="sidebar-search">
+                    <input type="text" placeholder="Menüde Ara...">
+                </div>
+                
+                <!-- Sidebar Menu -->
+                <nav class="sidebar-menu">
+                    {% block sidebar_menu %}
+                    <!-- Dashboard -->
+                    <div class="sidebar-menu-header">📊 Dashboard</div>
+                    <a href="{% url 'vb:dashboard' %}" class="sidebar-menu-item active">
+                        <i class="fas fa-home"></i>
+                        <span>Ana Sayfa</span>
+                    </a>
+                    
+                    <div class="sidebar-menu-divider"></div>
+                    
+                    <!-- Rezervasyon -->
+                    <div class="sidebar-menu-header">📅 Rezervasyon</div>
+                    <a href="{% url 'vb:rezervasyon-list' %}" class="sidebar-menu-item">
+                        <i class="fas fa-list"></i>
+                        <span>Rezervasyon Listesi</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Yeni Rezervasyon</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-search"></i>
+                        <span>Rezervasyon Ara</span>
+                    </a>
+                    
+                    <div class="sidebar-menu-divider"></div>
+                    
+                    <!-- Oda Yönetimi -->
+                    <div class="sidebar-menu-header">🏨 Oda Yönetimi</div>
+                    <a href="{% url 'vb:room-rack' %}" class="sidebar-menu-item">
+                        <i class="fas fa-door-open"></i>
+                        <span>Room Rack</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-broom"></i>
+                        <span>Kat Hizmetleri</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-bed"></i>
+                        <span>Oda Tanımları</span>
+                    </a>
+                    
+                    <div class="sidebar-menu-divider"></div>
+                    
+                    <!-- Misafir -->
+                    <div class="sidebar-menu-header">👥 Misafir</div>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-users"></i>
+                        <span>Misafir Listesi</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-id-card"></i>
+                        <span>Check-in</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Check-out</span>
+                    </a>
+                    
+                    <div class="sidebar-menu-divider"></div>
+                    
+                    <!-- Raporlar -->
+                    <div class="sidebar-menu-header">📊 Raporlar</div>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Günlük Rapor</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Gelir Raporu</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-percentage"></i>
+                        <span>Doluluk Oranı</span>
+                    </a>
+                    
+                    <div class="sidebar-menu-divider"></div>
+                    
+                    <!-- Ayarlar -->
+                    <div class="sidebar-menu-header">⚙️ Ayarlar</div>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Genel Ayarlar</span>
+                    </a>
+                    <a href="#" class="sidebar-menu-item">
+                        <i class="fas fa-user-cog"></i>
+                        <span>Kullanıcılar</span>
+                    </a>
+                    {% endblock %}
+                </nav>
+                
+                <!-- Sidebar Toggle Button -->
+                <div class="sidebar-toggle">
+                    <button>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- ==========================================
+                 CONTENT AREA (Main Content - Flex)
+                 ========================================== -->
+            <main class="content-area">
+                <!-- Content Header -->
+                <div class="content-header">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                    <p>{% block page_description %}Hoş geldiniz{% endblock %}</p>
+                </div>
+                
+                <!-- Content Body -->
+                <div class="content-body">
+                    {% block content %}
+                    <!-- Page content goes here -->
+                    {% endblock %}
+                </div>
+            </main>
+
+        </div>
+
+        <!-- ==========================================
+             STATUS BAR (Bottom - 36px)
+             ========================================== -->
+        <div class="statusbar">
+            <div class="statusbar-section">
+                <div class="statusbar-item">
+                    <i class="fas fa-building"></i>
+                    <span>{% block hotel_name %}{{ request.tenant.name|default:"SaaS 2026" }}{% endblock %}</span>
+                </div>
+                <span class="statusbar-divider"></span>
+                <div class="statusbar-item">
+                    <i class="fas fa-user"></i>
+                    <span>{{ user.get_full_name|default:user.username }}</span>
+                </div>
+            </div>
+            
+            <div class="statusbar-section">
+                <div class="statusbar-item">
+                    <i class="fas fa-signal"></i>
+                    <span data-status="connection">Bağlı</span>
+                </div>
+                <span class="statusbar-divider"></span>
+                <div class="statusbar-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>{% now "d.m.Y" %}</span>
+                </div>
+                <span class="statusbar-divider"></span>
+                <div class="statusbar-item">
+                    <i class="fas fa-clock"></i>
+                    <span data-status="time">{% now "H:i:s" %}</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- VB Components JavaScript -->
+    <script src="{% static 'vb_theme/js/vb-components.js' %}"></script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+    
+    <script>
+        // Inline JavaScript
+        {% block inline_js %}{% endblock %}
+    </script>
+</body>
+</html>
+
+

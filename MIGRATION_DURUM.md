@@ -99,3 +99,7 @@ python manage.py loaddata database_backups/fixtures/initial_data.json
 **📅 Son Kontrol:** 2025-11-13  
 **🔄 Durum:** Tüm migration'lar GitHub'da
 
+
+
+
+

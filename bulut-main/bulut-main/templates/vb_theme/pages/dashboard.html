@@ -1,0 +1,296 @@
+{% extends 'vb_theme/layouts/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_description %}Genel Bakış ve İstatistikler{% endblock %}
+
+{% block toolbar_left %}
+<button class="vb-button vb-button-primary" data-action="new-reservation">
+    <i class="fas fa-calendar-plus"></i> Yeni Rezervasyon
+</button>
+<button class="vb-button vb-button-success" data-action="quick-checkin">
+    <i class="fas fa-user-check"></i> Hızlı Check-in
+</button>
+<button class="vb-button" data-action="room-status">
+    <i class="fas fa-door-open"></i> Oda Durumu
+</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class="fas fa-bed"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Toplam Oda</div>
+            <div class="stat-value">{{ stats.total_rooms|default:120 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Boş Oda</div>
+            <div class="stat-value">{{ stats.vacant_rooms|default:34 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Dolu Oda</div>
+            <div class="stat-value">{{ stats.occupied_rooms|default:78 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon danger">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Doluluk Oranı</div>
+            <div class="stat-value">{{ stats.occupancy_rate|default:65 }}%</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-icon primary" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Bugün Check-in</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.checkins_today|default:12 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon warning" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-calendar-times"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Bugün Check-out</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.checkouts_today|default:8 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon success" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Bugün Gelir</div>
+            <div class="stat-value" style="font-size: 24px;">₺{{ stats.revenue_today|default:"24.5K" }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon danger" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-broom"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Kirli Oda</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.dirty_rooms|default:15 }}</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon primary" style="width: 48px; height: 48px; font-size: 20px;">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">Bekleyen Rezervasyon</div>
+            <div class="stat-value" style="font-size: 24px;">{{ stats.pending_reservations|default:23 }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Two Column Layout -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+    
+    <!-- Today's Check-ins -->
+    <div class="vb-groupbox">
+        <div class="vb-groupbox-title">
+            <i class="fas fa-calendar-check"></i> Bugün Check-in Yapacaklar
+        </div>
+        
+        <div class="vb-datagrid">
+            <div class="vb-datagrid-container" style="max-height: 300px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Saat</th>
+                            <th>Misafir</th>
+                            <th>Oda</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if checkins_today %}
+                            {% for checkin in checkins_today %}
+                            <tr>
+                                <td>{{ checkin.time|default:"14:00" }}</td>
+                                <td>{{ checkin.guest_name }}</td>
+                                <td>{{ checkin.room_number }}</td>
+                                <td>
+                                    {% if checkin.completed %}
+                                    <span style="color: var(--button-success);">✓ Tamamlandı</span>
+                                    {% else %}
+                                    <span style="color: var(--button-warning);">⏳ Bekliyor</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 30px; color: #6c757d;">
+                                    <i class="fas fa-check-circle" style="font-size: 32px; opacity: 0.3;"></i>
+                                    <p style="margin-top: 8px;">Bugün check-in bekleyen yok</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Check-outs -->
+    <div class="vb-groupbox">
+        <div class="vb-groupbox-title">
+            <i class="fas fa-calendar-times"></i> Bugün Check-out Yapacaklar
+        </div>
+        
+        <div class="vb-datagrid">
+            <div class="vb-datagrid-container" style="max-height: 300px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Saat</th>
+                            <th>Misafir</th>
+                            <th>Oda</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if checkouts_today %}
+                            {% for checkout in checkouts_today %}
+                            <tr>
+                                <td>{{ checkout.time|default:"12:00" }}</td>
+                                <td>{{ checkout.guest_name }}</td>
+                                <td>{{ checkout.room_number }}</td>
+                                <td>
+                                    {% if checkout.completed %}
+                                    <span style="color: var(--button-success);">✓ Tamamlandı</span>
+                                    {% else %}
+                                    <span style="color: var(--button-danger);">⏰ Bekliyor</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 30px; color: #6c757d;">
+                                    <i class="fas fa-check-circle" style="font-size: 32px; opacity: 0.3;"></i>
+                                    <p style="margin-top: 8px;">Bugün check-out bekleyen yok</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Reservations -->
+<div class="vb-groupbox" style="margin-top: 20px;">
+    <div class="vb-groupbox-title">
+        <i class="fas fa-clock"></i> Son Rezervasyonlar
+    </div>
+    
+    <div class="vb-datagrid">
+        <div class="vb-datagrid-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th data-sortable="true">Rezervasyon No</th>
+                        <th data-sortable="true">Misafir Adı</th>
+                        <th data-sortable="true">Oda</th>
+                        <th data-sortable="true">Giriş</th>
+                        <th data-sortable="true">Çıkış</th>
+                        <th data-sortable="true">Tutar</th>
+                        <th data-sortable="true">Durum</th>
+                        <th style="text-align: right;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_reservations %}
+                        {% for reservation in recent_reservations %}
+                        <tr data-id="{{ reservation.id }}">
+                            <td><strong>{{ reservation.code }}</strong></td>
+                            <td>{{ reservation.guest_name }}</td>
+                            <td>{{ reservation.room_number }}</td>
+                            <td>{{ reservation.check_in|date:"d.m.Y" }}</td>
+                            <td>{{ reservation.check_out|date:"d.m.Y" }}</td>
+                            <td><strong>₺{{ reservation.total_amount }}</strong></td>
+                            <td>
+                                {% if reservation.status == 'confirmed' %}
+                                <span style="color: var(--button-success); font-weight: 600;">✓ Onaylı</span>
+                                {% elif reservation.status == 'pending' %}
+                                <span style="color: var(--button-warning); font-weight: 600;">⏳ Beklemede</span>
+                                {% elif reservation.status == 'cancelled' %}
+                                <span style="color: var(--button-danger); font-weight: 600;">✗ İptal</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="vb-datagrid-actions">
+                                    <button class="vb-button vb-button-icon vb-button-primary" data-action="view" data-tooltip="Görüntüle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="vb-button vb-button-icon" data-action="edit" data-tooltip="Düzenle">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="vb-button vb-button-icon vb-button-danger" data-action="delete" data-tooltip="Sil">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 40px; color: #6c757d;">
+                                <i class="fas fa-calendar-alt" style="font-size: 48px; opacity: 0.3;"></i>
+                                <p style="margin-top: 12px;">Henüz rezervasyon yok</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block inline_js %}
+// Dashboard specific JavaScript
+
+// Auto-refresh stats every 5 minutes
+setInterval(function() {
+    // Add your AJAX refresh logic here
+}, 300000); // 5 minutes
+{% endblock %}
+
+

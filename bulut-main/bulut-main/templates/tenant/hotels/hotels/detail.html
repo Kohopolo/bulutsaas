@@ -1,0 +1,123 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{{ hotel.name }} - Otel Detayı{% endblock %}
+{% block page_title %}{{ hotel.name }}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Geri Dön Butonu -->
+    <div class="mb-4">
+        <a href="{% url 'hotels:hotel_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Otel Listesine Dön
+        </a>
+    </div>
+    
+    <!-- Otel Detayı -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center">
+                {% if hotel.main_image %}
+                <img src="{{ hotel.main_image.url }}" alt="{{ hotel.name }}" class="w-24 h-24 rounded-lg object-cover mr-4">
+                {% endif %}
+                <div>
+                    <h2 class="text-2xl font-bold text-vb-navy">{{ hotel.name }}</h2>
+                    {% if hotel.star_rating %}
+                    <div class="flex text-yellow-400 mt-1">
+                        {% for i in "12345"|make_list %}
+                        <i class="fas fa-star text-sm {% if forloop.counter <= hotel.star_rating %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <p class="text-gray-600 mt-1">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        {{ hotel.address }}{% if hotel.city %}, {{ hotel.city.name }}{% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'hotels:hotel_usage_report_detail' hotel.pk %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-chart-bar mr-2"></i>
+                    Kullanım Raporu
+                </a>
+                <a href="{% url 'hotels:hotel_update' hotel.pk %}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                    <i class="fas fa-edit mr-2"></i>
+                    Düzenle
+                </a>
+                <a href="{% url 'hotels:room_list' %}?hotel={{ hotel.id }}" class="px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-bed mr-2"></i>
+                    Odalar
+                </a>
+            </div>
+        </div>
+        
+        <!-- İstatistikler -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-blue-50 rounded-lg p-4">
+                <div class="text-2xl font-bold text-blue-900">{{ total_rooms }}</div>
+                <div class="text-sm text-blue-700">Toplam Oda</div>
+            </div>
+            <div class="bg-green-50 rounded-lg p-4">
+                <div class="text-2xl font-bold text-green-900">{{ total_room_numbers }}</div>
+                <div class="text-sm text-green-700">Oda Numarası</div>
+            </div>
+            <div class="bg-yellow-50 rounded-lg p-4">
+                <div class="text-2xl font-bold text-yellow-900">{{ hotel.total_beds }}</div>
+                <div class="text-sm text-yellow-700">Toplam Yatak</div>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-4">
+                <div class="text-2xl font-bold text-purple-900">{{ hotel.star_rating|default:"-" }}</div>
+                <div class="text-sm text-purple-700">Yıldız</div>
+            </div>
+        </div>
+        
+        <!-- Detay Bilgileri -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+<h3 class="vb-section-title text-gray-900 mb-3">İletişim Bilgileri</h3>
+                <div class="space-y-2 text-sm">
+                    {% if hotel.email %}
+                    <p><i class="fas fa-envelope mr-2 text-gray-400"></i>{{ hotel.email }}</p>
+                    {% endif %}
+                    {% if hotel.phone %}
+                    <p><i class="fas fa-phone mr-2 text-gray-400"></i>{{ hotel.phone }}</p>
+                    {% endif %}
+                    {% if hotel.whatsapp %}
+                    <p><i class="fab fa-whatsapp mr-2 text-green-500"></i>{{ hotel.whatsapp }}</p>
+                    {% endif %}
+                    {% if hotel.website %}
+                    <p><i class="fas fa-globe mr-2 text-gray-400"></i><a href="{{ hotel.website }}" target="_blank" class="text-vb-primary hover:underline">{{ hotel.website }}</a></p>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+<h3 class="vb-section-title text-gray-900 mb-3">Check-in/out</h3>
+                <div class="space-y-2 text-sm">
+                    <p><i class="fas fa-sign-in-alt mr-2 text-gray-400"></i>Check-in: {{ hotel.check_in_time }}</p>
+                    <p><i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>Check-out: {{ hotel.check_out_time }}</p>
+                </div>
+            </div>
+        </div>
+        
+        {% if hotel.detail_description %}
+        <div class="mt-6">
+<h3 class="vb-section-title text-gray-900 mb-3">Detay Açıklama</h3>
+            <p class="text-gray-700 whitespace-pre-wrap">{{ hotel.detail_description }}</p>
+        </div>
+        {% endif %}
+        
+        {% if images %}
+        <div class="mt-6">
+<h3 class="vb-section-title text-gray-900 mb-3">Resim Galerisi</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {% for image in images %}
+                <img src="{{ image.image.url }}" alt="{{ image.title }}" class="w-full h-32 object-cover rounded-lg">
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

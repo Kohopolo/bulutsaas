@@ -1,0 +1,112 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Hesap Ekstresi - Kasa Yönetimi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <h1 class="text-2xl font-bold text-vb-navy-500 mb-6">
+        <i class="fas fa-file-invoice mr-2 text-vb-primary"></i>Hesap Ekstresi
+    </h1>
+
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <form method="get" class="grid grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Hesap</label>
+                <select name="account" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Seçiniz</option>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.pk }}" {% if account.pk == acc.pk %}selected{% endif %}>{{ acc.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Başlangıç</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Bitiş</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-vb-primary text-white rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-search mr-2"></i>Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if account %}
+    <!-- Özet -->
+    <div class="grid grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 class="text-sm text-gray-600 mb-2">Açılış Bakiyesi</h3>
+            <p class="text-2xl font-bold">{{ opening_balance|floatformat:2 }} {{ account.currency }}</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 class="text-sm text-gray-600 mb-2">Toplam İşlem</h3>
+            <p class="text-2xl font-bold">{{ transactions.count }}</p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 class="text-sm text-gray-600 mb-2">Kapanış Bakiyesi</h3>
+            <p class="text-2xl font-bold {% if closing_balance >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ closing_balance|floatformat:2 }} {{ account.currency }}
+            </p>
+        </div>
+    </div>
+
+    <!-- İşlemler -->
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-vb-navy-500 mb-4">{{ account.name }} - İşlemler</h2>
+        <table class="w-full border-collapse">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Tarih</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">İşlem No</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Açıklama</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Borç</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Alacak</th>
+                    <th class="px-4 py-3 text-right text-sm font-semibold">Bakiye</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <tr class="bg-blue-50">
+                    <td colspan="5" class="px-4 py-2 text-sm font-semibold">Açılış Bakiyesi</td>
+                    <td class="px-4 py-2 text-right font-semibold">{{ opening_balance|floatformat:2 }} {{ account.currency }}</td>
+                </tr>
+                {% for transaction in transactions %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">{{ transaction.payment_date|date:"d.m.Y H:i" }}</td>
+                    <td class="px-4 py-3 font-mono text-sm">{{ transaction.transaction_number }}</td>
+                    <td class="px-4 py-3">{{ transaction.description|truncatewords:10 }}</td>
+                    <td class="px-4 py-3 text-right {% if transaction.transaction_type == 'expense' %}text-red-600 font-semibold{% else %}text-gray-400{% endif %}">
+                        {% if transaction.transaction_type == 'expense' %}{{ transaction.amount|floatformat:2 }}{% else %}-{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right {% if transaction.transaction_type == 'income' %}text-green-600 font-semibold{% else %}text-gray-400{% endif %}">
+                        {% if transaction.transaction_type == 'income' %}{{ transaction.amount|floatformat:2 }}{% else %}-{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold">
+                        {% if transaction.status == 'completed' %}
+                            {% if transaction.transaction_type == 'income' %}
+                                {{ opening_balance|add:transaction.amount|floatformat:2 }}
+                            {% else %}
+                                {{ opening_balance|add:transaction.amount|floatformat:2 }}
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">Bu dönemde işlem bulunmamaktadır.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

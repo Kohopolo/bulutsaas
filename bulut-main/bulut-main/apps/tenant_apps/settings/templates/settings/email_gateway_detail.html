@@ -1,0 +1,220 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{{ gateway.name }} - Email Gateway Detayı{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-envelope"></i> {{ gateway.name }} - Email Gateway Detayı
+            <div style="float: right;">
+                <a href="{% url 'settings:email_gateway_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+                <a href="{% url 'settings:email_gateway_edit' gateway.pk %}" class="vb-button primary">
+                    <i class="fas fa-edit"></i> Düzenle
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Temel Bilgiler</h3>
+                    <table class="vb-table">
+                        <tr>
+                            <td style="width: 150px;"><strong>Gateway Adı:</strong></td>
+                            <td>{{ gateway.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gateway Tipi:</strong></td>
+                            <td>{{ gateway.get_gateway_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SMTP Host:</strong></td>
+                            <td>{{ gateway.smtp_host|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SMTP Port:</strong></td>
+                            <td>{{ gateway.smtp_port }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TLS:</strong></td>
+                            <td>
+                                {% if gateway.use_tls %}
+                                    <span class="badge badge-success">Aktif</span>
+                                {% else %}
+                                    <span>Pasif</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>SSL:</strong></td>
+                            <td>
+                                {% if gateway.use_ssl %}
+                                    <span class="badge badge-success">Aktif</span>
+                                {% else %}
+                                    <span>Pasif</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gönderen Email:</strong></td>
+                            <td>{{ gateway.from_email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gönderen Adı:</strong></td>
+                            <td>{{ gateway.from_name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Yanıt Adresi:</strong></td>
+                            <td>{{ gateway.reply_to|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Durum:</strong></td>
+                            <td>
+                                {% if gateway.is_active %}
+                                    <span class="badge badge-success">Aktif</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Pasif</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Varsayılan:</strong></td>
+                            <td>
+                                {% if gateway.is_default %}
+                                    <span class="badge badge-primary">Evet</span>
+                                {% else %}
+                                    <span>Hayır</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Test Modu:</strong></td>
+                            <td>
+                                {% if gateway.is_test_mode %}
+                                    <span class="badge badge-warning">Aktif</span>
+                                {% else %}
+                                    <span>Kapalı</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">İstatistikler</h3>
+                    <table class="vb-table">
+                        <tr>
+                            <td style="width: 150px;"><strong>Toplam Gönderilen:</strong></td>
+                            <td><strong style="color: #28a745;">{{ gateway.total_sent }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Toplam Başarısız:</strong></td>
+                            <td><strong style="color: #dc3545;">{{ gateway.total_failed }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Başarı Oranı:</strong></td>
+                            <td>
+                                {% if stats.success_rate %}
+                                    <strong style="color: #28a745;">{{ stats.success_rate|floatformat:2 }}%</strong>
+                                {% else %}
+                                    <span>-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Son Gönderim:</strong></td>
+                            <td>{{ gateway.last_sent_at|date:"d.m.Y H:i"|default:"-" }}</td>
+                        </tr>
+                    </table>
+                    
+                    <div style="margin-top: 20px;">
+                        <button onclick="testGateway()" class="vb-button" style="background: #17a2b8; color: white;">
+                            <i class="fas fa-vial"></i> Test Et
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            {% if gateway.notes %}
+            <div style="margin-top: 20px;">
+                <h3 style="font-size: 16px; margin-bottom: 10px; color: #495057;">Notlar</h3>
+                <div style="padding: 10px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+                    {{ gateway.notes|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Son Gönderimler</h3>
+                {% if recent_logs %}
+                <table class="vb-table">
+                    <thead>
+                        <tr>
+                            <th>Alıcı</th>
+                            <th>Konu</th>
+                            <th>Durum</th>
+                            <th>Tarih</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_logs %}
+                        <tr>
+                            <td>{{ log.recipient_email }}</td>
+                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ log.subject|truncatewords:5 }}</td>
+                            <td>
+                                {% if log.status == 'sent' %}
+                                    <span class="badge badge-info">Gönderildi</span>
+                                {% elif log.status == 'delivered' %}
+                                    <span class="badge badge-success">Teslim Edildi</span>
+                                {% elif log.status == 'failed' %}
+                                    <span class="badge badge-danger">Başarısız</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ log.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.created_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color: #6c757d; text-align: center; padding: 20px;">
+                    <i class="fas fa-info-circle"></i> Henüz email gönderilmemiş.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testGateway() {
+    const testEmail = prompt('Test email adresi giriniz:', 'test@example.com');
+    if (!testEmail) return;
+    
+    fetch('{% url "settings:email_gateway_test" gateway.pk %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `test_email=${encodeURIComponent(testEmail)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✓ Test başarılı!\n\nMesaj ID: ' + data.message_id + '\n' + data.message);
+        } else {
+            alert('✗ Test başarısız!\n\nHata: ' + (data.error || data.message));
+        }
+    })
+    .catch(error => {
+        alert('Test sırasında hata oluştu: ' + error);
+    });
+}
+</script>
+{% endblock %}
+

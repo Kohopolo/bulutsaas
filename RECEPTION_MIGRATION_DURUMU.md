@@ -103,3 +103,7 @@ python manage.py migrate tenant_core --schema=<tenant_schema>
 - Her tenant schema için ayrı ayrı permission'lar oluşturulmalı
 - Migration sırası önemli: `0001` → `0002`
 
+
+
+
+

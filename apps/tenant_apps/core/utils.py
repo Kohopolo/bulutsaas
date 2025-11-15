@@ -235,6 +235,38 @@ def start_refund_process_for_deletion(obj, source_module, user, reason='Silme i�
 def calculate_dynamic_price(base_price, check_in_date, check_out_date, **kwargs):
     """
     Dinamik fiyat hesaplama (hotels modülü için)
+    
+    Args:
+        base_price: Temel fiyat
+        check_in_date: Check-in tarihi
+        check_out_date: Check-out tarihi
+        **kwargs: Diğer parametreler (pricing_type, adults, children, vb.)
+    
+    Returns:
+        dict: Fiyat hesaplama sonucu
     """
+    from decimal import Decimal
+    
     # Basit implementasyon - hotels modülünde detaylandırılabilir
-    return base_price
+    # Şimdilik temel fiyatı döndür
+    pricing_type = kwargs.get('pricing_type', 'fixed')
+    adults = kwargs.get('adults', 1)
+    children = kwargs.get('children', 0)
+    
+    # Eğer per_person ise yetişkin sayısı ile çarp
+    if pricing_type == 'per_person':
+        total_price = base_price * Decimal(str(adults))
+    else:
+        total_price = base_price
+    
+    return {
+        'total_price': total_price,
+        'adult_price': base_price if pricing_type == 'per_person' else base_price,
+        'child_price': Decimal('0'),
+        'breakdown': {
+            'base_price': base_price,
+            'pricing_type': pricing_type,
+            'adults': adults,
+            'children': children,
+        }
+    }

@@ -264,3 +264,7 @@ class BookingIntegration(BaseChannelIntegration):
             self.log_error("Booking.com: Rezervasyon değiştirme hatası", e)
             return {'success': False, 'message': str(e)}
 
+
+
+
+

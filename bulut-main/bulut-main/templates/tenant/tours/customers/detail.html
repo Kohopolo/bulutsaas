@@ -1,0 +1,140 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Müşteri Detayı - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Müşteri Detayı{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-4">
+        <a href="{% url 'tours:customer_list' %}" class="text-vb-primary hover:text-blue-600">
+            <i class="fas fa-arrow-left mr-2"></i>Müşteri Listesine Dön
+        </a>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Müşteri Bilgileri -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
+                <h3 class="text-xl font-bold text-vb-navy mb-4">
+                    <i class="fas fa-user mr-2 text-vb-primary"></i>
+                    Müşteri Bilgileri
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Müşteri Kodu</label>
+                        <p class="text-gray-900 font-medium">{{ customer.customer_code }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">VIP Seviyesi</label>
+                        <p class="text-gray-900">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ customer.get_vip_level_display }}
+                            </span>
+                        </p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Ad Soyad</label>
+                        <p class="text-gray-900">{{ customer.first_name }} {{ customer.last_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">E-posta</label>
+                        <p class="text-gray-900">{{ customer.email }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Telefon</label>
+                        <p class="text-gray-900">{{ customer.phone }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Toplam Rezervasyon</label>
+                        <p class="text-gray-900 font-semibold">{{ customer.total_reservations }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Toplam Harcama</label>
+                        <p class="text-gray-900 font-semibold">{{ customer.total_spent|floatformat:2 }} TL</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-600">Sadakat Puanı</label>
+                        <p class="text-gray-900 font-semibold">{{ customer.loyalty_points }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Son Rezervasyonlar -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-xl font-bold text-vb-navy mb-4">
+                    <i class="fas fa-calendar-check mr-2 text-vb-primary"></i>
+                    Son Rezervasyonlar
+                </h3>
+                <div class="space-y-3">
+                    {% for reservation in reservations %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ reservation.tour.name }}</p>
+                                <p class="text-sm text-gray-500">{{ reservation.reservation_code }}</p>
+                                <p class="text-sm text-gray-500">{{ reservation.created_at|date:"d.m.Y H:i" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-900">{{ reservation.total_amount|floatformat:2 }} TL</p>
+                                <span class="px-2 py-1 text-xs rounded-full 
+                                    {% if reservation.status == 'confirmed' %}bg-green-100 text-green-800
+                                    {% elif reservation.status == 'completed' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ reservation.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">Rezervasyon bulunamadı.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sadakat Geçmişi ve Notlar -->
+        <div class="space-y-6">
+            <!-- Sadakat Geçmişi -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-vb-navy mb-4">
+                    <i class="fas fa-star mr-2 text-vb-primary"></i>
+                    Sadakat Geçmişi
+                </h3>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for history in loyalty_history %}
+                    <div class="border-l-4 border-blue-500 pl-3 py-2">
+                        <p class="text-sm font-semibold {% if history.points > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if history.points > 0 %}+{% endif %}{{ history.points }} Puan
+                        </p>
+                        <p class="text-xs text-gray-500">{{ history.reason }}</p>
+                        <p class="text-xs text-gray-400">{{ history.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">Sadakat geçmişi bulunamadı.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Notlar -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 class="text-lg font-bold text-vb-navy mb-4">
+                    <i class="fas fa-sticky-note mr-2 text-vb-primary"></i>
+                    Notlar
+                </h3>
+                <div class="space-y-2 max-h-64 overflow-y-auto">
+                    {% for note in notes %}
+                    <div class="border border-gray-200 rounded-lg p-3">
+                        <p class="text-sm text-gray-900">{{ note.note }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ note.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-sm">Not bulunamadı.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

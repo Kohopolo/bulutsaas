@@ -634,3 +634,7 @@ python manage.py collectstatic
 **✍️ Dokümantasyon:** AI Assistant  
 **🔄 Versiyon:** 1.0.0
 
+
+
+
+

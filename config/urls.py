@@ -6,6 +6,7 @@ Tenant URL'leri için - Admin paneli yok (sadece public schema'da)
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
@@ -115,8 +116,5 @@ if settings.DEBUG:
 # admin.site.site_header = "SaaS 2026 Super Admin"
 # admin.site.site_title = "SaaS 2026"
 # admin.site.index_title = "Hoş Geldiniz"
-
-# Import HttpResponse
-from django.http import HttpResponse
 
 

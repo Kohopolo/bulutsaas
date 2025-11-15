@@ -1,0 +1,1149 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bilet Listesi{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">
+            <i class="fas fa-ticket-alt mr-2"></i>Bilet Listesi
+        </h1>
+        <button onclick="openTicketModal()" class="vb-button primary">
+            <i class="fas fa-plus mr-2"></i>Yeni Bilet
+        </button>
+    </div>
+    
+    <!-- Filtreler -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Arama</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" 
+                       class="form-control" placeholder="Bilet kodu, müşteri adı...">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Durum</label>
+                <select name="status" class="form-control">
+                    <option value="">Tümü</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kalkış Tarihi (Başlangıç)</label>
+                <input type="date" name="departure_from" value="{{ request.GET.departure_from }}" class="form-control">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kalkış Tarihi (Bitiş)</label>
+                <input type="date" name="departure_to" value="{{ request.GET.departure_to }}" class="form-control">
+            </div>
+            <div class="md:col-span-4 flex gap-2">
+                <button type="submit" class="vb-button primary">
+                    <i class="fas fa-search mr-2"></i>Filtrele
+                </button>
+                <a href="{% url 'ferry_tickets:ticket_list' %}" class="vb-button secondary">
+                    <i class="fas fa-times mr-2"></i>Temizle
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Bilet Listesi -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bilet Kodu</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rota</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kalkış</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yolcu</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Toplam</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ödenen</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kalan</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="text-blue-600 hover:underline font-semibold">
+                                {{ ticket.ticket_code }}
+                            </a>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if ticket.schedule and ticket.schedule.route %}
+                                {{ ticket.schedule.route }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if ticket.schedule %}
+                                {{ ticket.schedule.departure_date|date:"d.m.Y" }}<br>
+                                <small class="text-gray-500">{{ ticket.schedule.departure_time|time:"H:i" }}</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if ticket.customer %}
+                                {{ ticket.customer.get_full_name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {{ ticket.adult_count }} Yetişkin
+                            {% if ticket.child_count > 0 %}, {{ ticket.child_count }} Çocuk{% endif %}
+                            {% if ticket.infant_count > 0 %}, {{ ticket.infant_count }} Bebek{% endif %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs rounded-full 
+                                {% if ticket.status == 'confirmed' %}bg-green-100 text-green-800
+                                {% elif ticket.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif ticket.status == 'cancelled' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ ticket.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <strong>{{ ticket.total_amount|floatformat:2 }} {{ ticket.currency }}</strong>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span style="color: #388e3c; font-weight: bold;">{{ ticket.total_paid|floatformat:2 }} {{ ticket.currency }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span style="color: {% if ticket.remaining_amount > 0 %}#d32f2f{% else %}#388e3c{% endif %}; font-weight: bold;">
+                                {{ ticket.remaining_amount|floatformat:2 }} {{ ticket.currency }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <div class="flex gap-1 flex-wrap" style="min-width: 200px;">
+                                <a href="{% url 'ferry_tickets:ticket_detail' ticket.pk %}" class="vb-button small" title="Detay" style="padding: 4px 8px; font-size: 11px;">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if not ticket.is_deleted %}
+                                <a href="{% url 'ferry_tickets:ticket_payment_add' ticket.pk %}" class="vb-button small" title="Ödeme Ekle" style="padding: 4px 8px; font-size: 11px; background: #28a745; color: white; border-color: #28a745;">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </a>
+                                <button onclick="openTicketEditModal({{ ticket.pk }})" class="vb-button small" title="Düzenle" style="padding: 4px 8px; font-size: 11px;">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="changeTicketStatus({{ ticket.pk }})" class="vb-button small" title="Durum Değiştir" style="padding: 4px 8px; font-size: 11px;">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                                <a href="{% url 'ferry_tickets:ticket_voucher_create' ticket.pk %}" class="vb-button small" title="Voucher Oluştur" style="padding: 4px 8px; font-size: 11px; background: #17a2b8; color: white; border-color: #17a2b8;">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </a>
+                                {% if ticket.total_paid > 0 %}
+                                <button onclick="refundTicket({{ ticket.pk }})" class="vb-button small" title="İade" style="padding: 4px 8px; font-size: 11px; background: #ffc107; color: #000; border-color: #ffc107;">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                {% endif %}
+                                {% if ticket.status != 'cancelled' %}
+                                <button onclick="cancelTicket({{ ticket.pk }})" class="vb-button small" title="İptal Et" style="padding: 4px 8px; font-size: 11px; background: #ff9800; color: white; border-color: #ff9800;">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                                {% endif %}
+                                <button onclick="openDeleteTicketModal({{ ticket.pk }}, '{{ ticket.ticket_code }}', '{{ ticket.customer.get_full_name|default:"-" }}', '{{ ticket.schedule.route|default:"-" }}', '{{ ticket.schedule.departure_date|date:"d.m.Y"|default:"-" }}')" class="vb-button small danger" title="Sil" style="padding: 4px 8px; font-size: 11px; background: #dc3545; color: white; border-color: #dc3545;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% else %}
+                                <button onclick="openRestoreTicketModal({{ ticket.pk }}, '{{ ticket.ticket_code }}')" class="vb-button small" title="Geri Al" style="padding: 4px 8px; font-size: 11px; background: #28a745; color: white; border-color: #28a745;">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                            Bilet bulunamadı.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Sayfalama -->
+        {% if tickets.has_other_pages %}
+        <div class="p-4 border-t">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-gray-700">
+                    Sayfa {{ tickets.number }} / {{ tickets.paginator.num_pages }}
+                </div>
+                <div class="flex gap-2">
+                    {% if tickets.has_previous %}
+                    <a href="?page={{ tickets.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="vb-button small">
+                        <i class="fas fa-chevron-left"></i> Önceki
+                    </a>
+                    {% endif %}
+                    {% if tickets.has_next %}
+                    <a href="?page={{ tickets.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" class="vb-button small">
+                        Sonraki <i class="fas fa-chevron-right"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bilet Form Modal -->
+<div id="ticketModal" class="vb-modal" style="display: none;">
+    <div class="vb-modal-overlay" onclick="closeTicketModal()"></div>
+    <div class="vb-modal-content" style="max-width: 95vw; max-height: 95vh; width: 1400px;">
+        <div class="vb-modal-header">
+            <h3 class="vb-modal-title" id="ticketModalTitle">
+                <i class="fas fa-ticket-alt"></i> Yeni Bilet
+            </h3>
+            <button type="button" class="vb-modal-close" onclick="closeTicketModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="vb-modal-body" id="ticketModalBody" style="overflow-y: auto; max-height: calc(95vh - 120px);">
+            <!-- Form buraya yüklenecek -->
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal CSS */
+.vb-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    align-items: center;
+    justify-content: center;
+}
+
+.vb-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10001;
+}
+
+.vb-modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    border: 1px solid #888;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10002;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-height: 95vh;
+}
+
+.vb-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.vb-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.vb-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vb-modal-close:hover {
+    color: #333;
+}
+
+.vb-modal-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.vb-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+</style>
+
+<script>
+function openTicketModal() {
+    // Modal başlığını güncelle
+    const modalTitle = document.getElementById('ticketModalTitle');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-ticket-alt"></i> Yeni Bilet';
+    }
+    
+    fetch('{% url "ferry_tickets:ticket_create" %}', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.html) {
+            // innerHTML ile yükle
+            const modalBody = document.getElementById('ticketModalBody');
+            modalBody.innerHTML = data.html;
+            
+            // Script tag'lerini bul ve çalıştır
+            const scripts = modalBody.querySelectorAll('script');
+            
+            scripts.forEach(function(oldScript) {
+                try {
+                    // Script içeriğini al
+                    const scriptContent = oldScript.innerHTML;
+                    
+                    if (scriptContent && scriptContent.trim()) {
+                        // Script'i DOM'a ekleyerek çalıştır
+                        const newScript = document.createElement('script');
+                        newScript.textContent = scriptContent;
+                        document.head.appendChild(newScript);
+                    }
+                    
+                    // Eski script tag'ini kaldır
+                    oldScript.parentNode.removeChild(oldScript);
+                } catch (error) {
+                    console.error('Script çalıştırılırken hata:', error);
+                }
+            });
+            
+            // Script'lerin çalışması için bekle ve initTicketForm'u çağır
+            // Script'ler DOM'a eklendiğinde otomatik çalışır, ama biraz beklemek gerekebilir
+            let retryCount = 0;
+            const maxRetries = 10;
+            
+            function tryInitTicketForm() {
+                if (typeof initTicketForm === 'function') {
+                    try {
+                        initTicketForm();
+                    } catch (error) {
+                        // Hata yönetimi
+                    }
+                } else {
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        setTimeout(tryInitTicketForm, 50);
+                    } else {
+                        console.error('✗ initTicketForm fonksiyonu ' + maxRetries + ' deneme sonrası bulunamadı');
+                    }
+                }
+            }
+            
+            // İlk denemeyi başlat
+            setTimeout(tryInitTicketForm, 100);
+            
+            document.getElementById('ticketModal').style.display = 'flex';
+            
+            // Form submit handler'ı ekle
+            const form = document.getElementById('ticketForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitTicketForm(form);
+                });
+            }
+        } else {
+            console.error('Modal HTML bulunamadı:', data);
+            alert('Form yüklenirken bir hata oluştu.');
+        }
+    })
+    .catch(error => {
+        console.error('Modal açılırken hata:', error);
+        alert('Modal açılırken bir hata oluştu: ' + error.message);
+    });
+}
+
+function closeTicketModal() {
+    document.getElementById('ticketModal').style.display = 'none';
+    document.getElementById('ticketModalBody').innerHTML = '';
+}
+
+// Bilet düzenleme modal'ını aç
+function openTicketEditModal(ticketId) {
+    // Modal başlığını güncelle
+    const modalTitle = document.getElementById('ticketModalTitle');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-edit"></i> Bilet Düzenle';
+    }
+    
+    fetch(`/ferry-tickets/tickets/${ticketId}/edit/`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.html) {
+            // innerHTML ile yükle
+            const modalBody = document.getElementById('ticketModalBody');
+            modalBody.innerHTML = data.html;
+            
+            // Script tag'lerini bul ve çalıştır
+            const scripts = modalBody.querySelectorAll('script');
+            
+            scripts.forEach(function(oldScript) {
+                try {
+                    // Script içeriğini al
+                    const scriptContent = oldScript.innerHTML;
+                    
+                    if (scriptContent && scriptContent.trim()) {
+                        // Script'i DOM'a ekleyerek çalıştır
+                        const newScript = document.createElement('script');
+                        newScript.textContent = scriptContent;
+                        document.head.appendChild(newScript);
+                    }
+                    
+                    // Eski script tag'ini kaldır
+                    oldScript.parentNode.removeChild(oldScript);
+                } catch (error) {
+                    console.error('Script çalıştırılırken hata:', error);
+                }
+            });
+            
+            // Script'lerin çalışması için bekle ve initTicketForm'u çağır
+            let retryCount = 0;
+            const maxRetries = 10;
+            
+            function tryInitTicketForm() {
+                if (typeof initTicketForm === 'function') {
+                    try {
+                        initTicketForm();
+                    } catch (error) {
+                        // Hata yönetimi
+                    }
+                } else {
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        setTimeout(tryInitTicketForm, 50);
+                    } else {
+                        console.error('✗ initTicketForm fonksiyonu ' + maxRetries + ' deneme sonrası bulunamadı');
+                    }
+                }
+            }
+            
+            // İlk denemeyi başlat
+            setTimeout(tryInitTicketForm, 100);
+            
+            document.getElementById('ticketModal').style.display = 'flex';
+            
+            // Form submit handler'ı ekle
+            const form = document.getElementById('ticketForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitTicketForm(form);
+                });
+            }
+        } else {
+            console.error('Modal HTML bulunamadı:', data);
+            alert('Form yüklenirken bir hata oluştu.');
+        }
+    })
+    .catch(error => {
+        console.error('Modal açılırken hata:', error);
+        alert('Modal açılırken bir hata oluştu: ' + error.message);
+    });
+}
+
+// Bilet durum değiştir
+function changeTicketStatus(ticketId) {
+    const statuses = [
+        {value: 'pending', label: 'Beklemede'},
+        {value: 'confirmed', label: 'Onaylandı'},
+        {value: 'cancelled', label: 'İptal Edildi'},
+        {value: 'used', label: 'Kullanıldı'},
+        {value: 'expired', label: 'Süresi Doldu'},
+        {value: 'refunded', label: 'İade Edildi'}
+    ];
+    
+    const statusOptions = statuses.map((s, i) => `${i+1}. ${s.label}`).join('\n');
+    const selected = prompt(`Yeni durum seçin:\n${statusOptions}\n\nDurum numarasını girin:`);
+    
+    if (!selected) return;
+    
+    const selectedIndex = parseInt(selected) - 1;
+    if (selectedIndex < 0 || selectedIndex >= statuses.length) {
+        alert('Geçersiz seçim!');
+        return;
+    }
+    
+    const newStatus = statuses[selectedIndex].value;
+    
+    const formData = new FormData();
+    formData.append('status', newStatus);
+    
+    fetch(`/ferry-tickets/tickets/${ticketId}/status-change/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                          document.cookie.match(/csrftoken=([^;]+)/)?.[1],
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Bilet durumu başarıyla güncellendi.');
+            window.location.reload();
+        } else {
+            alert(data.error || 'Durum değiştirilirken bir hata oluştu.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Durum değiştirilirken bir hata oluştu.');
+    });
+}
+
+// Bilet iptal et
+function cancelTicket(ticketId) {
+    if (!confirm('Bu bileti iptal etmek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    const reason = prompt('İptal nedeni:');
+    if (!reason) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('cancellation_reason', reason);
+    
+    fetch(`/ferry-tickets/tickets/${ticketId}/cancel/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                          document.cookie.match(/csrftoken=([^;]+)/)?.[1],
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Bilet başarıyla iptal edildi.');
+            window.location.reload();
+        } else {
+            alert(data.error || 'Bilet iptal edilirken bir hata oluştu.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bilet iptal edilirken bir hata oluştu.');
+    });
+}
+
+// Bilet iade
+function refundTicket(ticketId) {
+    window.location.href = `/ferry-tickets/tickets/${ticketId}/refund/`;
+}
+
+// Bilet silme modal'ı (reception modülündeki gibi iki adımlı)
+let currentDeleteTicketId = null;
+let currentDeleteTicketCode = '';
+let currentDeleteTicketCustomer = '';
+let currentDeleteTicketRoute = '';
+let currentDeleteTicketDate = '';
+
+function openDeleteTicketModal(ticketId, ticketCode, customerName, route, date) {
+    currentDeleteTicketId = ticketId;
+    currentDeleteTicketCode = ticketCode || '';
+    currentDeleteTicketCustomer = customerName || '-';
+    currentDeleteTicketRoute = route || '-';
+    currentDeleteTicketDate = date || '-';
+    
+    const modalHtml = `
+        <div id="deleteTicketModal" class="vb-modal" style="display: flex;">
+            <div class="vb-modal-overlay" onclick="closeDeleteTicketModal()"></div>
+            <div class="vb-modal-content" style="max-width: 500px;">
+                <div class="vb-modal-header">
+                    <h3 class="vb-modal-title">
+                        <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i> Bilet Sil
+                    </h3>
+                    <button type="button" class="vb-modal-close" onclick="closeDeleteTicketModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="vb-modal-body">
+                    <div id="deleteTicketStep1">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 64px; color: #dc3545; margin-bottom: 20px;"></i>
+                            <h3 style="color: #dc3545; margin-bottom: 15px;">Dikkat!</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Bu bileti silmek istediğinizden <strong>emin misiniz?</strong>
+                            </p>
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 20px; text-align: left;">
+                                <strong>Bilet Bilgileri:</strong><br>
+                                <strong>Kod:</strong> ${currentDeleteTicketCode}<br>
+                                <strong>Müşteri:</strong> ${currentDeleteTicketCustomer}<br>
+                                <strong>Rota:</strong> ${currentDeleteTicketRoute}<br>
+                                <strong>Tarih:</strong> ${currentDeleteTicketDate}
+                            </div>
+                            <p style="color: #666; font-size: 14px;">
+                                <i class="fas fa-info-circle"></i> Bilet silinecek ve arşive eklenecektir. Bu işlem geri alınamaz.
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="proceedToDeleteTicketStep2()" class="vb-button danger" style="padding: 12px 30px; font-size: 16px;">
+                                <i class="fas fa-check"></i> Evet, Devam Et
+                            </button>
+                            <button onclick="closeDeleteTicketModal()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-times"></i> İptal
+                            </button>
+                        </div>
+                    </div>
+                    <div id="deleteTicketStep2" style="display: none;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-shield-alt" style="font-size: 64px; color: #dc3545; margin-bottom: 20px;"></i>
+                            <h3 style="color: #dc3545; margin-bottom: 15px;">Son Onay</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Silme işlemini tamamlamak için aşağıdaki bilgileri girin:
+                            </p>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; text-align: left;">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Bilet Kodu:
+                                    </label>
+                                    <input type="text" id="deleteTicketCode" 
+                                           placeholder="${currentDeleteTicketCode}" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #dc3545; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold;"
+                                           autocomplete="off">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Onay Metni (DELETE yazın):
+                                    </label>
+                                    <input type="text" id="deleteTicketConfirmText" 
+                                           placeholder="DELETE" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #dc3545; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold; text-transform: uppercase;"
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                            <p style="color: #dc3545; font-size: 14px; font-weight: bold;">
+                                <i class="fas fa-exclamation-circle"></i> Bu işlem geri alınamaz!
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="confirmDeleteTicket()" id="confirmDeleteTicketBtn" class="vb-button danger" style="padding: 12px 30px; font-size: 16px;" disabled>
+                                <i class="fas fa-trash"></i> Silmeyi Onayla
+                            </button>
+                            <button onclick="backToDeleteTicketStep1()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-arrow-left"></i> Geri
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById('deleteTicketModal');
+    if (oldModal) {
+        oldModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteTicketModal() {
+    const modal = document.getElementById('deleteTicketModal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = '';
+    }
+    currentDeleteTicketId = null;
+}
+
+function proceedToDeleteTicketStep2() {
+    // İlk adımı backend'e gönder
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '1');
+    
+    fetch(`/ferry-tickets/tickets/${currentDeleteTicketId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // İlk adım başarılı, ikinci adıma geç
+            document.getElementById('deleteTicketStep1').style.display = 'none';
+            document.getElementById('deleteTicketStep2').style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('deleteTicketCode').focus();
+            }, 100);
+            
+            const codeInput = document.getElementById('deleteTicketCode');
+            const confirmInput = document.getElementById('deleteTicketConfirmText');
+            const confirmBtn = document.getElementById('confirmDeleteTicketBtn');
+            
+            function checkInputs() {
+                const codeValue = codeInput.value.trim();
+                const confirmValue = confirmInput.value.trim().toUpperCase();
+                const expectedCode = currentDeleteTicketCode;
+                
+                if (codeValue === expectedCode && confirmValue === 'DELETE') {
+                    confirmBtn.disabled = false;
+                    confirmBtn.style.opacity = '1';
+                } else {
+                    confirmBtn.disabled = true;
+                    confirmBtn.style.opacity = '0.5';
+                }
+            }
+            
+            codeInput.addEventListener('input', checkInputs);
+            confirmInput.addEventListener('input', checkInputs);
+        } else {
+            // Hata durumu - ödeme/iade kontrolü
+            let errorMsg = data.error || 'Silme işlemi başlatılamadı.';
+            
+            if (data.has_payment && data.can_start_refund) {
+                // İade başlatma seçeneği göster
+                if (confirm('Bu bilete ödeme yapılmış. Silmeden önce iade işlemini başlatmak ister misiniz?')) {
+                    startRefundForTicket(currentDeleteTicketId);
+                }
+            } else if (data.refund_status === 'pending' || data.refund_status === 'processing') {
+                errorMsg += ' İade işlemi devam ediyor. İade tamamlandıktan sonra silme işlemini yapabilirsiniz.';
+            }
+            
+            alert(errorMsg);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Silme işlemi başlatılırken bir hata oluştu.');
+    });
+}
+
+// İade başlatma fonksiyonu
+function startRefundForTicket(ticketId) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '1');
+    formData.append('start_refund', '1');
+    
+    fetch(`/ferry-tickets/tickets/${ticketId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.refund_started) {
+            alert(data.message);
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                closeDeleteTicketModal();
+            }
+        } else {
+            alert(data.error || 'İade süreci başlatılamadı.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('İade süreci başlatılırken bir hata oluştu.');
+    });
+}
+
+function backToDeleteTicketStep1() {
+    document.getElementById('deleteTicketStep1').style.display = 'block';
+    document.getElementById('deleteTicketStep2').style.display = 'none';
+    document.getElementById('deleteTicketCode').value = '';
+    document.getElementById('deleteTicketConfirmText').value = '';
+    document.getElementById('confirmDeleteTicketBtn').disabled = true;
+}
+
+function confirmDeleteTicket() {
+    if (!currentDeleteTicketId) {
+        alert('Bilet ID bulunamadı.');
+        return;
+    }
+    
+    const codeInput = document.getElementById('deleteTicketCode');
+    const confirmInput = document.getElementById('deleteTicketConfirmText');
+    const codeValue = codeInput.value.trim();
+    const confirmValue = confirmInput.value.trim().toUpperCase();
+    const expectedCode = currentDeleteTicketCode;
+    
+    if (codeValue !== expectedCode) {
+        alert('Bilet kodu eşleşmiyor!');
+        codeInput.focus();
+        return;
+    }
+    
+    if (confirmValue !== 'DELETE') {
+        alert('Onay metni hatalı! Lütfen "DELETE" yazın.');
+        confirmInput.focus();
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmDeleteTicketBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Siliniyor...';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '2');
+    formData.append('ticket_code', codeValue);
+    formData.append('final_confirm', confirmValue);
+    
+    fetch(`/ferry-tickets/tickets/${currentDeleteTicketId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Bilet başarıyla silindi ve arşivlendi.');
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'Bilet silinirken bir hata oluştu.');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-trash"></i> Silmeyi Onayla';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bilet silinirken bir hata oluştu.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-trash"></i> Silmeyi Onayla';
+    });
+}
+
+// Bilet geri alma modal'ı
+let currentRestoreTicketId = null;
+let currentRestoreTicketCode = '';
+
+function openRestoreTicketModal(ticketId, ticketCode) {
+    currentRestoreTicketId = ticketId;
+    currentRestoreTicketCode = ticketCode || '';
+    
+    const modalHtml = `
+        <div id="restoreTicketModal" class="vb-modal" style="display: flex;">
+            <div class="vb-modal-overlay" onclick="closeRestoreTicketModal()"></div>
+            <div class="vb-modal-content" style="max-width: 500px;">
+                <div class="vb-modal-header">
+                    <h3 class="vb-modal-title">
+                        <i class="fas fa-undo" style="color: #28a745;"></i> Bilet Geri Al
+                    </h3>
+                    <button type="button" class="vb-modal-close" onclick="closeRestoreTicketModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="vb-modal-body">
+                    <div id="restoreTicketStep1">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-undo" style="font-size: 64px; color: #28a745; margin-bottom: 20px;"></i>
+                            <h3 style="color: #28a745; margin-bottom: 15px;">Bilet Geri Al</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Bu bileti geri almak ve aktifleştirmek istediğinizden <strong>emin misiniz?</strong>
+                            </p>
+                            <div style="background: #d4edda; padding: 15px; border-radius: 5px; border-left: 4px solid #28a745; margin-bottom: 20px; text-align: left;">
+                                <strong>Bilet Bilgileri:</strong><br>
+                                <strong>Kod:</strong> ${currentRestoreTicketCode}
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="proceedToRestoreTicketStep2()" class="vb-button" style="background: #28a745; color: white; border-color: #28a745; padding: 12px 30px; font-size: 16px;">
+                                <i class="fas fa-check"></i> Evet, Devam Et
+                            </button>
+                            <button onclick="closeRestoreTicketModal()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-times"></i> İptal
+                            </button>
+                        </div>
+                    </div>
+                    <div id="restoreTicketStep2" style="display: none;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <i class="fas fa-shield-alt" style="font-size: 64px; color: #28a745; margin-bottom: 20px;"></i>
+                            <h3 style="color: #28a745; margin-bottom: 15px;">Son Onay</h3>
+                            <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                                Geri alma işlemini tamamlamak için aşağıdaki bilgileri girin:
+                            </p>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; text-align: left;">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Bilet Kodu:
+                                    </label>
+                                    <input type="text" id="restoreTicketCode" 
+                                           placeholder="${currentRestoreTicketCode}" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #28a745; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold;"
+                                           autocomplete="off">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">
+                                        Onay Metni (RESTORE yazın):
+                                    </label>
+                                    <input type="text" id="restoreTicketConfirmText" 
+                                           placeholder="RESTORE" 
+                                           style="width: 100%; padding: 10px; border: 2px solid #28a745; border-radius: 5px; font-size: 16px; text-align: center; font-weight: bold; text-transform: uppercase;"
+                                           autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 25px;">
+                            <button onclick="confirmRestoreTicket()" id="confirmRestoreTicketBtn" class="vb-button" style="background: #28a745; color: white; border-color: #28a745; padding: 12px 30px; font-size: 16px;" disabled>
+                                <i class="fas fa-undo"></i> Geri Almayı Onayla
+                            </button>
+                            <button onclick="backToRestoreTicketStep1()" class="vb-button" style="padding: 12px 30px; font-size: 16px; margin-left: 10px;">
+                                <i class="fas fa-arrow-left"></i> Geri
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const oldModal = document.getElementById('restoreTicketModal');
+    if (oldModal) {
+        oldModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRestoreTicketModal() {
+    const modal = document.getElementById('restoreTicketModal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = '';
+    }
+    currentRestoreTicketId = null;
+}
+
+function proceedToRestoreTicketStep2() {
+    document.getElementById('restoreTicketStep1').style.display = 'none';
+    document.getElementById('restoreTicketStep2').style.display = 'block';
+    
+    setTimeout(() => {
+        document.getElementById('restoreTicketCode').focus();
+    }, 100);
+    
+    const codeInput = document.getElementById('restoreTicketCode');
+    const confirmInput = document.getElementById('restoreTicketConfirmText');
+    const confirmBtn = document.getElementById('confirmRestoreTicketBtn');
+    
+    function checkInputs() {
+        const codeValue = codeInput.value.trim();
+        const confirmValue = confirmInput.value.trim().toUpperCase();
+        const expectedCode = currentRestoreTicketCode;
+        
+        if (codeValue === expectedCode && confirmValue === 'RESTORE') {
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
+        } else {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+        }
+    }
+    
+    codeInput.addEventListener('input', checkInputs);
+    confirmInput.addEventListener('input', checkInputs);
+}
+
+function backToRestoreTicketStep1() {
+    document.getElementById('restoreTicketStep1').style.display = 'block';
+    document.getElementById('restoreTicketStep2').style.display = 'none';
+    document.getElementById('restoreTicketCode').value = '';
+    document.getElementById('restoreTicketConfirmText').value = '';
+    document.getElementById('confirmRestoreTicketBtn').disabled = true;
+}
+
+function confirmRestoreTicket() {
+    if (!currentRestoreTicketId) {
+        alert('Bilet ID bulunamadı.');
+        return;
+    }
+    
+    const codeInput = document.getElementById('restoreTicketCode');
+    const confirmInput = document.getElementById('restoreTicketConfirmText');
+    const codeValue = codeInput.value.trim();
+    const confirmValue = confirmInput.value.trim().toUpperCase();
+    const expectedCode = currentRestoreTicketCode;
+    
+    if (codeValue !== expectedCode) {
+        alert('Bilet kodu eşleşmiyor!');
+        codeInput.focus();
+        return;
+    }
+    
+    if (confirmValue !== 'RESTORE') {
+        alert('Onay metni hatalı! Lütfen "RESTORE" yazın.');
+        confirmInput.focus();
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('confirmRestoreTicketBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Geri alınıyor...';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+    
+    const formData = new FormData();
+    formData.append('confirm_step', '2');
+    formData.append('ticket_code', codeValue);
+    formData.append('final_confirm', confirmValue);
+    
+    fetch(`/ferry-tickets/tickets/${currentRestoreTicketId}/restore/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || 'Bilet başarıyla geri alındı ve aktifleştirildi.');
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'Bilet geri alınırken bir hata oluştu.');
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-undo"></i> Geri Almayı Onayla';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bilet geri alınırken bir hata oluştu.');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-undo"></i> Geri Almayı Onayla';
+    });
+}
+
+// ESC tuşu ile modal'ları kapat
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteTicketModal();
+        closeRestoreTicketModal();
+    }
+});
+
+function submitTicketForm(form) {
+    const formData = new FormData(form);
+    formData.append('X-Requested-With', 'XMLHttpRequest');
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeTicketModal();
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            // Hata mesajlarını göster
+            if (data.errors) {
+                console.error('Form hataları:', data.errors);
+                alert('Form gönderilirken hatalar oluştu. Lütfen kontrol edin.');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Form gönderilirken hata:', error);
+        alert('Form gönderilirken bir hata oluştu.');
+    });
+}
+
+// Modal dışına tıklanınca kapat
+window.onclick = function(event) {
+    const modal = document.getElementById('ticketModal');
+    if (event.target == modal) {
+        closeTicketModal();
+    }
+}
+</script>
+{% endblock %}
+

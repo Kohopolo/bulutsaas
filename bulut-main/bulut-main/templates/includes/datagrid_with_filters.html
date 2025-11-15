@@ -1,0 +1,94 @@
+{% comment %}
+VB DataGrid with Filter Inputs Component
+Usage:
+    {% include 'includes/datagrid_with_filters.html' with 
+        columns=columns 
+        rows=rows 
+        table_id="my-grid"
+    %}
+{% endcomment %}
+
+<div class="datagrid">
+    <div class="vb-datagrid-container">
+        <table id="{{ table_id|default:'vb-grid' }}">
+            <thead>
+                <tr>
+                    {% for column in columns %}
+                    <th {% if column.width %}style="width: {{ column.width }};"{% endif %}>
+                        {{ column.label }}
+                    </th>
+                    {% endfor %}
+                </tr>
+                <tr class="filter-row">
+                    {% for column in columns %}
+                    <th>
+                        {% if column.filter %}
+                            {% if column.filter_type == 'select' %}
+                                <select class="filter-input" name="filter_{{ column.name }}" data-column="{{ column.name }}">
+                                    <option value="">Tümü</option>
+                                    {% for option in column.filter_options %}
+                                    <option value="{{ option.value }}">{{ option.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <input type="text" class="filter-input" name="filter_{{ column.name }}" 
+                                       placeholder="Filtrele..." data-column="{{ column.name }}">
+                            {% endif %}
+                        {% else %}
+                            <input type="text" class="filter-input" name="filter_{{ column.name }}" 
+                                   placeholder="Filtrele..." data-column="{{ column.name }}">
+                        {% endif %}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% if rows %}
+                    {% for row in rows %}
+                    <tr>
+                        {% for column in columns %}
+                        <td {% if column.align %}style="text-align: {{ column.align }};"{% endif %}>
+                            {{ row|get_item:column.name|default:"-" }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="{{ columns|length }}" style="text-align: center; padding: 40px; color: #999;">
+                            Veri bulunamadı.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInputs = document.querySelectorAll('#{{ table_id|default:"vb-grid" }} .filter-input');
+    const table = document.querySelector('#{{ table_id|default:"vb-grid" }}');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const filterValue = this.value.toLowerCase();
+            const columnIndex = Array.from(this.closest('tr').children).indexOf(this.closest('th'));
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const cell = row.children[columnIndex];
+                if (cell) {
+                    const cellText = cell.textContent.toLowerCase();
+                    if (cellText.includes(filterValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+    });
+});
+</script>
+

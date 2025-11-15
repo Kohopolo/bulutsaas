@@ -160,3 +160,7 @@ python manage.py setup_ferry_tickets_all_tenants
 **Son Güncelleme:** 2025-01-27  
 **Durum:** Migrationlar bekliyor (Virtual environment aktifleştirilmeli)
 
+
+
+
+

@@ -95,3 +95,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(f'\n[OK] {added_count} pakete eklendi, {skipped_count} paket güncellendi')
         )
 
+
+
+
+

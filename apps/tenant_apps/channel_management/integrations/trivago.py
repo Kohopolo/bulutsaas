@@ -105,3 +105,7 @@ class TrivagoIntegration(BaseChannelIntegration):
         """Trivago meta arama motoru - rezervasyon değiştirme desteklenmiyor"""
         return {'success': False, 'message': 'Trivago meta arama motoru - rezervasyon işlemleri desteklenmiyor'}
 
+
+
+
+

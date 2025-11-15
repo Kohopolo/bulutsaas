@@ -1,0 +1,74 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Bungalov Özellikleri Listesi{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-star"></i> Bungalov Özellikleri Listesi
+            <div style="float: right;">
+                <a href="{% url 'bungalovs:bungalov_feature_create' %}" class="vb-button primary">
+                    <i class="fas fa-plus"></i> Yeni Özellik
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            {% if features %}
+            <table class="vb-datagrid">
+                <thead>
+                    <tr>
+                        <th>Ad</th>
+                        <th>Kod</th>
+                        <th>Kategori</th>
+                        <th>İkon</th>
+                        <th>Açıklama</th>
+                        <th>Aktif</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for feature in features %}
+                    <tr>
+                        <td><strong>{{ feature.name }}</strong></td>
+                        <td>{{ feature.code }}</td>
+                        <td>{{ feature.get_category_display }}</td>
+                        <td>
+                            {% if feature.icon %}
+                                <i class="{{ feature.icon }}"></i>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ feature.description|truncatewords:10|default:"-" }}</td>
+                        <td>
+                            {% if feature.is_active %}
+                                <span style="color: green;"><i class="fas fa-check-circle"></i></span>
+                            {% else %}
+                                <span style="color: red;"><i class="fas fa-times-circle"></i></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'bungalovs:bungalov_feature_update' feature.pk %}" class="vb-button small">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'bungalovs:bungalov_feature_delete' feature.pk %}" class="vb-button small danger" onclick="return confirm('Bu özelliği silmek istediğinize emin misiniz?');">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-inbox" style="font-size: 48px; color: #ccc; margin-bottom: 15px; display: block;"></i>
+                Bungalov özelliği bulunamadı.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
