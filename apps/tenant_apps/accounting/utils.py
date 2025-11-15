@@ -16,6 +16,7 @@ def create_journal_entry(
     entry_date=None,
     created_by=None,
     lines_data=None,
+    hotel=None,
     **kwargs
 ):
     """
@@ -46,6 +47,7 @@ def create_journal_entry(
     
     with transaction.atomic():
         journal_entry = JournalEntry.objects.create(
+            hotel=hotel,  # Otel bilgisi eklendi
             entry_date=entry_date,
             description=description,
             source_module=source_module,
@@ -63,7 +65,31 @@ def create_journal_entry(
                 continue
             
             try:
-                account = Account.objects.get(code=account_code, is_active=True, is_deleted=False)
+                # Önce otel bazlı hesabı ara, yoksa genel hesabı ara
+                if hotel:
+                    account = Account.objects.filter(
+                        hotel=hotel,
+                        code=account_code,
+                        is_active=True,
+                        is_deleted=False
+                    ).first()
+                    if not account:
+                        account = Account.objects.filter(
+                            hotel__isnull=True,
+                            code=account_code,
+                            is_active=True,
+                            is_deleted=False
+                        ).first()
+                else:
+                    account = Account.objects.filter(
+                        hotel__isnull=True,
+                        code=account_code,
+                        is_active=True,
+                        is_deleted=False
+                    ).first()
+                
+                if not account:
+                    continue
             except Account.DoesNotExist:
                 continue
             
@@ -97,6 +123,7 @@ def create_invoice(
     currency='TRY',
     created_by=None,
     lines_data=None,
+    hotel=None,
     **kwargs
 ):
     """
@@ -137,6 +164,7 @@ def create_invoice(
     total = subtotal - discount_amount + tax_amount
     
     invoice = Invoice.objects.create(
+        hotel=hotel,  # Otel bilgisi eklendi
         invoice_type=invoice_type,
         invoice_date=invoice_date,
         due_date=kwargs.get('due_date'),
@@ -185,6 +213,7 @@ def create_payment(
     payment_method='cash',
     cash_account_id=None,
     created_by=None,
+    hotel=None,
     **kwargs
 ):
     """
@@ -210,6 +239,7 @@ def create_payment(
         payment_date = timezone.now()
     
     payment = Payment.objects.create(
+        hotel=hotel,  # Otel bilgisi eklendi
         payment_date=payment_date,
         amount=amount,
         currency=currency,

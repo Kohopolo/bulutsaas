@@ -23,8 +23,8 @@ def create_finance_transaction_on_payment(sender, instance, created, **kwargs):
     try:
         from apps.tenant_apps.finance.utils import create_cash_transaction, get_default_cash_account
         
-        # Varsayılan kasa hesabını bul
-        account = get_default_cash_account(currency=instance.currency)
+        # Varsayılan kasa hesabını bul (otel bilgisi yok, genel hesap kullanılacak)
+        account = get_default_cash_account(currency=instance.currency, hotel=None)
         if not account:
             # Varsayılan hesap yoksa ilk aktif hesabı kullan
             from apps.tenant_apps.finance.models import CashAccount
@@ -67,6 +67,7 @@ def create_finance_transaction_on_payment(sender, instance, created, **kwargs):
                 currency=instance.currency,
                 created_by=None,  # PaymentTransaction'da created_by yok
                 status='completed',
+                hotel=None,  # PaymentTransaction'da otel bilgisi yok
             )
             
             # PaymentTransaction'a bağla
@@ -126,6 +127,7 @@ def create_accounting_payment_on_payment(sender, instance, created, **kwargs):
             payment_method=accounting_payment_method,
             cash_account_id=cash_account_id,
             created_by=None,
+            hotel=None,  # PaymentTransaction'da otel bilgisi yok
             auto_complete=True,  # Otomatik tamamla
             description=f"Ödeme işlemi - {instance.transaction_id}",
         )

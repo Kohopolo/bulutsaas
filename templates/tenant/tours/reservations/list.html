@@ -59,6 +59,8 @@
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tarih</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kişi</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tutar</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ödenen</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kalan</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Durum</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ödeme</th>
                         <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">İşlemler</th>
@@ -73,6 +75,10 @@
                         <td class="px-4 py-3 text-sm text-gray-600">{{ reservation.tour_date.date|date:"d.m.Y" }}</td>
                         <td class="px-4 py-3 text-sm text-gray-600">{{ reservation.total_people }} ({{ reservation.adult_count }}Y + {{ reservation.child_count }}Ç)</td>
                         <td class="px-4 py-3 text-sm font-semibold text-gray-900">{{ reservation.total_amount }} {{ reservation.currency }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold text-green-700">{{ reservation.total_paid|default:0 }} {{ reservation.currency }}</td>
+                        <td class="px-4 py-3 text-sm font-semibold {% if reservation.remaining_amount > 0 %}text-red-700{% else %}text-green-700{% endif %}">
+                            {{ reservation.remaining_amount|default:reservation.total_amount }} {{ reservation.currency }}
+                        </td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 rounded text-xs font-semibold {% if reservation.status == 'confirmed' %}bg-green-100 text-green-700{% elif reservation.status == 'pending' %}bg-yellow-100 text-yellow-700{% elif reservation.status == 'cancelled' %}bg-red-100 text-red-700{% else %}bg-gray-100 text-gray-700{% endif %}">
                                 {{ reservation.get_status_display }}
@@ -88,6 +94,9 @@
                                 <a href="{% url 'tours:reservation_detail' reservation.pk %}" class="text-vb-primary hover:text-blue-600" title="Detay">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                <a href="{% url 'tours:reservation_payment' reservation.pk %}" class="text-green-600 hover:text-green-700" title="Ödeme Ekle">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </a>
                                 <a href="{% url 'tours:reservation_voucher' reservation.pk %}" class="text-purple-600 hover:text-purple-700" title="Voucher">
                                     <i class="fas fa-file-invoice"></i>
                                 </a>
@@ -96,7 +105,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="px-4 py-8 text-center text-gray-500">
+                        <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                             <i class="fas fa-inbox text-4xl mb-2"></i>
                             <p>Henüz rezervasyon eklenmemiş.</p>
                         </td>

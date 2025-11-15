@@ -15,6 +15,32 @@
             </div>
         </div>
         <div class="groupbox-body">
+            <!-- Otel Filtreleme -->
+            {% if accessible_hotels|length > 1 %}
+            <div style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <form method="get" style="display: flex; gap: 10px; align-items: end;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 12px;">Otel</label>
+                        <select name="hotel" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">Tüm Oteller</option>
+                            <option value="0" {% if request.GET.hotel == '0' %}selected{% endif %}>Genel Gateway'ler</option>
+                            {% for hotel in accessible_hotels %}
+                            <option value="{{ hotel.id }}" {% if request.GET.hotel == hotel.id|stringformat:"s" or selected_hotel_id == hotel.id %}selected{% endif %}>
+                                {{ hotel.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="vb-button primary" style="padding: 8px 15px;">
+                        <i class="fas fa-filter"></i> Filtrele
+                    </button>
+                    <a href="{% url 'payment_management:gateway_list' %}" class="vb-button secondary" style="padding: 8px 15px;">
+                        <i class="fas fa-times"></i> Temizle
+                    </a>
+                </form>
+            </div>
+            {% endif %}
+            
             <!-- Yapılandırılmış Gateway'ler -->
             {% if tenant_gateways %}
             <h3 style="margin-bottom: 15px; color: #333; font-size: 14px; font-weight: bold;">Yapılandırılmış Gateway'ler</h3>
@@ -23,6 +49,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>Otel</th>
                                 <th>Gateway Adı</th>
                                 <th>Tip</th>
                                 <th>Durum</th>
@@ -34,6 +61,13 @@
                         <tbody>
                             {% for tg in tenant_gateways %}
                             <tr>
+                                <td>
+                                    {% if tg.hotel %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #007bff; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">{{ tg.hotel.name }}</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 3px 8px; background: #6c757d; color: white; border-radius: 3px; font-size: 11px; font-weight: bold;">Genel</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <strong>{{ tg.gateway.name }}</strong>
                                     {% if tg.gateway.description %}

@@ -120,7 +120,9 @@ def ticket_list(request):
     """Bilet Listesi"""
     tickets = FerryTicket.objects.filter(is_deleted=False).select_related(
         'schedule__route', 'schedule__ferry', 'customer'
-    ).order_by('-schedule__departure_date', '-created_at')
+    ).prefetch_related('payments').order_by('-schedule__departure_date', '-created_at')
+    
+    # NOT: Feribot bileti modülü otelle bağlantısız çalışır, hotel filtreleme yoktur
     
     # Arama
     search_query = request.GET.get('search', '').strip()
@@ -184,6 +186,8 @@ def ticket_list(request):
     # Rotalar (filtre için)
     routes = FerryRoute.objects.filter(is_active=True, is_deleted=False).order_by('name')
     
+    # NOT: Feribot bileti modülü otelle bağlantısız çalışır, hotel filtreleme yoktur
+    
     context = {
         'tickets': tickets,
         'status_choices': FerryTicketStatus.choices,
@@ -204,6 +208,7 @@ def ticket_create(request):
         if form.is_valid():
             ticket = form.save(commit=False)
             ticket.created_by = request.user
+            # NOT: Feribot bileti modülü otelle bağlantısız çalışır, hotel ataması yoktur
             
             # Bilet kodu oluştur
             if not ticket.ticket_code:
@@ -273,6 +278,7 @@ def ticket_create(request):
                 }, status=400)
     else:
         form = FerryTicketForm()
+        # NOT: Feribot bileti modülü otelle bağlantısız çalışır, hotel seçimi yoktur
         guest_formset = FerryTicketGuestFormSet(instance=None)
     
     context = {
@@ -295,6 +301,12 @@ def ticket_detail(request, pk):
     """Bilet Detayı"""
     ticket = get_object_or_404(FerryTicket, pk=pk)
     
+    # Ödeme toplamı
+    total_paid = ticket.payments.filter(is_deleted=False).aggregate(
+        total=Sum('payment_amount')
+    )['total'] or Decimal('0')
+    remaining_amount = ticket.total_amount - total_paid
+    
     # Yolcular
     guests = ticket.guests.filter(is_deleted=False).order_by('guest_order')
     
@@ -306,6 +318,8 @@ def ticket_detail(request, pk):
     
     context = {
         'ticket': ticket,
+        'total_paid': total_paid,
+        'remaining_amount': remaining_amount,
         'guests': guests,
         'payments': payments,
         'vouchers': vouchers,
@@ -661,38 +675,69 @@ def ticket_payment_add(request, pk):
     """Bilet Ödeme Ekle"""
     ticket = get_object_or_404(FerryTicket, pk=pk, is_deleted=False)
     
+    # Ödeme toplamı
+    total_paid = ticket.payments.filter(is_deleted=False).aggregate(
+        total=Sum('payment_amount')
+    )['total'] or Decimal('0')
+    remaining_amount = ticket.total_amount - total_paid
+    
     if request.method == 'POST':
         payment_amount = Decimal(request.POST.get('payment_amount', 0))
         payment_method = request.POST.get('payment_method')
-        payment_date = request.POST.get('payment_date') or date.today()
+        payment_date_str = request.POST.get('payment_date') or str(date.today())
+        payment_reference = request.POST.get('payment_reference', '')
+        transaction_id = request.POST.get('transaction_id', '')
+        notes = request.POST.get('notes', '')
         
         if payment_amount <= 0:
-            messages.error(request, 'Ödeme tutarı geçersiz.')
+            messages.error(request, 'Ödeme tutarı 0\'dan büyük olmalıdır.')
+        elif payment_amount > remaining_amount:
+            messages.error(request, f'Ödeme tutarı kalan tutardan ({remaining_amount} {ticket.currency}) fazla olamaz.')
+        else:
+            # Ödeme tarihini parse et
+            payment_date_obj = None
+            if payment_date_str:
+                try:
+                    if isinstance(payment_date_str, str):
+                        from datetime import datetime
+                        payment_date_obj = datetime.strptime(payment_date_str, '%Y-%m-%d').date()
+                    else:
+                        payment_date_obj = payment_date_str
+                except:
+                    payment_date_obj = date.today()
+            else:
+                payment_date_obj = date.today()
+            
+            # Ödeme kaydı oluştur
+            payment = FerryTicketPayment.objects.create(
+                ticket=ticket,
+                payment_date=payment_date_obj,
+                payment_amount=payment_amount,
+                payment_method=payment_method,
+                payment_type='advance' if payment_amount < remaining_amount else 'full',
+                currency=ticket.currency,
+                payment_reference=payment_reference,
+                payment_info={'transaction_id': transaction_id, 'notes': notes} if transaction_id or notes else {},
+                created_by=request.user
+            )
+            
+            # Bilet ödeme durumunu güncelle
+            ticket.update_total_paid()
+            
+            # Tam ödendiyse durumu güncelle
+            if ticket.is_paid():
+                ticket.status = FerryTicketStatus.CONFIRMED
+            
+            ticket.save()
+            
+            messages.success(request, f'{payment_amount} {ticket.currency} ödeme başarıyla eklendi.')
             return redirect('ferry_tickets:ticket_detail', pk=ticket.pk)
-        
-        FerryTicketPayment.objects.create(
-            ticket=ticket,
-            payment_date=payment_date,
-            payment_amount=payment_amount,
-            payment_method=payment_method,
-            payment_type='advance' if payment_amount < ticket.get_remaining_amount() else 'full',
-            currency=ticket.currency,
-            payment_reference=request.POST.get('payment_reference', ''),
-            created_by=request.user
-        )
-        
-        ticket.update_total_paid()
-        
-        # Tam ödendiyse durumu güncelle
-        if ticket.is_paid():
-            ticket.status = FerryTicketStatus.CONFIRMED
-        
-        ticket.save()
-        
-        messages.success(request, f'Ödeme başarıyla eklendi: {payment_amount} {ticket.currency}')
-        return redirect('ferry_tickets:ticket_detail', pk=ticket.pk)
     
-    context = {'ticket': ticket}
+    context = {
+        'ticket': ticket,
+        'total_paid': total_paid,
+        'remaining_amount': remaining_amount,
+    }
     return render(request, 'ferry_tickets/tickets/payment_add.html', context)
 
 

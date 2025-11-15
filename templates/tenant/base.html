@@ -316,6 +316,10 @@
                             <i class="fas fa-file-invoice w-4"></i>
                             <span class="ml-3">Voucher Şablonları</span>
                         </a>
+                        <a href="{% url 'reception:end_of_day_dashboard' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-moon w-4"></i>
+                            <span class="ml-3">Gün Sonu İşlemleri</span>
+                        </a>
                     </div>
                 </div>
                 {% endif %}
@@ -977,6 +981,45 @@
                     </div>
                 {% endif %}
                 
+                <!-- Ayarlar Modülü -->
+                {% if has_settings_module %}
+                <div class="mb-2">
+                    <button onclick="toggleModule('settings-module')" class="w-full flex items-center justify-between px-3 py-2 text-gray-400 text-sm font-semibold hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors">
+                        <div class="flex items-center">
+                            <i class="fas fa-cog w-5"></i>
+                            <span class="ml-3">Ayarlar</span>
+                        </div>
+                        <i id="settings-module-icon" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </button>
+                    <div id="settings-module" class="hidden">
+                        <a href="{% url 'settings:sms_gateway_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-sms w-4"></i>
+                            <span class="ml-3">SMS Gateway'ler</span>
+                        </a>
+                        <a href="{% url 'settings:sms_template_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-file-alt w-4"></i>
+                            <span class="ml-3">SMS Şablonları</span>
+                        </a>
+                        <a href="{% url 'settings:sms_log_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-list-alt w-4"></i>
+                            <span class="ml-3">SMS Logları</span>
+                        </a>
+                        <a href="{% url 'settings:email_gateway_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-envelope w-4"></i>
+                            <span class="ml-3">Email Gateway'ler</span>
+                        </a>
+                        <a href="{% url 'settings:email_template_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-file-alt w-4"></i>
+                            <span class="ml-3">Email Şablonları</span>
+                        </a>
+                        <a href="{% url 'settings:email_log_list' %}" class="flex items-center px-3 py-2 pl-8 text-gray-300 hover:bg-bulut-sidebar-hover hover:text-white rounded-vb transition-colors text-sm">
+                            <i class="fas fa-list-alt w-4"></i>
+                            <span class="ml-3">Email Logları</span>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <!-- Yedekleme Yönetimi Modülü -->
                 {% if has_backup_module %}
                 <div class="mb-2">
@@ -1027,6 +1070,8 @@
                     </button>
                     <h1 class="text-lg font-semibold text-vb-navy-500">{% block page_title %}Dashboard{% endblock %}</h1>
                     {% if active_hotel %}
+                    {# Otelle bağlantısız modüllerde hotel seçim butonu gösterilmez: tours, bungalovs, ferry_tickets #}
+                    {% if not request.path|slice:":7" == "/tours/" and not request.path|slice:":10" == "/bungalovs/" and not request.path|slice:":15" == "/ferry-tickets/" %}
                     <div class="flex items-center px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
                         <i class="fas fa-hotel text-blue-600 mr-2"></i>
                         <span class="text-sm font-semibold text-blue-700">{{ active_hotel.name }}</span>
@@ -1034,6 +1079,7 @@
                             <i class="fas fa-exchange-alt text-xs"></i>
                         </button>
                     </div>
+                    {% endif %}
                     {% endif %}
                 </div>
                 <div class="flex items-center space-x-4">
@@ -1083,6 +1129,8 @@
     
     <!-- Otel Seçim Modal -->
     {% if active_hotel %}
+    {# Otelle bağlantısız modüllerde hotel modal gösterilmez: tours, bungalovs, ferry_tickets #}
+    {% if not request.path|slice:":7" == "/tours/" and not request.path|slice:":10" == "/bungalovs/" and not request.path|slice:":15" == "/ferry-tickets/" %}
     <div id="hotelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
@@ -1101,16 +1149,21 @@
             </div>
         </div>
     </div>
-    {% endif %}
-
+    
     <script>
         function openHotelModal() {
-            document.getElementById('hotelModal').classList.remove('hidden');
-            loadHotels();
+            const modal = document.getElementById('hotelModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                loadHotels();
+            }
         }
         
         function closeHotelModal() {
-            document.getElementById('hotelModal').classList.add('hidden');
+            const modal = document.getElementById('hotelModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
         }
         
         function loadHotels() {
@@ -1118,27 +1171,32 @@
                 .then(response => response.json())
                 .then(data => {
                     const content = document.getElementById('hotelModalContent');
-                    if (data.hotels && data.hotels.length > 0) {
-                        content.innerHTML = data.hotels.map(hotel => `
-                            <button onclick="selectHotel(${hotel.id})" 
-                                    class="w-full text-left p-4 border-2 rounded-lg hover:border-vb-primary transition-colors
-                                           ${hotel.is_active ? 'border-vb-primary bg-blue-50' : 'border-gray-200'}">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h4 class="font-semibold text-gray-900">${hotel.name}</h4>
-                                        ${hotel.city ? `<p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${hotel.city}</p>` : ''}
+                    if (content) {
+                        if (data.hotels && data.hotels.length > 0) {
+                            content.innerHTML = data.hotels.map(hotel => `
+                                <button onclick="selectHotel(${hotel.id})" 
+                                        class="w-full text-left p-4 border-2 rounded-lg hover:border-vb-primary transition-colors
+                                               ${hotel.is_active ? 'border-vb-primary bg-blue-50' : 'border-gray-200'}">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-900">${hotel.name}</h4>
+                                            ${hotel.city ? `<p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${hotel.city}</p>` : ''}
+                                        </div>
+                                        ${hotel.is_active ? '<i class="fas fa-check-circle text-vb-primary text-xl"></i>' : ''}
                                     </div>
-                                    ${hotel.is_active ? '<i class="fas fa-check-circle text-vb-primary text-xl"></i>' : ''}
-                                </div>
-                            </button>
-                        `).join('');
-                    } else {
-                        content.innerHTML = '<p class="text-center text-gray-600 py-8">Erişebileceğiniz otel bulunmamaktadır.</p>';
+                                </button>
+                            `).join('');
+                        } else {
+                            content.innerHTML = '<p class="text-center text-gray-600 py-8">Erişebileceğiniz otel bulunmamaktadır.</p>';
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    document.getElementById('hotelModalContent').innerHTML = '<p class="text-center text-red-600 py-8">Otel listesi yüklenirken hata oluştu.</p>';
+                    const content = document.getElementById('hotelModalContent');
+                    if (content) {
+                        content.innerHTML = '<p class="text-center text-red-600 py-8">Otel listesi yüklenirken hata oluştu.</p>';
+                    }
                 });
         }
         
@@ -1181,12 +1239,19 @@
         }
         
         // Modal dışına tıklanınca kapat
-        document.getElementById('hotelModal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeHotelModal();
-            }
-        });
+        const hotelModal = document.getElementById('hotelModal');
+        if (hotelModal) {
+            hotelModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeHotelModal();
+                }
+            });
+        }
     </script>
+    {% endif %}
+    {# Otelle bağlantısız modüllerde hotel modal gösterilmez: tours, bungalovs, ferry_tickets #}
+    {% endif %}
+    {# active_hotel kontrolü kapatıldı #}
 
     <!-- Sidebar Mobile & Accordion Script -->
     <script>

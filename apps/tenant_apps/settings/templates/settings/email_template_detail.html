@@ -1,0 +1,184 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}{{ template.name }} - Email Şablonu Detayı{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-file-alt"></i> {{ template.name }} - Email Şablonu Detayı
+            <div style="float: right;">
+                <a href="{% url 'settings:email_template_list' %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+                {% if not template.is_system_template %}
+                <a href="{% url 'settings:email_template_edit' template.pk %}" class="vb-button primary">
+                    <i class="fas fa-edit"></i> Düzenle
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Temel Bilgiler</h3>
+                    <table class="vb-table">
+                        <tr>
+                            <td style="width: 150px;"><strong>Şablon Adı:</strong></td>
+                            <td>{{ template.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Şablon Kodu:</strong></td>
+                            <td><code>{{ template.code }}</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kategori:</strong></td>
+                            <td>{{ template.get_category_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Modül:</strong></td>
+                            <td>{{ template.module_usage|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Durum:</strong></td>
+                            <td>
+                                {% if template.is_active %}
+                                    <span class="badge badge-success">Aktif</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Pasif</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sistem Şablonu:</strong></td>
+                            <td>
+                                {% if template.is_system_template %}
+                                    <span class="badge badge-info">Evet</span>
+                                {% else %}
+                                    <span>Hayır</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kullanım Sayısı:</strong></td>
+                            <td><strong>{{ template.usage_count }}</strong> kez</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Son Kullanım:</strong></td>
+                            <td>{{ template.last_used_at|date:"d.m.Y H:i"|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Şablon Önizlemesi</h3>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+                        <div style="margin-bottom: 10px;">
+                            <strong>Konu:</strong> 
+                            <div style="color: #495057; font-size: 13px; margin-top: 5px;">
+                                {{ preview.subject }}
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                            <strong>HTML İçerik:</strong>
+                            <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 3px; max-height: 200px; overflow-y: auto;">
+                                {% if preview.html %}
+                                    <div style="font-size: 12px;">{{ preview.html|safe }}</div>
+                                {% else %}
+                                    <em style="color: #6c757d;">HTML içerik yok</em>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if preview.text %}
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                            <strong>Metin İçerik:</strong>
+                            <div style="margin-top: 10px; padding: 10px; background: #fff; border-radius: 3px; white-space: pre-wrap; font-family: monospace; font-size: 12px; color: #495057;">
+                                {{ preview.text }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if template.available_variables %}
+                    <div style="margin-top: 20px;">
+                        <h4 style="font-size: 14px; margin-bottom: 10px; color: #495057;">Kullanılabilir Değişkenler</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            {% for key, value in template.available_variables.items %}
+                            <span class="badge badge-secondary" style="font-size: 11px;">
+                                <code>&#123;&#123;{{ key }}&#125;&#125;</code> - {{ value }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if template.description %}
+            <div style="margin-top: 20px;">
+                <h3 style="font-size: 16px; margin-bottom: 10px; color: #495057;">Açıklama</h3>
+                <div style="padding: 10px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+                    {{ template.description|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Şablon İçeriği</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    <div>
+                        <h4 style="font-size: 14px; margin-bottom: 10px; color: #495057;">HTML Şablon</h4>
+                        <div style="padding: 15px; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                            {{ template.template_html|default:"HTML şablon tanımlanmamış" }}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 14px; margin-bottom: 10px; color: #495057;">Metin Şablon</h4>
+                        <div style="padding: 15px; background: #fff; border: 1px solid #dee2e6; border-radius: 5px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                            {{ template.template_text|default:"Metin şablon tanımlanmamış" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if usage_logs %}
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 15px; color: #495057;">Son Kullanımlar</h3>
+                <table class="vb-table">
+                    <thead>
+                        <tr>
+                            <th>Alıcı</th>
+                            <th>Konu</th>
+                            <th>Durum</th>
+                            <th>Tarih</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in usage_logs %}
+                        <tr>
+                            <td>{{ log.recipient_email }}</td>
+                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ log.subject|truncatewords:5 }}</td>
+                            <td>
+                                {% if log.status == 'sent' %}
+                                    <span class="badge badge-info">Gönderildi</span>
+                                {% elif log.status == 'delivered' %}
+                                    <span class="badge badge-success">Teslim Edildi</span>
+                                {% elif log.status == 'failed' %}
+                                    <span class="badge badge-danger">Başarısız</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ log.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.created_at|date:"d.m.Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

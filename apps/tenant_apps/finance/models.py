@@ -15,6 +15,7 @@ class CashAccount(TimeStampedModel, SoftDeleteModel):
     """
     Kasa Hesapları
     Nakit, Banka, Kredi Kartı, Dijital Cüzdan vb.
+    Otel bazlı veya genel kasa hesapları olabilir
     """
     ACCOUNT_TYPE_CHOICES = [
         ('cash', 'Nakit Kasa'),
@@ -32,8 +33,19 @@ class CashAccount(TimeStampedModel, SoftDeleteModel):
         ('GBP', 'British Pound'),
     ]
     
+    # Otel Bağlantısı (null ise genel kasa hesabı)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.CASCADE,
+        related_name='cash_accounts',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa tüm oteller için genel kasa hesabı olur'
+    )
+    
     name = models.CharField('Hesap Adı', max_length=100)
-    code = models.SlugField('Hesap Kodu', max_length=50, unique=True)
+    code = models.SlugField('Hesap Kodu', max_length=50)
     account_type = models.CharField('Hesap Tipi', max_length=20, choices=ACCOUNT_TYPE_CHOICES, default='cash')
     currency = models.CharField('Para Birimi', max_length=3, choices=CURRENCY_CHOICES, default='TRY')
     
@@ -62,6 +74,11 @@ class CashAccount(TimeStampedModel, SoftDeleteModel):
         verbose_name = 'Kasa Hesabı'
         verbose_name_plural = 'Kasa Hesapları'
         ordering = ['sort_order', 'name']
+        unique_together = [('hotel', 'code')]  # Aynı otel için kod benzersiz olmalı
+        indexes = [
+            models.Index(fields=['hotel', 'is_active']),
+            models.Index(fields=['hotel', 'is_default']),
+        ]
     
     def __str__(self):
         return f"{self.name} ({self.get_account_type_display()})"
@@ -85,6 +102,18 @@ class CashAccount(TimeStampedModel, SoftDeleteModel):
     def get_balance(self):
         """Güncel bakiyeyi döndür (hesaplamadan)"""
         return self.current_balance
+    
+    def save(self, *args, **kwargs):
+        # Otel bazlı varsayılan hesap: Her otel için sadece bir hesap varsayılan olabilir
+        if self.is_default:
+            # Aynı otel ve para birimi için diğer hesapları varsayılan olmaktan çıkar
+            filter_kwargs = {'is_default': True, 'currency': self.currency}
+            if self.hotel:
+                filter_kwargs['hotel'] = self.hotel
+            else:
+                filter_kwargs['hotel__isnull'] = True
+            CashAccount.objects.filter(**filter_kwargs).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
 
 
 # ==================== KASA İŞLEMLERİ ====================
@@ -93,6 +122,7 @@ class CashTransaction(TimeStampedModel, SoftDeleteModel):
     """
     Kasa İşlemleri
     Tüm modüllerden (Tur, Rezervasyon, vb.) kasa işlemleri buradan yönetilir
+    Otel bazlı veya genel kasa işlemleri olabilir
     """
     TRANSACTION_TYPE_CHOICES = [
         ('income', 'Gelir'),
@@ -116,6 +146,17 @@ class CashTransaction(TimeStampedModel, SoftDeleteModel):
         ('digital_wallet', 'Dijital Cüzdan'),
         ('other', 'Diğer'),
     ]
+    
+    # Otel Bağlantısı (null ise genel işlem)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.SET_NULL,
+        related_name='cash_transactions',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa genel kasa işlemi olur'
+    )
     
     # Temel Bilgiler
     transaction_number = models.CharField('İşlem No', max_length=50, unique=True,
@@ -202,6 +243,7 @@ class CashTransaction(TimeStampedModel, SoftDeleteModel):
         ordering = ['-payment_date', '-created_at']
         indexes = [
             models.Index(fields=['account', '-payment_date']),
+            models.Index(fields=['hotel', '-payment_date']),
             models.Index(fields=['source_module', 'source_id']),
             models.Index(fields=['transaction_type', 'status']),
             models.Index(fields=['transaction_number']),
@@ -278,6 +320,7 @@ class CashFlow(TimeStampedModel):
     """
     Nakit Akışı Takibi
     Günlük, haftalık, aylık nakit akışı özetleri
+    Otel bazlı veya genel nakit akışı olabilir
     """
     PERIOD_TYPE_CHOICES = [
         ('daily', 'Günlük'),
@@ -285,6 +328,17 @@ class CashFlow(TimeStampedModel):
         ('monthly', 'Aylık'),
         ('yearly', 'Yıllık'),
     ]
+    
+    # Otel Bağlantısı (null ise genel nakit akışı)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.CASCADE,
+        related_name='cash_flows',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa genel nakit akışı olur'
+    )
     
     account = models.ForeignKey(
         CashAccount,
@@ -316,10 +370,11 @@ class CashFlow(TimeStampedModel):
     class Meta:
         verbose_name = 'Nakit Akışı'
         verbose_name_plural = 'Nakit Akışları'
-        unique_together = ('account', 'period_type', 'period_start', 'period_end')
+        unique_together = ('account', 'hotel', 'period_type', 'period_start', 'period_end')
         ordering = ['-period_start', '-period_end']
         indexes = [
             models.Index(fields=['account', 'period_type', '-period_start']),
+            models.Index(fields=['hotel', 'period_type', '-period_start']),
         ]
     
     def __str__(self):

@@ -7,7 +7,8 @@ from django.core.validators import MinValueValidator
 from decimal import Decimal
 from .models import (
     Reservation, ReservationStatus, ReservationSource,
-    ReservationGuest, ReservationPayment
+    ReservationGuest, ReservationPayment,
+    EndOfDaySettings, EndOfDayAutomationType, EndOfDayNoShowAction
 )
 
 
@@ -467,3 +468,69 @@ class VoucherTemplateForm(forms.ModelForm):
                 existing_default.save()
         
         return cleaned_data
+
+
+# ==================== GÜN SONU İŞLEMLERİ FORMLARI ====================
+
+class EndOfDaySettingsForm(forms.ModelForm):
+    """Gün Sonu Ayarları Formu"""
+    
+    class Meta:
+        model = EndOfDaySettings
+        fields = [
+            'stop_if_room_price_zero',
+            'stop_if_advance_folio_balance_not_zero',
+            'check_checkout_folios',
+            'cancel_no_show_reservations',
+            'no_show_action',
+            'extend_non_checkout_reservations',
+            'extend_days',
+            'cancel_room_change_plans',
+            'auto_run_time',
+            'automation_type',
+            'is_active',
+            'enable_rollback',
+            'notes',
+        ]
+        widgets = {
+            'stop_if_room_price_zero': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'stop_if_advance_folio_balance_not_zero': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'check_checkout_folios': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'cancel_no_show_reservations': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'no_show_action': forms.Select(attrs={'class': 'form-control'}),
+            'extend_non_checkout_reservations': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'extend_days': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'cancel_room_change_plans': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'auto_run_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'automation_type': forms.Select(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'enable_rollback': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+        labels = {
+            'stop_if_room_price_zero': 'Oda Fiyatı SIFIR İse Durdur!',
+            'stop_if_advance_folio_balance_not_zero': 'Peşin Folyo Balansı Sıfır Değilse Durdur!',
+            'check_checkout_folios': 'Checkout Olmuş Folyoları Kontrol Et!',
+            'cancel_no_show_reservations': 'Gelmeyen Rezervasyonları İptal Et veya Yarına Al!',
+            'no_show_action': 'No-Show İşlemi',
+            'extend_non_checkout_reservations': 'CheckOut Olmamış Konaklayanları UZAT!',
+            'extend_days': 'Uzatma Gün Sayısı',
+            'cancel_room_change_plans': 'Oda Değişim Planlarını İPTAL Et!',
+            'auto_run_time': 'Otomatik Çalışma Saati',
+            'automation_type': 'Otomasyon Türü',
+            'is_active': 'Aktif mi?',
+            'enable_rollback': 'Rollback Aktif mi?',
+            'notes': 'Notlar',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.hotel = kwargs.pop('hotel', None)
+        super().__init__(*args, **kwargs)
+        
+        # Otel bilgisi yoksa hata
+        if not self.hotel and not self.instance.pk:
+            raise ValueError("Hotel bilgisi gerekli")
+        
+        # Otel bilgisi varsa ve yeni kayıt oluşturuluyorsa
+        if self.hotel and not self.instance.pk:
+            self.instance.hotel = self.hotel

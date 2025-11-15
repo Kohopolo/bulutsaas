@@ -21,6 +21,7 @@ def create_cash_transaction(
     to_account_id=None,
     created_by=None,
     status='completed',
+    hotel=None,
     **kwargs
 ):
     """
@@ -59,6 +60,7 @@ def create_cash_transaction(
     
     cash_transaction = CashTransaction.objects.create(
         account=account,
+        hotel=hotel,  # Otel bilgisi eklendi
         transaction_type=transaction_type,
         amount=amount,
         currency=currency,
@@ -82,18 +84,56 @@ def create_cash_transaction(
     return cash_transaction
 
 
-def get_default_cash_account(currency='TRY'):
+def get_default_cash_account(currency='TRY', hotel=None):
     """
     Varsayılan kasa hesabını döndür
+    Otel bazlı hesap varsa onu, yoksa genel hesabı döndürür
     
     Args:
         currency: Para birimi
+        hotel: Hotel instance (opsiyonel)
     
     Returns:
         CashAccount objesi veya None
     """
-    return CashAccount.objects.filter(
+    # Önce otel bazlı varsayılan hesabı ara
+    if hotel:
+        account = CashAccount.objects.filter(
+            hotel=hotel,
+            is_default=True,
+            is_active=True,
+            is_deleted=False,
+            currency=currency
+        ).first()
+        if account:
+            return account
+    
+    # Otel bazlı hesap yoksa genel varsayılan hesabı ara
+    account = CashAccount.objects.filter(
+        hotel__isnull=True,
         is_default=True,
+        is_active=True,
+        is_deleted=False,
+        currency=currency
+    ).first()
+    
+    if account:
+        return account
+    
+    # Varsayılan yoksa aktif olan herhangi bir otel bazlı hesabı döndür
+    if hotel:
+        account = CashAccount.objects.filter(
+            hotel=hotel,
+            is_active=True,
+            is_deleted=False,
+            currency=currency
+        ).first()
+        if account:
+            return account
+    
+    # Son olarak aktif olan herhangi bir genel hesabı döndür
+    return CashAccount.objects.filter(
+        hotel__isnull=True,
         is_active=True,
         is_deleted=False,
         currency=currency

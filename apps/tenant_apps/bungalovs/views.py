@@ -337,6 +337,7 @@ def reservation_detail(request, pk):
     total_paid = reservation.payments.filter(is_deleted=False).aggregate(
         total=Sum('payment_amount')
     )['total'] or Decimal('0')
+    remaining_amount = reservation.total_amount - total_paid
     
     # Misafirler
     guests = reservation.guests.all().order_by('guest_type', 'guest_order')
@@ -347,6 +348,7 @@ def reservation_detail(request, pk):
     context = {
         'reservation': reservation,
         'total_paid': total_paid,
+        'remaining_amount': remaining_amount,
         'guests': guests,
         'payments': payments,
         'delete_check': delete_check,
@@ -644,6 +646,74 @@ def reservation_status_change(request, pk):
             messages.success(request, 'Rezervasyon durumu güncellendi.')
     
     return redirect('bungalovs:reservation_detail', pk=reservation.pk)
+
+
+@login_required
+@require_bungalov_permission('edit')
+@require_http_methods(["GET", "POST"])
+def reservation_payment_add(request, pk):
+    """Rezervasyon Ödeme Ekle"""
+    reservation = get_object_or_404(BungalovReservation, pk=pk, is_deleted=False)
+    
+    # Ödeme toplamı
+    total_paid = reservation.payments.filter(is_deleted=False).aggregate(
+        total=Sum('payment_amount')
+    )['total'] or Decimal('0')
+    remaining_amount = reservation.total_amount - total_paid
+    
+    if request.method == 'POST':
+        payment_amount = Decimal(request.POST.get('payment_amount', 0))
+        payment_method = request.POST.get('payment_method')
+        payment_date = request.POST.get('payment_date') or timezone.now().date()
+        payment_reference = request.POST.get('payment_reference', '')
+        transaction_id = request.POST.get('transaction_id', '')
+        notes = request.POST.get('notes', '')
+        
+        if payment_amount <= 0:
+            messages.error(request, 'Ödeme tutarı 0\'dan büyük olmalıdır.')
+        elif payment_amount > remaining_amount:
+            messages.error(request, f'Ödeme tutarı kalan tutardan ({remaining_amount} {reservation.currency}) fazla olamaz.')
+        else:
+            # Ödeme kaydı oluştur
+            payment_date_obj = None
+            if payment_date:
+                try:
+                    if isinstance(payment_date, str):
+                        from datetime import datetime
+                        payment_date_obj = datetime.strptime(payment_date, '%Y-%m-%d').date()
+                    else:
+                        payment_date_obj = payment_date
+                except:
+                    payment_date_obj = timezone.now().date()
+            else:
+                payment_date_obj = timezone.now().date()
+            
+            payment = BungalovReservationPayment.objects.create(
+                reservation=reservation,
+                payment_type='payment',
+                payment_date=payment_date_obj,
+                payment_amount=payment_amount,
+                payment_method=payment_method,
+                currency=reservation.currency,
+                payment_reference=payment_reference,
+                transaction_id=transaction_id,
+                notes=notes,
+                created_by=request.user,
+            )
+            
+            # Rezervasyon ödeme durumunu güncelle
+            reservation.update_total_paid()
+            
+            messages.success(request, f'{payment_amount} {reservation.currency} ödeme başarıyla eklendi.')
+            return redirect('bungalovs:reservation_detail', pk=reservation.pk)
+    
+    context = {
+        'reservation': reservation,
+        'total_paid': total_paid,
+        'remaining_amount': remaining_amount,
+    }
+    
+    return render(request, 'bungalovs/reservations/payment_add.html', context)
 
 
 @login_required

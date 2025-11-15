@@ -149,6 +149,16 @@
                 <span class="text-lg font-bold text-gray-900">Toplam Tutar:</span>
                 <span class="text-2xl font-bold text-vb-primary">{{ reservation.total_amount }} {{ reservation.currency }}</span>
             </div>
+            <div class="flex justify-between pt-2 border-t border-gray-200 mt-2">
+                <span class="text-sm font-semibold text-gray-700">Toplam Ödenen:</span>
+                <span class="text-lg font-bold text-green-700">{{ total_paid|default:0 }} {{ reservation.currency }}</span>
+            </div>
+            <div class="flex justify-between pt-1">
+                <span class="text-sm font-semibold text-gray-700">Kalan Tutar:</span>
+                <span class="text-lg font-bold {% if remaining_amount > 0 %}text-red-700{% else %}text-green-700{% endif %}">
+                    {{ remaining_amount|default:reservation.total_amount }} {{ reservation.currency }}
+                </span>
+            </div>
         </div>
     </div>
     

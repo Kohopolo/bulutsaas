@@ -182,17 +182,41 @@ def configuration_list(request):
     elif status_filter == 'inactive':
         configurations = configurations.filter(is_active=False)
     
-    hotel_filter = request.GET.get('hotel', '')
-    if hotel_filter:
-        configurations = configurations.filter(hotel_id=hotel_filter)
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                configurations = configurations.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Sadece aktif otelin kanal yapılandırmalarını göster
+            configurations = configurations.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     # Sayfalama
     paginator = Paginator(configurations, 20)
     page = request.GET.get('page')
     configurations = paginator.get_page(page)
     
-    # Oteller (filtre için) - django-tenants kullanıldığı için tenant field'ı yok
-    hotels = Hotel.objects.filter(is_deleted=False).order_by('name')
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    else:
+        # Fallback: Tüm otelleri göster
+        from apps.tenant_apps.hotels.models import Hotel
+        accessible_hotels = Hotel.objects.filter(is_deleted=False).order_by('name')
     
     # İstatistikler
     stats = {
@@ -203,11 +227,13 @@ def configuration_list(request):
     
     context = {
         'configurations': configurations,
-        'hotels': hotels,
+        'hotels': accessible_hotels,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
         'stats': stats,
         'search': search,
         'status_filter': status_filter,
-        'hotel_filter': hotel_filter,
     }
     
     return render(request, 'channel_management/configuration_list.html', context)

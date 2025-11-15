@@ -75,6 +75,7 @@
                         <th>Gece</th>
                         <th>Tutar</th>
                         <th>Ödenen</th>
+                        <th>Kalan</th>
                         <th>Durum</th>
                         <th>İşlemler</th>
                     </tr>
@@ -90,11 +91,12 @@
                         <td>{{ reservation.total_nights }}</td>
                         <td><strong>{{ reservation.total_amount|floatformat:2 }} {{ reservation.currency }}</strong></td>
                         <td>
-                            {% if reservation.total_paid >= reservation.total_amount %}
-                                <span style="color: green;"><i class="fas fa-check-circle"></i> {{ reservation.total_paid|floatformat:2 }}</span>
-                            {% else %}
-                                <span style="color: orange;">{{ reservation.total_paid|floatformat:2 }}</span>
-                            {% endif %}
+                            <span style="color: #388e3c; font-weight: bold;">{{ reservation.total_paid|floatformat:2 }} {{ reservation.currency }}</span>
+                        </td>
+                        <td>
+                            <span style="color: {% if reservation.remaining_amount > 0 %}#d32f2f{% else %}#388e3c{% endif %}; font-weight: bold;">
+                                {{ reservation.remaining_amount|floatformat:2 }} {{ reservation.currency }}
+                            </span>
                         </td>
                         <td>
                             <span class="badge badge-{% if reservation.status == 'checked_in' %}success{% elif reservation.status == 'confirmed' %}info{% elif reservation.status == 'cancelled' %}danger{% else %}warning{% endif %}">
@@ -102,10 +104,13 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{% url 'bungalovs:reservation_detail' reservation.pk %}" class="vb-button small">
+                            <a href="{% url 'bungalovs:reservation_detail' reservation.pk %}" class="vb-button small" title="Detay">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{% url 'bungalovs:reservation_update' reservation.pk %}" class="vb-button small">
+                            <a href="{% url 'bungalovs:reservation_payment_add' reservation.pk %}" class="vb-button small" style="background: #28a745; color: white; border-color: #28a745;" title="Ödeme Ekle">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </a>
+                            <a href="{% url 'bungalovs:reservation_update' reservation.pk %}" class="vb-button small" title="Düzenle">
                                 <i class="fas fa-edit"></i>
                             </a>
                         </td>

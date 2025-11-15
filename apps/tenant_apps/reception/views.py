@@ -16,9 +16,16 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.urls import reverse
 
-from .models import Reservation, ReservationStatus, ReservationSource
-from .forms import ReservationForm, ReservationGuestFormSet
+from .models import (
+    Reservation, ReservationStatus, ReservationSource,
+    EndOfDayOperation, EndOfDaySettings, EndOfDayOperationStep,
+    EndOfDayReport, EndOfDayJournalEntry,
+    EndOfDayOperationStatus, EndOfDayAutomationType, EndOfDayReportType,
+    EndOfDayStepStatus
+)
+from .forms import ReservationForm, ReservationGuestFormSet, EndOfDaySettingsForm
 from .utils import save_guest_information
+from .end_of_day_utils import run_end_of_day_operation, rollback_end_of_day_operation
 from apps.tenant_apps.hotels.decorators import require_hotel_permission
 
 
@@ -770,70 +777,15 @@ def reservation_update(request, pk):
         # Form'u instance ile oluştur (Django otomatik olarak değerleri yükler)
         form = ReservationForm(instance=reservation, hotel=hotel)
         
-        # Debug: Form instance değerlerini kontrol et
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f'[DEBUG] Form instance değerleri kontrol ediliyor - Rezervasyon ID: {reservation.pk}')
-        logger.info(f'[DEBUG] Form check_in_date initial: {form.fields["check_in_date"].initial}')
-        logger.info(f'[DEBUG] Form check_out_date initial: {form.fields["check_out_date"].initial}')
-        logger.info(f'[DEBUG] Form room initial: {form.fields["room"].initial}')
-        logger.info(f'[DEBUG] Form status initial: {form.fields["status"].initial}')
-        logger.info(f'[DEBUG] Form source initial: {form.fields["source"].initial}')
-        logger.info(f'[DEBUG] Form adult_count initial: {form.fields["adult_count"].initial}')
-        logger.info(f'[DEBUG] Form child_count initial: {form.fields["child_count"].initial}')
-        logger.info(f'[DEBUG] Form room_rate initial: {form.fields["room_rate"].initial}')
-        logger.info(f'[DEBUG] Form currency initial: {form.fields["currency"].initial}')
-        
-        # Form instance değerlerini kontrol et
-        if form.instance:
-            logger.info(f'[DEBUG] Form instance check_in_date: {form.instance.check_in_date}')
-            logger.info(f'[DEBUG] Form instance check_out_date: {form.instance.check_out_date}')
-            logger.info(f'[DEBUG] Form instance room_id: {form.instance.room_id}')
-            logger.info(f'[DEBUG] Form instance status: {form.instance.status}')
-            logger.info(f'[DEBUG] Form instance source: {form.instance.source}')
-            logger.info(f'[DEBUG] Form instance adult_count: {form.instance.adult_count}')
-            logger.info(f'[DEBUG] Form instance child_count: {form.instance.child_count}')
-            logger.info(f'[DEBUG] Form instance room_rate: {form.instance.room_rate}')
-            logger.info(f'[DEBUG] Form instance currency: {form.instance.currency}')
-        
         # Mevcut misafirleri formset'e yükle
-        
         # Formset'i queryset ile açıkça oluştur (instance yeterli değil)
         from .models import ReservationGuest
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        # Önce misafirleri kontrol et
-        all_guests = ReservationGuest.objects.filter(reservation=reservation)
-        logger.info(f'[DEBUG] Rezervasyon {reservation.pk} - Tüm misafirler (filter ile): {all_guests.count()}')
-        logger.info(f'[DEBUG] Rezervasyon {reservation.pk} - reservation.guests.count(): {reservation.guests.count()}')
-        
-        # Her misafiri logla
-        for guest in all_guests[:10]:
-            logger.info(f'[DEBUG] Misafir: ID={guest.id}, Ad={guest.first_name}, Soyad={guest.last_name}, Type={guest.guest_type}, Order={guest.guest_order}, Reservation_ID={guest.reservation_id}')
         
         # Formset'i oluştur
         guest_formset = ReservationGuestFormSet(
             instance=reservation,
             queryset=ReservationGuest.objects.filter(reservation=reservation).order_by('guest_type', 'guest_order')
         )
-        
-        # Debug: Formset'teki misafir sayısını kontrol et
-        logger.info(f'[DEBUG] Rezervasyon {reservation.pk} için formset oluşturuldu.')
-        logger.info(f'[DEBUG] Rezervasyon misafir sayısı: {reservation.guests.count()}')
-        logger.info(f'[DEBUG] Formset queryset sayısı: {guest_formset.queryset.count()}')
-        logger.info(f'[DEBUG] Formset form sayısı: {len(guest_formset)}')
-        
-        # Formset formlarını detaylı logla
-        for i, form in enumerate(guest_formset):
-            logger.info(f'[DEBUG] Formset Form {i}: ID={form.instance.id if form.instance else "YENİ"}, Type={form.instance.guest_type if form.instance else "N/A"}, Order={form.instance.guest_order if form.instance else "N/A"}, Ad={form.instance.first_name if form.instance else "N/A"}')
-        
-        # Eğer formset hala boşsa, misafirleri logla
-        if len(guest_formset) == 0 and reservation.guests.count() > 0:
-            logger.warning(f'[WARNING] Formset boş ama {reservation.guests.count()} misafir var!')
-            logger.warning(f'[WARNING] Bu bir sorun! Formset misafirleri yükleyemiyor.')
-            for guest in reservation.guests.all()[:5]:
-                logger.warning(f'[WARNING] Misafir: {guest.id} - {guest.first_name} {guest.last_name} (type: {guest.guest_type}, order: {guest.guest_order}, reservation_id: {guest.reservation_id})')
     
     # Misafir bilgileri (JavaScript için JSON)
     import json
@@ -1266,6 +1218,7 @@ def reservation_refund(request, pk):
                         created_by=request.user,
                         refund_policy_id=refund_policy.pk if refund_policy else None,
                         customer=reservation.customer if reservation.customer else None,
+                        hotel=reservation.hotel,  # Otel bilgisi eklendi
                     )
                     
                     # Manuel iade tutarını ayarla (politika hesaplamasını override et)
@@ -1608,13 +1561,9 @@ def room_plan(request):
                 is_deleted=False
             ).select_related('room', 'block').order_by('number')
             
-            logger.info(f'Kat {floor.name} (ID: {floor.id}) - Aktif oda sayısı: {rooms.count()}')
-            
             if rooms.count() == 0:
-                logger.warning(f'Kat {floor.name} (ID: {floor.id}) - Aktif oda bulunamadı! Tüm odalar: {all_rooms.count()}')
-                # Aktif oda yoksa, pasif odaları da göster (debug için)
+                # Aktif oda yoksa, pasif odaları da göster
                 rooms = all_rooms.filter(is_deleted=False).select_related('room', 'block').order_by('number')
-                logger.info(f'Kat {floor.name} - Pasif odalar dahil edildi: {rooms.count()}')
             
             # Her oda için rezervasyon bilgisini ekle
             rooms_with_reservations = []
@@ -3184,4 +3133,502 @@ def api_room_numbers(request):
         })
     
     return JsonResponse({'room_numbers': results})
+
+# ==================== GÜN SONU İŞLEMLERİ (END OF DAY / NIGHT AUDIT) ====================
+# Bu dosya views.py'nin sonuna eklenecek
+
+@login_required
+@require_hotel_permission('view')
+def end_of_day_dashboard(request):
+    """
+    Gün Sonu İşlemleri Dashboard
+    Hotel bazlı çalışır - Çoklu otel yetkisi varsa kullanıcı seçim yapabilir
+    """
+    # Erişilebilir oteller
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    active_hotel = getattr(request, 'active_hotel', None)
+    
+    # Otel seçimi (GET parametresinden veya aktif otel)
+    hotel_id = request.GET.get('hotel_id')
+    if hotel_id:
+        try:
+            hotel_id = int(hotel_id)
+            # Kullanıcının bu otelde yetkisi var mı kontrol et
+            hotel = None
+            for h in accessible_hotels:
+                if h.id == hotel_id:
+                    hotel = h
+                    break
+            if not hotel:
+                messages.error(request, 'Bu otel için yetkiniz bulunmamaktadır.')
+                hotel = active_hotel
+        except (ValueError, TypeError):
+            hotel = active_hotel
+    else:
+        hotel = active_hotel
+    
+    if not hotel:
+        messages.error(request, 'Aktif otel seçilmedi.')
+        return redirect('hotels:select_hotel')
+    
+    # Son işlemler (bu otel için)
+    recent_operations = EndOfDayOperation.objects.filter(
+        hotel=hotel,
+        is_deleted=False
+    ).select_related('created_by').order_by('-operation_date', '-created_at')[:10]
+    
+    # Bugünün işlemi var mı?
+    today = date.today()
+    today_operation = EndOfDayOperation.objects.filter(
+        hotel=hotel,
+        operation_date=today,
+        is_deleted=False
+    ).first()
+    
+    # Ayarlar
+    settings = EndOfDaySettings.get_or_create_for_hotel(hotel)
+    
+    # İstatistikler
+    total_operations = EndOfDayOperation.objects.filter(
+        hotel=hotel,
+        is_deleted=False
+    ).count()
+    
+    completed_operations = EndOfDayOperation.objects.filter(
+        hotel=hotel,
+        status=EndOfDayOperationStatus.COMPLETED,
+        is_deleted=False
+    ).count()
+    
+    failed_operations = EndOfDayOperation.objects.filter(
+        hotel=hotel,
+        status=EndOfDayOperationStatus.FAILED,
+        is_deleted=False
+    ).count()
+    
+    context = {
+        'hotel': hotel,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': active_hotel,
+        'recent_operations': recent_operations,
+        'today_operation': today_operation,
+        'settings': settings,
+        'total_operations': total_operations,
+        'completed_operations': completed_operations,
+        'failed_operations': failed_operations,
+        'can_run_today': today_operation is None or today_operation.status == EndOfDayOperationStatus.FAILED,
+    }
+    
+    return render(request, 'reception/end_of_day/dashboard.html', context)
+
+
+@login_required
+@require_hotel_permission('edit')
+def end_of_day_settings(request, hotel_id=None):
+    """
+    Gün Sonu Ayarları
+    Hotel bazlı çalışır - Çoklu otel yetkisi varsa kullanıcı seçim yapabilir
+    """
+    # Erişilebilir oteller
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    active_hotel = getattr(request, 'active_hotel', None)
+    
+    # Otel seçimi
+    if hotel_id:
+        try:
+            hotel_id = int(hotel_id)
+            hotel = None
+            for h in accessible_hotels:
+                if h.id == hotel_id:
+                    hotel = h
+                    break
+            if not hotel:
+                messages.error(request, 'Bu otel için yetkiniz bulunmamaktadır.')
+                hotel = active_hotel
+        except (ValueError, TypeError):
+            hotel = active_hotel
+    else:
+        hotel = active_hotel
+    
+    if not hotel:
+        messages.error(request, 'Aktif otel seçilmedi.')
+        return redirect('hotels:select_hotel')
+    
+    # Ayarları al veya oluştur
+    settings = EndOfDaySettings.get_or_create_for_hotel(hotel)
+    
+    if request.method == 'POST':
+        form = EndOfDaySettingsForm(request.POST, instance=settings, hotel=hotel)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'{hotel.name} oteli için gün sonu ayarları başarıyla güncellendi.')
+            return redirect('reception:end_of_day_settings', hotel_id=hotel.id)
+    else:
+        form = EndOfDaySettingsForm(instance=settings, hotel=hotel)
+    
+    context = {
+        'hotel': hotel,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': active_hotel,
+        'form': form,
+        'settings': settings,
+    }
+    
+    return render(request, 'reception/end_of_day/settings.html', context)
+
+
+@login_required
+@require_hotel_permission('edit')
+def end_of_day_run(request, hotel_id=None):
+    """
+    Gün Sonu İşlemini Çalıştır
+    Hotel bazlı çalışır - Çoklu otel yetkisi varsa kullanıcı seçim yapabilir
+    """
+    # Erişilebilir oteller
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    active_hotel = getattr(request, 'active_hotel', None)
+    
+    # Otel seçimi
+    if hotel_id:
+        try:
+            hotel_id = int(hotel_id)
+            hotel = None
+            for h in accessible_hotels:
+                if h.id == hotel_id:
+                    hotel = h
+                    break
+            if not hotel:
+                messages.error(request, 'Bu otel için yetkiniz bulunmamaktadır.')
+                hotel = active_hotel
+        except (ValueError, TypeError):
+            hotel = active_hotel
+    else:
+        hotel = active_hotel
+    
+    if not hotel:
+        messages.error(request, 'Aktif otel seçilmedi.')
+        return redirect('hotels:select_hotel')
+    
+    # Bugünün işlemi var mı kontrol et
+    today = date.today()
+    existing_operation = EndOfDayOperation.objects.filter(
+        hotel=hotel,
+        operation_date=today,
+        is_deleted=False
+    ).first()
+    
+    if existing_operation and existing_operation.status == EndOfDayOperationStatus.COMPLETED:
+        messages.warning(request, f'{today.strftime("%d.%m.%Y")} tarihi için gün sonu işlemi zaten tamamlanmış.')
+        return redirect('reception:end_of_day_operation_detail', pk=existing_operation.pk)
+    
+    # POST isteği - İşlemi başlat
+    if request.method == 'POST':
+        # Mevcut işlem varsa onu kullan, yoksa yeni oluştur
+        if existing_operation:
+            operation = existing_operation
+        else:
+            operation = EndOfDayOperation.objects.create(
+                hotel=hotel,
+                operation_date=today,
+                program_date=today,
+                status=EndOfDayOperationStatus.PENDING,
+                automation_type=EndOfDayAutomationType.MANUAL,
+                created_by=request.user,
+            )
+        
+        # İşlemi başlat
+        settings = EndOfDaySettings.get_or_create_for_hotel(hotel)
+        success, message = run_end_of_day_operation(operation, settings)
+        
+        if success:
+            messages.success(request, f'{hotel.name} oteli için gün sonu işlemi başarıyla tamamlandı.')
+        else:
+            messages.error(request, f'Gün sonu işlemi başarısız: {message}')
+        
+        return redirect('reception:end_of_day_operation_detail', pk=operation.pk)
+    
+    # GET isteği - Form göster
+    settings = EndOfDaySettings.get_or_create_for_hotel(hotel)
+    
+    context = {
+        'hotel': hotel,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': active_hotel,
+        'settings': settings,
+        'existing_operation': existing_operation,
+        'can_run': existing_operation is None or existing_operation.status == EndOfDayOperationStatus.FAILED,
+    }
+    
+    return render(request, 'reception/end_of_day/run.html', context)
+
+
+@login_required
+@require_hotel_permission('view')
+def end_of_day_operation_list(request):
+    """
+    Gün Sonu İşlemleri Listesi
+    Hotel bazlı filtreleme ile
+    """
+    # Erişilebilir oteller
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    active_hotel = getattr(request, 'active_hotel', None)
+    
+    # Otel filtresi
+    hotel_id = request.GET.get('hotel_id')
+    if hotel_id:
+        try:
+            hotel_id = int(hotel_id)
+            hotel = None
+            for h in accessible_hotels:
+                if h.id == hotel_id:
+                    hotel = h
+                    break
+            if not hotel:
+                hotel = active_hotel
+        except (ValueError, TypeError):
+            hotel = active_hotel
+    else:
+        hotel = active_hotel
+    
+    # İşlemleri getir
+    operations = EndOfDayOperation.objects.filter(is_deleted=False)
+    
+    # Hotel bazlı filtreleme
+    if hotel:
+        operations = operations.filter(hotel=hotel)
+    
+    # Durum filtresi
+    status_filter = request.GET.get('status')
+    if status_filter:
+        operations = operations.filter(status=status_filter)
+    
+    # Tarih filtresi
+    date_from = request.GET.get('date_from')
+    if date_from:
+        try:
+            from datetime import datetime
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            operations = operations.filter(operation_date__gte=date_from_obj)
+        except (ValueError, TypeError):
+            pass
+    
+    date_to = request.GET.get('date_to')
+    if date_to:
+        try:
+            from datetime import datetime
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            operations = operations.filter(operation_date__lte=date_to_obj)
+        except (ValueError, TypeError):
+            pass
+    
+    # Sıralama ve sayfalama
+    operations = operations.select_related('hotel', 'created_by').order_by('-operation_date', '-created_at')
+    paginator = Paginator(operations, 25)
+    page = request.GET.get('page')
+    operations = paginator.get_page(page)
+    
+    context = {
+        'operations': operations,
+        'hotel': hotel,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': active_hotel,
+        'status_choices': EndOfDayOperationStatus.choices,
+        'selected_status': status_filter,
+        'selected_hotel_id': hotel.id if hotel else None,
+    }
+    
+    return render(request, 'reception/end_of_day/operation_list.html', context)
+
+
+@login_required
+@require_hotel_permission('view')
+def end_of_day_operation_detail(request, pk):
+    """Gün Sonu İşlemi Detayı"""
+    operation = get_object_or_404(
+        EndOfDayOperation,
+        pk=pk,
+        is_deleted=False
+    )
+    
+    # Kullanıcının bu otelde yetkisi var mı kontrol et
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    if operation.hotel not in accessible_hotels:
+        messages.error(request, 'Bu işleme erişim yetkiniz bulunmamaktadır.')
+        return redirect('reception:end_of_day_operation_list')
+    
+    # Adımlar
+    steps = operation.steps.all().order_by('step_order')
+    
+    # Raporlar
+    reports = operation.reports.all().order_by('-generated_at')
+    
+    # Muhasebe fişleri
+    journal_entries = operation.journal_entries.all().select_related('journal_entry').order_by('-created_at')
+    
+    context = {
+        'operation': operation,
+        'steps': steps,
+        'reports': reports,
+        'journal_entries': journal_entries,
+        'can_rollback': operation.can_rollback(),
+        'progress_percentage': operation.get_progress_percentage(),
+        'duration': operation.get_duration(),
+    }
+    
+    return render(request, 'reception/end_of_day/operation_detail.html', context)
+
+
+@login_required
+@require_hotel_permission('edit')
+@require_http_methods(["POST"])
+def end_of_day_operation_rollback(request, pk):
+    """Gün Sonu İşlemini Geri Al (Rollback)"""
+    operation = get_object_or_404(
+        EndOfDayOperation,
+        pk=pk,
+        is_deleted=False
+    )
+    
+    # Kullanıcının bu otelde yetkisi var mı kontrol et
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    if operation.hotel not in accessible_hotels:
+        messages.error(request, 'Bu işleme erişim yetkiniz bulunmamaktadır.')
+        return redirect('reception:end_of_day_operation_list')
+    
+    # Rollback yapılabilir mi?
+    if not operation.can_rollback():
+        messages.error(request, 'Bu işlem için rollback yapılamaz.')
+        return redirect('reception:end_of_day_operation_detail', pk=operation.pk)
+    
+    # Rollback işlemi
+    success, message = rollback_end_of_day_operation(operation)
+    
+    if success:
+        messages.success(request, f'Rollback işlemi başarıyla tamamlandı: {message}')
+    else:
+        messages.error(request, f'Rollback işlemi başarısız: {message}')
+    
+    return redirect('reception:end_of_day_operation_detail', pk=operation.pk)
+
+
+@login_required
+@require_hotel_permission('view')
+def end_of_day_report_list(request):
+    """
+    Gün Sonu Raporları Listesi
+    Hotel bazlı filtreleme ile
+    """
+    # Erişilebilir oteller
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    active_hotel = getattr(request, 'active_hotel', None)
+    
+    # Otel filtresi
+    hotel_id = request.GET.get('hotel_id')
+    if hotel_id:
+        try:
+            hotel_id = int(hotel_id)
+            hotel = None
+            for h in accessible_hotels:
+                if h.id == hotel_id:
+                    hotel = h
+                    break
+            if not hotel:
+                hotel = active_hotel
+        except (ValueError, TypeError):
+            hotel = active_hotel
+    else:
+        hotel = active_hotel
+    
+    # Raporları getir
+    reports = EndOfDayReport.objects.all()
+    
+    # Hotel bazlı filtreleme
+    if hotel:
+        reports = reports.filter(operation__hotel=hotel)
+    
+    # Rapor türü filtresi
+    report_type_filter = request.GET.get('report_type')
+    if report_type_filter:
+        reports = reports.filter(report_type=report_type_filter)
+    
+    # Tarih filtresi
+    date_from = request.GET.get('date_from')
+    if date_from:
+        try:
+            from datetime import datetime
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            reports = reports.filter(generated_at__date__gte=date_from_obj)
+        except (ValueError, TypeError):
+            pass
+    
+    date_to = request.GET.get('date_to')
+    if date_to:
+        try:
+            from datetime import datetime
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            reports = reports.filter(generated_at__date__lte=date_to_obj)
+        except (ValueError, TypeError):
+            pass
+    
+    # Sıralama ve sayfalama
+    reports = reports.select_related('operation', 'operation__hotel').order_by('-generated_at')
+    paginator = Paginator(reports, 25)
+    page = request.GET.get('page')
+    reports = paginator.get_page(page)
+    
+    context = {
+        'reports': reports,
+        'hotel': hotel,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': active_hotel,
+        'report_type_choices': EndOfDayReportType.choices,
+        'selected_report_type': report_type_filter,
+        'selected_hotel_id': hotel.id if hotel else None,
+    }
+    
+    return render(request, 'reception/end_of_day/report_list.html', context)
+
+
+@login_required
+@require_hotel_permission('view')
+def end_of_day_report_detail(request, pk):
+    """Gün Sonu Raporu Detayı"""
+    report = get_object_or_404(EndOfDayReport, pk=pk)
+    
+    # Kullanıcının bu otelde yetkisi var mı kontrol et
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    if report.operation.hotel not in accessible_hotels:
+        messages.error(request, 'Bu rapora erişim yetkiniz bulunmamaktadır.')
+        return redirect('reception:end_of_day_report_list')
+    
+    context = {
+        'report': report,
+        'operation': report.operation,
+    }
+    
+    return render(request, 'reception/end_of_day/report_detail.html', context)
+
+
+@login_required
+@require_hotel_permission('view')
+def end_of_day_report_download(request, pk):
+    """Gün Sonu Raporu İndir"""
+    report = get_object_or_404(EndOfDayReport, pk=pk)
+    
+    # Kullanıcının bu otelde yetkisi var mı kontrol et
+    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    if report.operation.hotel not in accessible_hotels:
+        messages.error(request, 'Bu rapora erişim yetkiniz bulunmamaktadır.')
+        return redirect('reception:end_of_day_report_list')
+    
+    if not report.report_file:
+        messages.error(request, 'Rapor dosyası bulunamadı.')
+        return redirect('reception:end_of_day_report_detail', pk=report.pk)
+    
+    from django.http import FileResponse
+    return FileResponse(
+        report.report_file.open('rb'),
+        as_attachment=True,
+        filename=report.report_file.name.split('/')[-1]
+    )
 

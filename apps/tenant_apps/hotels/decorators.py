@@ -71,11 +71,21 @@ def require_hotel_permission(permission_level='view'):
                 return redirect('tenant:dashboard')
 
             try:
-                tenant_user = TenantUser.objects.get(user=request.user, is_active=True)
-                
                 # Superuser veya staff kullanıcılar tüm yetkilere sahip
                 if request.user.is_superuser or request.user.is_staff:
                     return view_func(request, *args, **kwargs)
+                
+                # TenantUser kontrolü
+                try:
+                    tenant_user = TenantUser.objects.get(user=request.user, is_active=True)
+                except TenantUser.DoesNotExist:
+                    # TenantUser yoksa, superuser veya staff değilse erişim reddedilir
+                    # AJAX isteği ise JSON döndür
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        from django.http import JsonResponse
+                        return JsonResponse({'error': 'Tenant kullanıcı profili bulunamadı.'}, status=403)
+                    messages.error(request, 'Tenant kullanıcı profili bulunamadı.')
+                    return redirect('tenant:login')
                 
                 # Admin kullanıcılar tüm yetkilere sahip
                 try:
@@ -90,6 +100,7 @@ def require_hotel_permission(permission_level='view'):
                     pass
                 
                 # Otel yetkisini kontrol et
+                hotel_permission = None
                 try:
                     hotel_permission = HotelUserPermission.objects.filter(
                         tenant_user=tenant_user,
@@ -100,12 +111,8 @@ def require_hotel_permission(permission_level='view'):
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.error(f'Hotel permission sorgulama hatası: {str(e)}', exc_info=True)
-                    # AJAX isteği ise JSON döndür
-                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                        from django.http import JsonResponse
-                        return JsonResponse({'error': 'Yetki kontrolü sırasında hata oluştu.'}, status=500)
-                    messages.error(request, 'Yetki kontrolü sırasında hata oluştu.')
-                    return redirect('tenant:dashboard')
+                    # Hata durumunda hotel_permission None olarak devam et
+                    hotel_permission = None
                 
                 # Hotel name güvenli erişim
                 hotel_name = getattr(hotel, 'name', 'Otel')

@@ -645,3 +645,471 @@ class VoucherTemplate(TimeStampedModel, SoftDeleteModel):
     def __str__(self):
         return self.name
 
+
+# ==================== GÜN SONU İŞLEMLERİ (END OF DAY / NIGHT AUDIT) ====================
+
+class EndOfDayOperationStatus(models.TextChoices):
+    """Gün Sonu İşlem Durumları"""
+    PENDING = 'pending', 'Beklemede'
+    RUNNING = 'running', 'Çalışıyor'
+    COMPLETED = 'completed', 'Tamamlandı'
+    FAILED = 'failed', 'Başarısız'
+    ROLLED_BACK = 'rolled_back', 'Geri Alındı'
+
+
+class EndOfDayAutomationType(models.TextChoices):
+    """Gün Sonu Otomasyon Türleri"""
+    SCHEDULED = 'scheduled', 'Zaman Planlı'
+    MANUAL = 'manual', 'Manuel'
+    AUTOMATIC = 'automatic', 'Tam Otomatik'
+
+
+class EndOfDayReportType(models.TextChoices):
+    """Gün Sonu Rapor Türleri"""
+    SUMMARY = 'summary', 'Özet'
+    FINANCIAL = 'financial', 'Finansal'
+    OPERATIONAL = 'operational', 'Operasyonel'
+    GUEST = 'guest', 'Misafir'
+    MANAGEMENT = 'management', 'Yönetim'
+
+
+class EndOfDayStepStatus(models.TextChoices):
+    """Gün Sonu Adım Durumları"""
+    PENDING = 'pending', 'Beklemede'
+    RUNNING = 'running', 'Çalışıyor'
+    COMPLETED = 'completed', 'Tamamlandı'
+    FAILED = 'failed', 'Başarısız'
+
+
+class EndOfDayNoShowAction(models.TextChoices):
+    """No-Show İşlem Türleri"""
+    CANCEL = 'cancel', 'İptal Et'
+    MOVE_TO_TOMORROW = 'move_to_tomorrow', 'Yarına Al'
+
+
+class EndOfDayOperation(TimeStampedModel, SoftDeleteModel):
+    """
+    Gün Sonu İşlemi (Night Audit / End of Day)
+    Her otel için ayrı gün sonu işlemleri yapılır
+    """
+    # Otel Bağlantısı (ZORUNLU - Hotel bazlı çalışır)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.CASCADE,
+        related_name='end_of_day_operations',
+        verbose_name='Otel'
+    )
+    
+    # Tarih Bilgileri
+    operation_date = models.DateField('İşlem Tarihi', db_index=True,
+                                      help_text='Gün sonu işleminin yapıldığı tarih')
+    program_date = models.DateField('Program Tarihi', db_index=True,
+                                   help_text='İşlemin yapıldığı günün tarihi')
+    
+    # Durum Bilgileri
+    status = models.CharField(
+        'Durum',
+        max_length=20,
+        choices=EndOfDayOperationStatus.choices,
+        default=EndOfDayOperationStatus.PENDING,
+        db_index=True
+    )
+    
+    # İşlem Türü
+    is_async = models.BooleanField('Asenkron mu?', default=False,
+                                   help_text='Asenkron olarak çalıştırılsın mı?')
+    automation_type = models.CharField(
+        'Otomasyon Türü',
+        max_length=20,
+        choices=EndOfDayAutomationType.choices,
+        default=EndOfDayAutomationType.MANUAL,
+        db_index=True
+    )
+    
+    # Ayarlar ve Sonuçlar
+    settings = models.JSONField('İşlem Ayarları', default=dict, blank=True,
+                               help_text='İşlem sırasında kullanılan ayarlar')
+    results = models.JSONField('İşlem Sonuçları', default=dict, blank=True,
+                              help_text='İşlem sonuçları ve istatistikler')
+    
+    # Zaman Bilgileri
+    started_at = models.DateTimeField('Başlangıç Zamanı', null=True, blank=True)
+    completed_at = models.DateTimeField('Bitiş Zamanı', null=True, blank=True)
+    
+    # Hata ve Rollback
+    error_message = models.TextField('Hata Mesajı', blank=True,
+                                    help_text='İşlem sırasında oluşan hatalar')
+    rollback_data = models.JSONField('Rollback Verileri', default=dict, blank=True,
+                                    help_text='Geri alma işlemi için gerekli veriler')
+    
+    # Kullanıcı Takibi
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_end_of_day_operations',
+        verbose_name='Oluşturan Kullanıcı'
+    )
+    
+    # Ek Bilgiler
+    notes = models.TextField('Notlar', blank=True)
+    metadata = models.JSONField('Ek Bilgiler', default=dict, blank=True)
+    
+    class Meta:
+        verbose_name = 'Gün Sonu İşlemi'
+        verbose_name_plural = 'Gün Sonu İşlemleri'
+        ordering = ['-operation_date', '-created_at']
+        indexes = [
+            models.Index(fields=['hotel', 'operation_date']),
+            models.Index(fields=['hotel', 'status']),
+            models.Index(fields=['operation_date', 'status']),
+            models.Index(fields=['automation_type']),
+        ]
+        unique_together = [('hotel', 'operation_date')]  # Her otel için günde bir işlem
+    
+    def __str__(self):
+        return f"{self.hotel.name} - {self.operation_date.strftime('%d.%m.%Y')} - {self.get_status_display()}"
+    
+    def can_rollback(self):
+        """Rollback yapılabilir mi?"""
+        return (
+            self.status in [EndOfDayOperationStatus.COMPLETED, EndOfDayOperationStatus.FAILED] and
+            self.rollback_data and
+            len(self.rollback_data) > 0
+        )
+    
+    def get_progress_percentage(self):
+        """İlerleme yüzdesini hesapla"""
+        if self.status == EndOfDayOperationStatus.COMPLETED:
+            return 100
+        elif self.status == EndOfDayOperationStatus.FAILED:
+            return 0
+        
+        # Adımların durumuna göre hesapla
+        total_steps = self.steps.count()
+        if total_steps == 0:
+            return 0
+        
+        completed_steps = self.steps.filter(status=EndOfDayStepStatus.COMPLETED).count()
+        return int((completed_steps / total_steps) * 100) if total_steps > 0 else 0
+    
+    def get_duration(self):
+        """İşlem süresini hesapla"""
+        if self.started_at and self.completed_at:
+            return self.completed_at - self.started_at
+        return None
+
+
+class EndOfDaySettings(TimeStampedModel):
+    """
+    Gün Sonu Ayarları
+    Her otel için ayrı ayarlar (unique hotel)
+    """
+    # Otel Bağlantısı (ZORUNLU ve UNIQUE - Her otel için tek ayar)
+    hotel = models.OneToOneField(
+        'hotels.Hotel',
+        on_delete=models.CASCADE,
+        related_name='end_of_day_settings',
+        verbose_name='Otel',
+        unique=True
+    )
+    
+    # Pre-Audit Kontrol Ayarları
+    stop_if_room_price_zero = models.BooleanField(
+        'Oda Fiyatı SIFIR İse Durdur!',
+        default=True,
+        help_text='Sıfır fiyatlı oda varsa gün sonu işlemini durdur'
+    )
+    stop_if_advance_folio_balance_not_zero = models.BooleanField(
+        'Peşin Folyo Balansı Sıfır Değilse Durdur!',
+        default=True,
+        help_text='Peşin ödemeli rezervasyonda bakiye varsa durdur'
+    )
+    check_checkout_folios = models.BooleanField(
+        'Checkout Olmuş Folyoları Kontrol Et!',
+        default=True,
+        help_text='Check-out yapılmış folyoları kontrol et'
+    )
+    
+    # Otomatik İşlem Ayarları
+    cancel_no_show_reservations = models.BooleanField(
+        'Gelmeyen Rezervasyonları İptal Et veya Yarına Al!',
+        default=False,
+        help_text='No-show rezervasyonları iptal et veya yarına al'
+    )
+    no_show_action = models.CharField(
+        'No-Show İşlemi',
+        max_length=20,
+        choices=EndOfDayNoShowAction.choices,
+        default=EndOfDayNoShowAction.CANCEL,
+        help_text='No-show rezervasyonları için yapılacak işlem'
+    )
+    
+    extend_non_checkout_reservations = models.BooleanField(
+        'CheckOut Olmamış Konaklayanları UZAT!',
+        default=False,
+        help_text='Check-out yapılmamış rezervasyonları otomatik uzat'
+    )
+    extend_days = models.IntegerField(
+        'Uzatma Gün Sayısı',
+        default=1,
+        validators=[MinValueValidator(1)],
+        help_text='Kaç gün uzatılacak?'
+    )
+    
+    cancel_room_change_plans = models.BooleanField(
+        'Oda Değişim Planlarını İPTAL Et!',
+        default=False,
+        help_text='Planlanmış ama gerçekleşmemiş oda değişimlerini iptal et'
+    )
+    
+    # Otomasyon Ayarları
+    auto_run_time = models.TimeField(
+        'Otomatik Çalışma Saati',
+        null=True,
+        blank=True,
+        help_text='Gün sonu işleminin otomatik başlatılacağı saat (örn: 02:00)'
+    )
+    automation_type = models.CharField(
+        'Otomasyon Türü',
+        max_length=20,
+        choices=EndOfDayAutomationType.choices,
+        default=EndOfDayAutomationType.MANUAL,
+        help_text='Gün sonu işleminin nasıl çalıştırılacağı'
+    )
+    
+    # Genel Ayarlar
+    is_active = models.BooleanField('Aktif mi?', default=True)
+    enable_rollback = models.BooleanField(
+        'Rollback Aktif mi?',
+        default=True,
+        help_text='Hata durumunda geri alma işlemi yapılabilsin mi?'
+    )
+    
+    # Ek Bilgiler
+    notes = models.TextField('Notlar', blank=True)
+    
+    class Meta:
+        verbose_name = 'Gün Sonu Ayarı'
+        verbose_name_plural = 'Gün Sonu Ayarları'
+        ordering = ['hotel__name']
+    
+    def __str__(self):
+        return f"{self.hotel.name} - Gün Sonu Ayarları"
+    
+    @classmethod
+    def get_or_create_for_hotel(cls, hotel):
+        """Otel için ayarları al veya oluştur"""
+        settings, created = cls.objects.get_or_create(
+            hotel=hotel,
+            defaults={
+                'stop_if_room_price_zero': True,
+                'stop_if_advance_folio_balance_not_zero': True,
+                'check_checkout_folios': True,
+                'cancel_no_show_reservations': False,
+                'extend_non_checkout_reservations': False,
+                'cancel_room_change_plans': False,
+                'automation_type': EndOfDayAutomationType.MANUAL,
+                'is_active': True,
+                'enable_rollback': True,
+            }
+        )
+        return settings
+
+
+class EndOfDayOperationStep(TimeStampedModel):
+    """
+    Gün Sonu İşlem Adımları
+    Her işlem için adım adım takip
+    """
+    # İşlem Bağlantısı
+    operation = models.ForeignKey(
+        EndOfDayOperation,
+        on_delete=models.CASCADE,
+        related_name='steps',
+        verbose_name='Gün Sonu İşlemi'
+    )
+    
+    # Adım Bilgileri
+    step_name = models.CharField('Adım Adı', max_length=200,
+                                help_text='İşlem adımının adı')
+    step_order = models.IntegerField('Sıra Numarası',
+                                     help_text='Adımın sırası (1, 2, 3, ...)')
+    
+    # Durum
+    status = models.CharField(
+        'Durum',
+        max_length=20,
+        choices=EndOfDayStepStatus.choices,
+        default=EndOfDayStepStatus.PENDING,
+        db_index=True
+    )
+    
+    # Zaman Bilgileri
+    started_at = models.DateTimeField('Başlangıç Zamanı', null=True, blank=True)
+    completed_at = models.DateTimeField('Bitiş Zamanı', null=True, blank=True)
+    
+    # Sonuç ve Hata
+    result_data = models.JSONField('Sonuç Verileri', default=dict, blank=True,
+                                  help_text='Adımın sonuç verileri')
+    error_message = models.TextField('Hata Mesajı', blank=True)
+    rollback_data = models.JSONField('Rollback Verileri', default=dict, blank=True)
+    
+    # Ek Bilgiler
+    notes = models.TextField('Notlar', blank=True)
+    
+    class Meta:
+        verbose_name = 'Gün Sonu İşlem Adımı'
+        verbose_name_plural = 'Gün Sonu İşlem Adımları'
+        ordering = ['operation', 'step_order']
+        indexes = [
+            models.Index(fields=['operation', 'step_order']),
+            models.Index(fields=['operation', 'status']),
+        ]
+        unique_together = [('operation', 'step_order')]  # Her işlem için adım sırası benzersiz
+    
+    def __str__(self):
+        return f"{self.operation} - {self.step_order}. {self.step_name}"
+    
+    def get_execution_time(self):
+        """Çalışma süresini hesapla"""
+        if self.started_at and self.completed_at:
+            return self.completed_at - self.started_at
+        return None
+
+
+class EndOfDayReport(TimeStampedModel):
+    """
+    Gün Sonu Raporları
+    Her işlem için oluşturulan raporlar
+    """
+    # İşlem Bağlantısı
+    operation = models.ForeignKey(
+        EndOfDayOperation,
+        on_delete=models.CASCADE,
+        related_name='reports',
+        verbose_name='Gün Sonu İşlemi'
+    )
+    
+    # Rapor Bilgileri
+    report_type = models.CharField(
+        'Rapor Türü',
+        max_length=20,
+        choices=EndOfDayReportType.choices,
+        db_index=True
+    )
+    report_data = models.JSONField('Rapor Verileri', default=dict,
+                                  help_text='Rapor içeriği (JSON)')
+    
+    # Dosya
+    report_file = models.FileField(
+        'Rapor Dosyası',
+        upload_to='reception/end_of_day/reports/%Y/%m/',
+        null=True,
+        blank=True,
+        help_text='PDF/Excel rapor dosyası'
+    )
+    export_format = models.CharField(
+        'Export Formatı',
+        max_length=10,
+        choices=[('pdf', 'PDF'), ('excel', 'Excel'), ('json', 'JSON'), ('csv', 'CSV')],
+        default='pdf'
+    )
+    
+    # Zaman ve Export
+    generated_at = models.DateTimeField('Oluşturulma Zamanı', auto_now_add=True)
+    exported_to = models.JSONField('Gönderildiği Sistemler', default=list, blank=True,
+                                  help_text='Hangi sistemlere gönderildi?')
+    
+    # Ek Bilgiler
+    notes = models.TextField('Notlar', blank=True)
+    
+    class Meta:
+        verbose_name = 'Gün Sonu Raporu'
+        verbose_name_plural = 'Gün Sonu Raporları'
+        ordering = ['-generated_at']
+        indexes = [
+            models.Index(fields=['operation', 'report_type']),
+            models.Index(fields=['generated_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.operation} - {self.get_report_type_display()} - {self.generated_at.strftime('%d.%m.%Y %H:%M')}"
+
+
+class EndOfDayJournalEntry(TimeStampedModel):
+    """
+    Gün Sonu Muhasebe Fişleri
+    Muhasebe modülü ile entegrasyon
+    """
+    # İşlem Bağlantısı
+    operation = models.ForeignKey(
+        EndOfDayOperation,
+        on_delete=models.CASCADE,
+        related_name='journal_entries',
+        verbose_name='Gün Sonu İşlemi'
+    )
+    
+    # Muhasebe Bağlantısı
+    journal_entry = models.ForeignKey(
+        'accounting.JournalEntry',
+        on_delete=models.CASCADE,
+        related_name='end_of_day_operations',
+        verbose_name='Yevmiye Kaydı'
+    )
+    
+    # Fiş Bilgileri
+    entry_type = models.CharField(
+        'Fiş Türü',
+        max_length=20,
+        choices=[
+            ('revenue', 'Gelir'),
+            ('expense', 'Gider'),
+            ('transfer', 'Transfer'),
+        ],
+        db_index=True
+    )
+    department = models.CharField(
+        'Departman',
+        max_length=20,
+        choices=[
+            ('room', 'Konaklama'),
+            ('f&b', 'Yiyecek-İçecek'),
+            ('spa', 'Spa'),
+            ('extra', 'Ek Hizmetler'),
+        ],
+        db_index=True
+    )
+    market_segment = models.CharField(
+        'Pazar Segmenti',
+        max_length=20,
+        choices=[
+            ('direct', 'Direkt'),
+            ('online', 'Online'),
+            ('agency', 'Acente'),
+            ('corporate', 'Kurumsal'),
+            ('group', 'Grup'),
+            ('walk_in', 'Gel-Al'),
+        ],
+        db_index=True,
+        blank=True
+    )
+    
+    # Finansal Bilgiler
+    amount = models.DecimalField('Tutar', max_digits=15, decimal_places=2)
+    currency = models.CharField('Para Birimi', max_length=3, default='TRY')
+    
+    class Meta:
+        verbose_name = 'Gün Sonu Muhasebe Fişi'
+        verbose_name_plural = 'Gün Sonu Muhasebe Fişleri'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['operation', 'entry_type']),
+            models.Index(fields=['operation', 'department']),
+            models.Index(fields=['operation', 'market_segment']),
+        ]
+    
+    def __str__(self):
+        return f"{self.operation} - {self.get_entry_type_display()} - {self.amount} {self.currency}"
+

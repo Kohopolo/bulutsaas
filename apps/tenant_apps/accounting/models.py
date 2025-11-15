@@ -16,6 +16,7 @@ class Account(TimeStampedModel, SoftDeleteModel):
     """
     Hesap Planı
     Muhasebe hesap planı (Aktif, Pasif, Gelir, Gider hesapları)
+    Otel bazlı veya genel hesap planı olabilir
     """
     ACCOUNT_TYPE_CHOICES = [
         ('asset', 'Aktif'),
@@ -32,8 +33,19 @@ class Account(TimeStampedModel, SoftDeleteModel):
         ('GBP', 'British Pound'),
     ]
     
+    # Otel Bağlantısı (null ise genel hesap)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.CASCADE,
+        related_name='accounts',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa tüm oteller için genel hesap olur'
+    )
+    
     # Hesap Bilgileri
-    code = models.CharField('Hesap Kodu', max_length=20, unique=True,
+    code = models.CharField('Hesap Kodu', max_length=20,
                            help_text='Hesap planı kodu (örn: 100, 120, 600)')
     name = models.CharField('Hesap Adı', max_length=200)
     account_type = models.CharField('Hesap Tipi', max_length=20, choices=ACCOUNT_TYPE_CHOICES)
@@ -73,8 +85,10 @@ class Account(TimeStampedModel, SoftDeleteModel):
         verbose_name = 'Hesap'
         verbose_name_plural = 'Hesap Planı'
         ordering = ['code', 'name']
+        unique_together = [('hotel', 'code')]  # Aynı otel için kod benzersiz olmalı
         indexes = [
             models.Index(fields=['code']),
+            models.Index(fields=['hotel', 'account_type']),
             models.Index(fields=['account_type']),
             models.Index(fields=['parent']),
         ]
@@ -119,12 +133,24 @@ class JournalEntry(TimeStampedModel, SoftDeleteModel):
     """
     Yevmiye Kayıtları
     Çift taraflı muhasebe kayıtları
+    Otel bazlı veya genel yevmiye kayıtları olabilir
     """
     STATUS_CHOICES = [
         ('draft', 'Taslak'),
         ('posted', 'Kaydedildi'),
         ('cancelled', 'İptal Edildi'),
     ]
+    
+    # Otel Bağlantısı (null ise genel kayıt)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.SET_NULL,
+        related_name='journal_entries',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa genel yevmiye kaydı olur'
+    )
     
     # Temel Bilgiler
     entry_number = models.CharField('Yevmiye No', max_length=50, unique=True,
@@ -171,6 +197,7 @@ class JournalEntry(TimeStampedModel, SoftDeleteModel):
         ordering = ['-entry_date', '-entry_number']
         indexes = [
             models.Index(fields=['entry_date', 'status']),
+            models.Index(fields=['hotel', 'entry_date']),
             models.Index(fields=['source_module', 'source_id']),
             models.Index(fields=['entry_number']),
         ]
@@ -287,6 +314,7 @@ class Invoice(TimeStampedModel, SoftDeleteModel):
     """
     Fatura
     Gelir ve gider faturaları
+    Otel bazlı veya genel faturalar olabilir
     """
     INVOICE_TYPE_CHOICES = [
         ('sales', 'Satış Faturası'),
@@ -300,6 +328,17 @@ class Invoice(TimeStampedModel, SoftDeleteModel):
         ('paid', 'Ödendi'),
         ('cancelled', 'İptal Edildi'),
     ]
+    
+    # Otel Bağlantısı (null ise genel fatura)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.SET_NULL,
+        related_name='invoices',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa genel fatura olur'
+    )
     
     # Temel Bilgiler
     invoice_number = models.CharField('Fatura No', max_length=50, unique=True,
@@ -367,6 +406,7 @@ class Invoice(TimeStampedModel, SoftDeleteModel):
         ordering = ['-invoice_date', '-invoice_number']
         indexes = [
             models.Index(fields=['invoice_date', 'status']),
+            models.Index(fields=['hotel', 'invoice_date']),
             models.Index(fields=['invoice_number']),
             models.Index(fields=['source_module', 'source_id']),
         ]
@@ -484,6 +524,7 @@ class Payment(TimeStampedModel, SoftDeleteModel):
     """
     Ödeme Kayıtları
     Fatura ödemeleri ve diğer ödemeler
+    Otel bazlı veya genel ödemeler olabilir
     """
     PAYMENT_METHOD_CHOICES = [
         ('cash', 'Nakit'),
@@ -499,6 +540,17 @@ class Payment(TimeStampedModel, SoftDeleteModel):
         ('completed', 'Tamamlandı'),
         ('cancelled', 'İptal Edildi'),
     ]
+    
+    # Otel Bağlantısı (null ise genel ödeme)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.SET_NULL,
+        related_name='payments',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa genel ödeme olur'
+    )
     
     # Temel Bilgiler
     payment_number = models.CharField('Ödeme No', max_length=50, unique=True,
@@ -554,6 +606,7 @@ class Payment(TimeStampedModel, SoftDeleteModel):
         ordering = ['-payment_date', '-payment_number']
         indexes = [
             models.Index(fields=['payment_date', 'status']),
+            models.Index(fields=['hotel', 'payment_date']),
             models.Index(fields=['invoice']),
             models.Index(fields=['source_module', 'source_id']),
         ]

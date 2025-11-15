@@ -101,6 +101,7 @@ TENANT_APPS = [
     'apps.tenant_apps.ferry_tickets',  # Feribot Bileti
     'apps.tenant_apps.bungalovs',  # Bungalov Yönetimi
     'apps.tenant_apps.backup',  # Yedekleme Yönetimi
+    'apps.tenant_apps.settings',  # Ayarlar Modülü (SMS entegrasyonları)
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]

@@ -52,6 +52,7 @@ def create_refund_request(
     customer_phone='',
     created_by=None,
     refund_policy_id=None,
+    hotel=None,
     **kwargs
 ):
     """
@@ -70,6 +71,7 @@ def create_refund_request(
         customer_phone: Müşteri telefon
         created_by: Oluşturan kullanıcı
         refund_policy_id: İade politikası ID (otomatik bulunur)
+        hotel: Otel bilgisi (otomatik bulunur source_module'den)
         **kwargs: Ek parametreler
     
     Returns:
@@ -77,6 +79,33 @@ def create_refund_request(
     """
     if original_payment_date is None:
         original_payment_date = timezone.now().date()
+    
+    # Hotel bilgisini source_module'den çıkar (eğer verilmemişse)
+    if not hotel and source_module and source_id:
+        try:
+            if source_module == 'reception':
+                from apps.tenant_apps.reception.models import Reservation
+                source_obj = Reservation.objects.filter(pk=source_id).first()
+                if source_obj and hasattr(source_obj, 'hotel'):
+                    hotel = source_obj.hotel
+            elif source_module == 'tours':
+                from apps.tenant_apps.tours.models import TourReservation
+                source_obj = TourReservation.objects.filter(pk=source_id).first()
+                if source_obj and hasattr(source_obj, 'hotel'):
+                    hotel = source_obj.hotel
+            elif source_module == 'ferry_tickets':
+                from apps.tenant_apps.ferry_tickets.models import FerryTicket
+                source_obj = FerryTicket.objects.filter(pk=source_id).first()
+                if source_obj and hasattr(source_obj, 'hotel'):
+                    hotel = source_obj.hotel
+            elif source_module == 'bungalovs':
+                from apps.tenant_apps.bungalovs.models import BungalovReservation
+                source_obj = BungalovReservation.objects.filter(pk=source_id).first()
+                if source_obj and hasattr(source_obj, 'hotel'):
+                    hotel = source_obj.hotel
+        except Exception:
+            # Hata durumunda hotel None kalır
+            pass
     
     # İade politikasını bul
     if refund_policy_id:
@@ -102,6 +131,7 @@ def create_refund_request(
         refund_method = refund_policy.refund_method
     
     refund_request = RefundRequest.objects.create(
+        hotel=hotel,  # Otel bilgisi eklendi
         source_module=source_module,
         source_id=source_id,
         source_reference=source_reference,

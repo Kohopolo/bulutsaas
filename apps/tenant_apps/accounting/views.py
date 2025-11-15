@@ -25,6 +25,33 @@ def account_list(request):
     """Hesap planı listesi"""
     accounts = Account.objects.filter(is_deleted=False)
     
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                accounts = accounts.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel hesaplar (otel yok)
+                accounts = accounts.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel hesaplar için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin hesaplarını göster
+            # Sadece aktif otelin hesaplarını göster
+            accounts = accounts.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
+    
     # Filtreleme
     account_type = request.GET.get('account_type')
     if account_type:
@@ -56,10 +83,19 @@ def account_list(request):
     page = request.GET.get('page')
     accounts = paginator.get_page(page)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
         'accounts': accounts,
         'account_types': Account.ACCOUNT_TYPE_CHOICES,
         'currencies': Account.CURRENCY_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/accounting/accounts/list.html', context)
 
@@ -91,11 +127,18 @@ def account_create(request):
     if request.method == 'POST':
         form = AccountForm(request.POST)
         if form.is_valid():
-            account = form.save()
+            account = form.save(commit=False)
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not account.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                account.hotel = request.active_hotel
+            account.save()
             messages.success(request, f'Hesap "{account.code} - {account.name}" başarıyla oluşturuldu.')
             return redirect('accounting:account_detail', pk=account.pk)
     else:
         form = AccountForm()
+        # Varsayılan olarak aktif oteli seç
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            form.fields['hotel'].initial = request.active_hotel
     
     context = {'form': form}
     return render(request, 'tenant/accounting/accounts/form.html', context)
@@ -154,6 +197,33 @@ def journal_entry_list(request):
     """Yevmiye kayıtları listesi"""
     entries = JournalEntry.objects.filter(is_deleted=False)
     
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                entries = entries.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel kayıtlar (otel yok)
+                entries = entries.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel kayıtlar için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin kayıtlarını göster
+            # Sadece aktif otelin kayıtlarını göster
+            entries = entries.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
+    
     # Filtreleme
     status = request.GET.get('status')
     if status:
@@ -189,9 +259,18 @@ def journal_entry_list(request):
     page = request.GET.get('page')
     entries = paginator.get_page(page)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
         'entries': entries,
         'statuses': JournalEntry.STATUS_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/accounting/journal_entries/list.html', context)
 
@@ -222,11 +301,17 @@ def journal_entry_create(request):
         if form.is_valid():
             entry = form.save(commit=False)
             entry.created_by = request.user
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not entry.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                entry.hotel = request.active_hotel
             entry.save()
             messages.success(request, f'Yevmiye kaydı "{entry.entry_number}" başarıyla oluşturuldu.')
             return redirect('accounting:journal_entry_detail', pk=entry.pk)
     else:
         form = JournalEntryForm()
+        # Varsayılan olarak aktif oteli seç
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            form.fields['hotel'].initial = request.active_hotel
     
     context = {'form': form}
     return render(request, 'tenant/accounting/journal_entries/form.html', context)
@@ -289,7 +374,34 @@ def journal_entry_cancel(request, pk):
 @require_accounting_module
 def invoice_list(request):
     """Fatura listesi"""
-    invoices = Invoice.objects.filter(is_deleted=False)
+    invoices = Invoice.objects.filter(is_deleted=False).select_related('hotel')
+    
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                invoices = invoices.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel faturalar (otel yok)
+                invoices = invoices.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel faturalar için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin faturalarını göster
+            # Sadece aktif otelin faturalarını göster
+            invoices = invoices.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
     
     # Filtreleme
     invoice_type = request.GET.get('invoice_type')
@@ -326,10 +438,22 @@ def invoice_list(request):
     page = request.GET.get('page')
     invoices = paginator.get_page(page)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    # Eğer accessible_hotels boşsa ama active_hotel varsa, onu ekle
+    if not accessible_hotels and hasattr(request, 'active_hotel') and request.active_hotel:
+        accessible_hotels = [request.active_hotel]
+    
     context = {
         'invoices': invoices,
         'invoice_types': Invoice.INVOICE_TYPE_CHOICES,
         'statuses': Invoice.STATUS_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/accounting/invoices/list.html', context)
 
@@ -360,11 +484,17 @@ def invoice_create(request):
         if form.is_valid():
             invoice = form.save(commit=False)
             invoice.created_by = request.user
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not invoice.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                invoice.hotel = request.active_hotel
             invoice.save()
             messages.success(request, f'Fatura "{invoice.invoice_number}" başarıyla oluşturuldu.')
             return redirect('accounting:invoice_detail', pk=invoice.pk)
     else:
         form = InvoiceForm()
+        # Varsayılan olarak aktif oteli seç
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            form.fields['hotel'].initial = request.active_hotel
     
     context = {'form': form}
     return render(request, 'tenant/accounting/invoices/form.html', context)
@@ -414,6 +544,33 @@ def payment_list(request):
     """Ödeme listesi"""
     payments = Payment.objects.filter(is_deleted=False)
     
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                payments = payments.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel ödemeler (otel yok)
+                payments = payments.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel ödemeler için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin ödemelerini göster
+            # Sadece aktif otelin ödemelerini göster
+            payments = payments.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
+    
     # Filtreleme
     status = request.GET.get('status')
     if status:
@@ -449,10 +606,19 @@ def payment_list(request):
     page = request.GET.get('page')
     payments = paginator.get_page(page)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
         'payments': payments,
         'statuses': Payment.STATUS_CHOICES,
         'payment_methods': Payment.PAYMENT_METHOD_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/accounting/payments/list.html', context)
 
@@ -478,11 +644,17 @@ def payment_create(request):
         if form.is_valid():
             payment = form.save(commit=False)
             payment.created_by = request.user
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not payment.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                payment.hotel = request.active_hotel
             payment.save()
             messages.success(request, f'Ödeme "{payment.payment_number}" başarıyla oluşturuldu.')
             return redirect('accounting:payment_detail', pk=payment.pk)
     else:
         form = PaymentForm()
+        # Varsayılan olarak aktif oteli seç
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            form.fields['hotel'].initial = request.active_hotel
     
     context = {'form': form}
     return render(request, 'tenant/accounting/payments/form.html', context)

@@ -345,7 +345,7 @@ def tour_location_delete(request, pk):
 @login_required
 def tour_reservation_list(request):
     """Rezervasyon listesi"""
-    reservations = TourReservation.objects.all().select_related('tour', 'tour_date', 'sales_person').order_by('-created_at')
+    reservations = TourReservation.objects.all().select_related('tour', 'tour_date', 'sales_person').prefetch_related('payments').order_by('-created_at')
     
     # Filtreleme
     status = request.GET.get('status')
@@ -363,6 +363,11 @@ def tour_reservation_list(request):
         reservations = paginator.page(page)
     except:
         reservations = paginator.page(1)
+    
+    # Her rezervasyon için ödeme bilgilerini hesapla
+    for reservation in reservations:
+        reservation.total_paid = reservation.payments.filter(status='completed').aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        reservation.remaining_amount = reservation.total_amount - reservation.total_paid
     
     # Context için gerekli veriler
     tours = Tour.objects.filter(is_active=True).order_by('name')
@@ -454,7 +459,7 @@ def ajax_get_available_capacity(request):
 # Yeni endpoint: Tur tarihlerini getir
 @login_required
 def ajax_get_tour_dates(request):
-    """AJAX - Tur tarihlerini getir"""
+    """AJAX - Tur tarihlerini getir (Geçmiş tarihler hariç)"""
     tour_id = request.GET.get('tour_id')
     
     try:
@@ -462,12 +467,16 @@ def ajax_get_tour_dates(request):
         dates = tour.tour_dates.filter(is_active=True).order_by('date')
         
         dates_list = []
-        for date in dates:
+        for date_obj in dates:
+            # Geçmiş tarihleri filtrele
+            if date_obj.is_expired():
+                continue
+            
             dates_list.append({
-                'id': date.pk,
-                'date': date.date.strftime('%d.%m.%Y'),
-                'adult_price': float(date.get_adult_price()),
-                'child_price': float(date.get_child_price()),
+                'id': date_obj.pk,
+                'date': date_obj.date.strftime('%d.%m.%Y'),
+                'adult_price': float(date_obj.get_adult_price()),
+                'child_price': float(date_obj.get_child_price()),
             })
         
         return JsonResponse({
@@ -948,10 +957,12 @@ def tour_reservation_create(request):
     
     tours = Tour.objects.filter(is_active=True, status='published')
     
-    # Seçili tur için tarihleri getir
+    # Seçili tur için tarihleri getir (Geçmiş tarihler hariç)
     tour_dates = []
     if initial_tour:
-        tour_dates = initial_tour.tour_dates.filter(is_active=True).order_by('date')
+        all_dates = initial_tour.tour_dates.filter(is_active=True).order_by('date')
+        # Geçmiş tarihleri filtrele
+        tour_dates = [date_obj for date_obj in all_dates if not date_obj.is_expired()]
     
     context = {
         'form': form,

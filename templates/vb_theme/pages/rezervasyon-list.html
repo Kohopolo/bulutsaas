@@ -281,7 +281,6 @@
 
 {% block inline_js %}
 // Rezervasyon List specific JavaScript
-console.log('Rezervasyon List loaded');
 
 // Row actions
 document.querySelectorAll('[data-action]').forEach(function(button) {
@@ -292,28 +291,23 @@ document.querySelectorAll('[data-action]').forEach(function(button) {
         
         switch(action) {
             case 'view':
-                console.log('View reservation:', id);
                 // window.location.href = '/rezervasyon/' + id + '/';
                 break;
             case 'edit':
-                console.log('Edit reservation:', id);
                 // window.location.href = '/rezervasyon/' + id + '/edit/';
                 break;
             case 'checkin':
                 VBComponents.confirm('Check-in yapmak istediğinizden emin misiniz?', function() {
-                    console.log('Check-in:', id);
                     VBComponents.notify('Check-in işlemi başarılı', 'success');
                 });
                 break;
             case 'checkout':
                 VBComponents.confirm('Check-out yapmak istediğinizden emin misiniz?', function() {
-                    console.log('Check-out:', id);
                     VBComponents.notify('Check-out işlemi başarılı', 'success');
                 });
                 break;
             case 'delete':
                 VBComponents.confirm('Rezervasyonu silmek istediğinizden emin misiniz?', function() {
-                    console.log('Delete:', id);
                     VBComponents.notify('Rezervasyon silindi', 'error');
                 });
                 break;

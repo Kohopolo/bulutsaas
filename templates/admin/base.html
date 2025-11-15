@@ -243,7 +243,14 @@
     </style>
     
     {% block extrastyle %}{% endblock %}
-    {% block extrahead %}{% endblock %}
+    {% block extrahead %}
+    {# jQuery - Must be loaded first for Django admin #}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    {# Django Admin JavaScript - Core files #}
+    <script src="{% static 'admin/js/core.js' %}"></script>
+    <script src="{% static 'admin/js/jquery.init.js' %}"></script>
+    <script src="{% static 'admin/js/prepopulate_init.js' %}"></script>
+    {% endblock %}
 </head>
 <body class="h-full bg-gray-50 overflow-hidden">
     <!-- VB Desktop Application Layout -->

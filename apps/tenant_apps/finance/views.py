@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from .models import CashAccount, CashTransaction, CashFlow
 from .forms import CashAccountForm, CashTransactionForm, CashFlowForm
 from .decorators import require_finance_module
+from .utils import get_default_cash_account
 from . import views_reports
 
 
@@ -26,6 +27,33 @@ from . import views_reports
 def account_list(request):
     """Kasa hesapları listesi"""
     accounts = CashAccount.objects.filter(is_deleted=False)
+    
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                accounts = accounts.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel hesaplar (otel yok)
+                accounts = accounts.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel hesaplar için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin hesaplarını göster
+            # Sadece aktif otelin hesaplarını göster
+            accounts = accounts.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
     
     # Filtreleme
     account_type = request.GET.get('account_type')
@@ -59,10 +87,19 @@ def account_list(request):
     page = request.GET.get('page')
     accounts = paginator.get_page(page)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
         'accounts': accounts,
         'account_types': CashAccount.ACCOUNT_TYPE_CHOICES,
         'currencies': CashAccount.CURRENCY_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/finance/accounts/list.html', context)
 
@@ -111,11 +148,18 @@ def account_create(request):
     if request.method == 'POST':
         form = CashAccountForm(request.POST)
         if form.is_valid():
-            account = form.save()
+            account = form.save(commit=False)
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not account.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                account.hotel = request.active_hotel
+            account.save()
             messages.success(request, f'Kasa hesabı "{account.name}" başarıyla oluşturuldu.')
             return redirect('finance:account_detail', pk=account.pk)
     else:
         form = CashAccountForm()
+        # Varsayılan olarak aktif oteli seç
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            form.fields['hotel'].initial = request.active_hotel
     
     context = {'form': form}
     return render(request, 'tenant/finance/accounts/form.html', context)
@@ -177,6 +221,32 @@ def transaction_list(request):
     """Kasa işlemleri listesi"""
     transactions = CashTransaction.objects.filter(is_deleted=False)
     
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                transactions = transactions.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel işlemler (otel yok)
+                transactions = transactions.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel işlemler için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Sadece aktif otelin işlemlerini göster
+            transactions = transactions.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
+    
     # Filtreleme
     account_id = request.GET.get('account')
     if account_id:
@@ -228,12 +298,21 @@ def transaction_list(request):
     # Filtre seçenekleri
     accounts = CashAccount.objects.filter(is_active=True, is_deleted=False)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
         'transactions': transactions,
         'accounts': accounts,
         'transaction_types': CashTransaction.TRANSACTION_TYPE_CHOICES,
         'statuses': CashTransaction.STATUS_CHOICES,
         'payment_methods': CashTransaction.PAYMENT_METHOD_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/finance/transactions/list.html', context)
 
@@ -259,6 +338,9 @@ def transaction_create(request):
         if form.is_valid():
             transaction = form.save(commit=False)
             transaction.created_by = request.user
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not transaction.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                transaction.hotel = request.active_hotel
             transaction.save()
             
             # Tamamlandı olarak işaretlenmişse
@@ -269,8 +351,12 @@ def transaction_create(request):
             return redirect('finance:transaction_detail', pk=transaction.pk)
     else:
         form = CashTransactionForm()
-        # Varsayılan hesap
-        default_account = CashAccount.objects.filter(is_default=True, is_active=True, is_deleted=False).first()
+        # Varsayılan hesap (otel bazlı)
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            default_account = get_default_cash_account(currency='TRY', hotel=request.active_hotel)
+            form.fields['hotel'].initial = request.active_hotel
+        else:
+            default_account = get_default_cash_account(currency='TRY', hotel=None)
         if default_account:
             form.fields['account'].initial = default_account
     

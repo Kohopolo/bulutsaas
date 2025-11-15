@@ -69,6 +69,25 @@ class PackageAdmin(admin.ModelAdmin):
         """Silinmemiş paketleri göster"""
         qs = super().get_queryset(request)
         return qs.filter(is_deleted=False)
+    
+    def save_formset(self, request, form, formset, change):
+        """Inline formset'i kaydet"""
+        instances = formset.save(commit=False)
+        for instance in instances:
+            # Package otomatik olarak atanır (inline formset)
+            if not instance.package_id:
+                instance.package = form.instance
+            instance.save()
+        
+        # Silinen kayıtları işle
+        for obj in formset.deleted_objects:
+            obj.delete()
+        
+        # Yeni kayıtları kaydet
+        for instance in formset.new_objects:
+            if not instance.package_id:
+                instance.package = form.instance
+            instance.save()
 
 
 @admin.register(PackageModule)

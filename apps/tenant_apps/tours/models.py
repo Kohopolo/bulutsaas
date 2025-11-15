@@ -562,6 +562,25 @@ class TourDate(TimeStampedModel):
     def get_child_price(self):
         """Çocuk fiyatı - tarih bazlı varsa onu, yoksa genel fiyatı"""
         return self.child_price if self.child_price is not None else self.tour.child_price
+    
+    def is_expired(self):
+        """Tur tarihi geçmiş mi? (Tarih + saat kontrolü)"""
+        from django.utils import timezone
+        from datetime import datetime, time
+        
+        today = timezone.now().date()
+        now_time = timezone.now().time()
+        
+        # Eğer tarih bugünden önceyse geçmiş
+        if self.date < today:
+            return True
+        
+        # Eğer tarih bugünse ve tur saati geçmişse geçmiş
+        if self.date == today and self.tour.departure_time:
+            if now_time > self.tour.departure_time:
+                return True
+        
+        return False
 
 
 class TourProgram(TimeStampedModel):
@@ -977,6 +996,38 @@ class TourReservation(TimeStampedModel):
             # Kontenjan zaten rezerve edilmiş sayılır
             pass
         # İptal durumunda kontenjan geri verilir (cancel metodunda)
+    
+    def calculate_total_paid(self):
+        """Toplam ödenen tutarı hesapla"""
+        from django.db.models import Sum
+        total = self.payments.filter(status='completed').aggregate(
+            total=Sum('amount')
+        )['total'] or Decimal('0')
+        return total
+    
+    def update_total_paid(self):
+        """Toplam ödenen tutarı güncelle ve payment_status'u ayarla"""
+        total_paid = self.calculate_total_paid()
+        
+        # Payment status'u güncelle
+        if total_paid >= self.total_amount:
+            self.payment_status = 'paid'
+        elif total_paid > 0:
+            self.payment_status = 'partial'
+        else:
+            self.payment_status = 'pending'
+        
+        self.save(update_fields=['payment_status'])
+    
+    def is_paid(self):
+        """Tamamen ödendi mi?"""
+        total_paid = self.calculate_total_paid()
+        return total_paid >= self.total_amount
+    
+    def get_remaining_amount(self):
+        """Kalan tutarı hesapla"""
+        total_paid = self.calculate_total_paid()
+        return max(Decimal('0'), self.total_amount - total_paid)
     
     def generate_voucher(self):
         """Voucher oluştur"""

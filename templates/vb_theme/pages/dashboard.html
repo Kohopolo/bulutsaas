@@ -286,12 +286,10 @@
 
 {% block inline_js %}
 // Dashboard specific JavaScript
-console.log('Dashboard loaded');
 
 // Auto-refresh stats every 5 minutes
 setInterval(function() {
     // Add your AJAX refresh logic here
-    console.log('Refreshing dashboard stats...');
 }, 300000); // 5 minutes
 {% endblock %}
 

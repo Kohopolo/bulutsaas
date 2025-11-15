@@ -111,6 +111,7 @@ class PackageModuleInlineForm(forms.ModelForm):
         }
         widgets = {
             'limits': forms.Textarea(attrs={'rows': 3, 'placeholder': '{"max_hotels": 5, "max_room_numbers": 100, "max_users": 10, "max_reservations": 500, "max_ai_credits": 1000}'}),
+            'permissions': forms.Textarea(attrs={'rows': 2, 'placeholder': '{"view": true, "add": true, "edit": false, "delete": false}'}),
             'module': forms.Select(attrs={'class': 'form-control'}),
         }
     
@@ -119,3 +120,39 @@ class PackageModuleInlineForm(forms.ModelForm):
         # Tüm aktif modülleri göster
         from apps.modules.models import Module
         self.fields['module'].queryset = Module.objects.filter(is_active=True).order_by('sort_order', 'name')
+        
+        # JSONField'lar için varsayılan değerleri string'e çevir (eğer instance varsa)
+        if self.instance and self.instance.pk:
+            import json
+            if self.instance.permissions:
+                self.initial['permissions'] = json.dumps(self.instance.permissions, ensure_ascii=False, indent=2)
+            if self.instance.limits:
+                self.initial['limits'] = json.dumps(self.instance.limits, ensure_ascii=False, indent=2)
+    
+    def clean_permissions(self):
+        """JSON permissions field'ını validate et"""
+        import json
+        permissions = self.cleaned_data.get('permissions')
+        if permissions:
+            if isinstance(permissions, str):
+                try:
+                    permissions = json.loads(permissions)
+                except json.JSONDecodeError as e:
+                    raise forms.ValidationError(f'Geçersiz JSON formatı: {str(e)}')
+            if not isinstance(permissions, dict):
+                raise forms.ValidationError('Yetkiler bir dictionary (obje) olmalıdır.')
+        return permissions or {}
+    
+    def clean_limits(self):
+        """JSON limits field'ını validate et"""
+        import json
+        limits = self.cleaned_data.get('limits')
+        if limits:
+            if isinstance(limits, str):
+                try:
+                    limits = json.loads(limits)
+                except json.JSONDecodeError as e:
+                    raise forms.ValidationError(f'Geçersiz JSON formatı: {str(e)}')
+            if not isinstance(limits, dict):
+                raise forms.ValidationError('Limitler bir dictionary (obje) olmalıdır.')
+        return limits or {}

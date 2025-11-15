@@ -63,6 +63,8 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yolcu</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Toplam</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ödenen</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kalan</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
                     </tr>
                 </thead>
@@ -111,10 +113,15 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            {{ ticket.total_amount|floatformat:2 }} {{ ticket.currency }}
-                            {% if not ticket.is_paid %}
-                            <br><small class="text-red-600">Kalan: {{ ticket.get_remaining_amount|floatformat:2 }} {{ ticket.currency }}</small>
-                            {% endif %}
+                            <strong>{{ ticket.total_amount|floatformat:2 }} {{ ticket.currency }}</strong>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span style="color: #388e3c; font-weight: bold;">{{ ticket.total_paid|floatformat:2 }} {{ ticket.currency }}</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span style="color: {% if ticket.remaining_amount > 0 %}#d32f2f{% else %}#388e3c{% endif %}; font-weight: bold;">
+                                {{ ticket.remaining_amount|floatformat:2 }} {{ ticket.currency }}
+                            </span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <div class="flex gap-1 flex-wrap" style="min-width: 200px;">
@@ -122,6 +129,9 @@
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% if not ticket.is_deleted %}
+                                <a href="{% url 'ferry_tickets:ticket_payment_add' ticket.pk %}" class="vb-button small" title="Ödeme Ekle" style="padding: 4px 8px; font-size: 11px; background: #28a745; color: white; border-color: #28a745;">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </a>
                                 <button onclick="openTicketEditModal({{ ticket.pk }})" class="vb-button small" title="Düzenle" style="padding: 4px 8px; font-size: 11px;">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -353,9 +363,8 @@ function openTicketModal() {
                 if (typeof initTicketForm === 'function') {
                     try {
                         initTicketForm();
-                        console.log('✓ initTicketForm başarıyla çağrıldı');
                     } catch (error) {
-                        console.error('✗ initTicketForm çağrılırken hata:', error);
+                        // Hata yönetimi
                     }
                 } else {
                     retryCount++;
@@ -451,9 +460,8 @@ function openTicketEditModal(ticketId) {
                 if (typeof initTicketForm === 'function') {
                     try {
                         initTicketForm();
-                        console.log('✓ initTicketForm başarıyla çağrıldı (düzenleme)');
                     } catch (error) {
-                        console.error('✗ initTicketForm çağrılırken hata:', error);
+                        // Hata yönetimi
                     }
                 } else {
                     retryCount++;

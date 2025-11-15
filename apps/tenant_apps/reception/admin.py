@@ -4,7 +4,9 @@ Reception Admin Configuration
 from django.contrib import admin
 from .models import (
     Reservation, ReservationGuest, ReservationPayment,
-    ReservationTimeline, ReservationVoucher, VoucherTemplate
+    ReservationTimeline, ReservationVoucher, VoucherTemplate,
+    EndOfDayOperation, EndOfDaySettings, EndOfDayOperationStep,
+    EndOfDayReport, EndOfDayJournalEntry
 )
 
 
@@ -90,4 +92,113 @@ class VoucherTemplateAdmin(admin.ModelAdmin):
     list_display = ['name', 'code', 'is_active', 'is_default']
     list_filter = ['is_active', 'is_default']
     search_fields = ['name', 'code']
+
+
+# ==================== GÜN SONU İŞLEMLERİ ADMIN ====================
+
+@admin.register(EndOfDayOperation)
+class EndOfDayOperationAdmin(admin.ModelAdmin):
+    list_display = ['hotel', 'operation_date', 'program_date', 'status', 'automation_type', 'started_at', 'completed_at', 'created_by']
+    list_filter = ['status', 'automation_type', 'operation_date', 'hotel', 'is_async']
+    search_fields = ['hotel__name', 'operation_date', 'program_date']
+    readonly_fields = ['started_at', 'completed_at', 'created_at', 'updated_at']
+    date_hierarchy = 'operation_date'
+    
+    fieldsets = (
+        ('Temel Bilgiler', {
+            'fields': ('hotel', 'operation_date', 'program_date', 'status')
+        }),
+        ('İşlem Türü', {
+            'fields': ('automation_type', 'is_async')
+        }),
+        ('Ayarlar ve Sonuçlar', {
+            'fields': ('settings', 'results', 'metadata')
+        }),
+        ('Zaman Bilgileri', {
+            'fields': ('started_at', 'completed_at')
+        }),
+        ('Hata ve Rollback', {
+            'fields': ('error_message', 'rollback_data')
+        }),
+        ('Kullanıcı Takibi', {
+            'fields': ('created_by',)
+        }),
+        ('Notlar', {
+            'fields': ('notes',)
+        }),
+        ('Tarihler', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def enable_rollback(self, obj):
+        """Rollback yapılabilir mi?"""
+        return obj.can_rollback()
+    enable_rollback.boolean = True
+    enable_rollback.short_description = 'Rollback Yapılabilir mi?'
+
+
+@admin.register(EndOfDaySettings)
+class EndOfDaySettingsAdmin(admin.ModelAdmin):
+    list_display = ['hotel', 'is_active', 'automation_type', 'auto_run_time', 'enable_rollback']
+    list_filter = ['is_active', 'automation_type', 'stop_if_room_price_zero', 'cancel_no_show_reservations']
+    search_fields = ['hotel__name']
+    
+    fieldsets = (
+        ('Otel', {
+            'fields': ('hotel',)
+        }),
+        ('Pre-Audit Kontrol Ayarları', {
+            'fields': (
+                'stop_if_room_price_zero',
+                'stop_if_advance_folio_balance_not_zero',
+                'check_checkout_folios'
+            )
+        }),
+        ('Otomatik İşlem Ayarları', {
+            'fields': (
+                'cancel_no_show_reservations',
+                'no_show_action',
+                'extend_non_checkout_reservations',
+                'extend_days',
+                'cancel_room_change_plans'
+            )
+        }),
+        ('Otomasyon Ayarları', {
+            'fields': ('automation_type', 'auto_run_time', 'is_active')
+        }),
+        ('Genel Ayarlar', {
+            'fields': ('enable_rollback',)
+        }),
+        ('Notlar', {
+            'fields': ('notes',)
+        }),
+    )
+
+
+@admin.register(EndOfDayOperationStep)
+class EndOfDayOperationStepAdmin(admin.ModelAdmin):
+    list_display = ['operation', 'step_order', 'step_name', 'status', 'started_at', 'completed_at']
+    list_filter = ['status', 'operation__hotel', 'operation__operation_date']
+    search_fields = ['step_name', 'operation__hotel__name']
+    readonly_fields = ['started_at', 'completed_at', 'created_at', 'updated_at']
+    ordering = ['operation', 'step_order']
+
+
+@admin.register(EndOfDayReport)
+class EndOfDayReportAdmin(admin.ModelAdmin):
+    list_display = ['operation', 'report_type', 'export_format', 'generated_at', 'report_file']
+    list_filter = ['report_type', 'export_format', 'generated_at', 'operation__hotel']
+    search_fields = ['operation__hotel__name', 'report_type']
+    readonly_fields = ['generated_at', 'created_at', 'updated_at']
+    date_hierarchy = 'generated_at'
+
+
+@admin.register(EndOfDayJournalEntry)
+class EndOfDayJournalEntryAdmin(admin.ModelAdmin):
+    list_display = ['operation', 'journal_entry', 'entry_type', 'department', 'market_segment', 'amount', 'currency']
+    list_filter = ['entry_type', 'department', 'market_segment', 'operation__hotel']
+    search_fields = ['operation__hotel__name', 'journal_entry__entry_number']
+    readonly_fields = ['created_at', 'updated_at']
 

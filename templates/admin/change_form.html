@@ -198,19 +198,30 @@
                 {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}">{% endif %}
                 {% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
                 
-                {% if errors %}
-                    <div class="mb-4 p-4 bg-vb-danger text-white rounded-vb">
-                        <p class="font-semibold mb-2">Lütfen aşağıdaki hataları düzeltin:</p>
-                        {{ adminform.form.non_field_errors }}
-                        {% if errors|length == 1 %}
-                        <p>{{ errors }}</p>
-                        {% else %}
-                        <ul class="list-disc list-inside">
-                            {% for error in errors %}
+                {% if adminform.form.non_field_errors %}
+                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-vb">
+                        <p class="font-semibold mb-2 text-red-800">Lütfen aşağıdaki hataları düzeltin:</p>
+                        <ul class="list-disc list-inside text-red-700">
+                            {% for error in adminform.form.non_field_errors %}
                             <li>{{ error }}</li>
                             {% endfor %}
                         </ul>
-                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                {% if adminform.form.errors %}
+                    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-vb">
+                        <p class="font-semibold mb-2 text-red-800">Form hataları (alan bazlı hatalar aşağıda gösterilecektir):</p>
+                        <ul class="list-disc list-inside text-red-700">
+                            {% for field_name, error_list in adminform.form.errors.items %}
+                            <li>
+                                <strong>{{ field_name|capfirst }}:</strong>
+                                {% for error in error_list %}
+                                    {{ error }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 {% endif %}
                 

@@ -15,6 +15,7 @@ class RefundPolicy(TimeStampedModel, SoftDeleteModel):
     """
     İade Politikaları
     Modül bazında iade kuralları tanımlanır
+    Otel bazlı veya genel iade politikaları olabilir
     """
     POLICY_TYPE_CHOICES = [
         ('percentage', 'Yüzde İadesi'),
@@ -31,9 +32,20 @@ class RefundPolicy(TimeStampedModel, SoftDeleteModel):
         ('voucher', 'Voucher/Hediye Çeki'),
     ]
     
+    # Otel Bağlantısı (null ise genel politika)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.CASCADE,
+        related_name='refund_policies',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa tüm oteller için genel politika olur'
+    )
+    
     # Temel Bilgiler
     name = models.CharField('Politika Adı', max_length=200)
-    code = models.SlugField('Politika Kodu', max_length=50, unique=True)
+    code = models.SlugField('Politika Kodu', max_length=50)
     description = models.TextField('Açıklama', blank=True)
     
     # Modül Bilgisi
@@ -82,13 +94,33 @@ class RefundPolicy(TimeStampedModel, SoftDeleteModel):
         verbose_name = 'İade Politikası'
         verbose_name_plural = 'İade Politikaları'
         ordering = ['priority', 'sort_order', 'name']
+        unique_together = [('hotel', 'code')]  # Aynı otel için kod benzersiz olmalı
         indexes = [
             models.Index(fields=['module', 'is_active']),
+            models.Index(fields=['hotel', 'module', 'is_active']),
+            models.Index(fields=['hotel', 'is_default']),
             models.Index(fields=['is_default']),
         ]
     
     def __str__(self):
         return f"{self.name} ({self.get_policy_type_display()})"
+    
+    def save(self, *args, **kwargs):
+        # Otel bazlı varsayılan politika: Her otel için sadece bir politika varsayılan olabilir
+        if self.is_default:
+            # Aynı otel ve modül için diğer politikaları varsayılan olmaktan çıkar
+            filter_kwargs = {'is_default': True}
+            if self.hotel:
+                filter_kwargs['hotel'] = self.hotel
+            else:
+                filter_kwargs['hotel__isnull'] = True
+            
+            # Modül bazlı filtreleme (eğer modül belirtilmişse)
+            if self.module:
+                filter_kwargs['module'] = self.module
+            
+            RefundPolicy.objects.filter(**filter_kwargs).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
     
     def calculate_refund_amount(self, original_amount, booking_date=None, start_date=None, current_date=None):
         """
@@ -147,6 +179,7 @@ class RefundRequest(TimeStampedModel, SoftDeleteModel):
     """
     İade Talepleri
     Müşterilerden gelen iade talepleri
+    Otel bazlı veya genel iade talepleri olabilir
     """
     STATUS_CHOICES = [
         ('pending', 'Beklemede'),
@@ -156,6 +189,17 @@ class RefundRequest(TimeStampedModel, SoftDeleteModel):
         ('completed', 'Tamamlandı'),
         ('cancelled', 'İptal Edildi'),
     ]
+    
+    # Otel Bağlantısı (null ise genel talep)
+    hotel = models.ForeignKey(
+        'hotels.Hotel',
+        on_delete=models.SET_NULL,
+        related_name='refund_requests',
+        null=True,
+        blank=True,
+        verbose_name='Otel',
+        help_text='Boş bırakılırsa genel iade talebi olur'
+    )
     
     # Temel Bilgiler
     request_number = models.CharField('Talep No', max_length=50, unique=True,
@@ -264,6 +308,7 @@ class RefundRequest(TimeStampedModel, SoftDeleteModel):
         ordering = ['-request_date', '-request_number']
         indexes = [
             models.Index(fields=['source_module', 'source_id']),
+            models.Index(fields=['hotel', 'status', 'request_date']),
             models.Index(fields=['status', 'request_date']),
             models.Index(fields=['request_number']),
         ]

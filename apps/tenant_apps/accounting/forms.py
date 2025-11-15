@@ -7,13 +7,30 @@ from .models import Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLin
 
 class AccountForm(forms.ModelForm):
     """Hesap Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel Hesap (Tüm Oteller) ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa tüm oteller için genel hesap olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = Account
-        fields = ['code', 'name', 'account_type', 'currency', 'parent', 'level',
+        fields = ['code', 'name', 'hotel', 'account_type', 'currency', 'parent', 'level',
                  'opening_balance', 'description', 'is_active', 'is_system', 'sort_order']
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'hotel': forms.Select(attrs={'class': 'form-control'}),
             'account_type': forms.Select(attrs={'class': 'form-control'}),
             'currency': forms.Select(attrs={'class': 'form-control'}),
             'parent': forms.Select(attrs={'class': 'form-control'}),
@@ -27,6 +44,7 @@ class AccountForm(forms.ModelForm):
         labels = {
             'code': 'Hesap Kodu',
             'name': 'Hesap Adı',
+            'hotel': 'Otel',
             'account_type': 'Hesap Tipi',
             'currency': 'Para Birimi',
             'parent': 'Üst Hesap',
@@ -40,6 +58,7 @@ class AccountForm(forms.ModelForm):
         help_texts = {
             'code': 'Hesap planı kodu (örn: 100, 120, 600)',
             'name': 'Hesap adı',
+            'hotel': 'Boş bırakılırsa tüm oteller için genel hesap olur',
             'account_type': 'Hesap tipi (Aktif, Pasif, Gelir, Gider)',
             'currency': 'Para birimi',
             'parent': 'Üst hesap (hiyerarşi için)',
@@ -54,12 +73,29 @@ class AccountForm(forms.ModelForm):
 
 class JournalEntryForm(forms.ModelForm):
     """Yevmiye Kaydı Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel Kayıt ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa genel yevmiye kaydı olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = JournalEntry
-        fields = ['entry_date', 'description', 'source_module', 'source_id', 
+        fields = ['entry_date', 'hotel', 'description', 'source_module', 'source_id', 
                  'source_reference', 'notes', 'status']
         widgets = {
             'entry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'hotel': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'source_module': forms.TextInput(attrs={'class': 'form-control'}),
             'source_id': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -69,6 +105,7 @@ class JournalEntryForm(forms.ModelForm):
         }
         labels = {
             'entry_date': 'Kayıt Tarihi',
+            'hotel': 'Otel',
             'description': 'Açıklama',
             'source_module': 'Kaynak Modül',
             'source_id': 'Kaynak ID',
@@ -99,9 +136,25 @@ class JournalEntryLineForm(forms.ModelForm):
 
 class InvoiceForm(forms.ModelForm):
     """Fatura Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel Fatura ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa genel fatura olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = Invoice
-        fields = ['invoice_type', 'invoice_date', 'due_date', 'customer_name', 
+        fields = ['invoice_type', 'invoice_date', 'due_date', 'hotel', 'customer_name', 
                  'customer_tax_id', 'customer_address', 'customer_email', 'customer_phone',
                  'subtotal', 'discount_amount', 'tax_rate', 'currency', 'status',
                  'source_module', 'source_id', 'source_reference', 'description', 'notes']
@@ -109,6 +162,7 @@ class InvoiceForm(forms.ModelForm):
             'invoice_type': forms.Select(attrs={'class': 'form-control'}),
             'invoice_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'due_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'hotel': forms.Select(attrs={'class': 'form-control'}),
             'customer_name': forms.TextInput(attrs={'class': 'form-control'}),
             'customer_tax_id': forms.TextInput(attrs={'class': 'form-control'}),
             'customer_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -129,6 +183,7 @@ class InvoiceForm(forms.ModelForm):
             'invoice_type': 'Fatura Tipi',
             'invoice_date': 'Fatura Tarihi',
             'due_date': 'Vade Tarihi',
+            'hotel': 'Otel',
             'customer_name': 'Müşteri/Tedarikçi Adı',
             'customer_tax_id': 'Vergi No/TC',
             'customer_address': 'Adres',
@@ -172,9 +227,25 @@ class InvoiceLineForm(forms.ModelForm):
 
 class PaymentForm(forms.ModelForm):
     """Ödeme Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel Ödeme ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa genel ödeme olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = Payment
-        fields = ['payment_date', 'amount', 'currency', 'payment_method', 'invoice',
+        fields = ['payment_date', 'amount', 'currency', 'payment_method', 'hotel', 'invoice',
                  'cash_account_id', 'source_module', 'source_id', 'source_reference',
                  'description', 'notes', 'status']
         widgets = {
@@ -182,6 +253,7 @@ class PaymentForm(forms.ModelForm):
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'currency': forms.Select(attrs={'class': 'form-control'}),
             'payment_method': forms.Select(attrs={'class': 'form-control'}),
+            'hotel': forms.Select(attrs={'class': 'form-control'}),
             'invoice': forms.Select(attrs={'class': 'form-control'}),
             'cash_account_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'source_module': forms.TextInput(attrs={'class': 'form-control'}),
@@ -196,6 +268,7 @@ class PaymentForm(forms.ModelForm):
             'amount': 'Tutar',
             'currency': 'Para Birimi',
             'payment_method': 'Ödeme Yöntemi',
+            'hotel': 'Otel',
             'invoice': 'Fatura',
             'cash_account_id': 'Kasa Hesabı ID',
             'source_module': 'Kaynak Modül',

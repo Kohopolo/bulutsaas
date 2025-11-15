@@ -43,6 +43,9 @@ urlpatterns = [
     path('reservations/<int:pk>/checkin/', views.reservation_checkin, name='reservation_checkin'),
     path('reservations/<int:pk>/checkout/', views.reservation_checkout, name='reservation_checkout'),
     
+    # Rezervasyon Ödeme
+    path('reservations/<int:pk>/payment/add/', views.reservation_payment_add, name='reservation_payment_add'),
+    
     # Rezervasyon Ödeme Linki
     path('reservations/<int:pk>/payment-link/', views.reservation_payment_link, name='reservation_payment_link'),
     

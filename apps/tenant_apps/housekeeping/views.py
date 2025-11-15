@@ -110,22 +110,36 @@ def dashboard(request):
 @require_housekeeping_permission('view')
 def task_list(request):
     """Temizlik Görevleri Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    tasks = CleaningTask.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                tasks = tasks.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin görevlerini göster
+            # Sadece aktif otelin görevlerini göster
+            tasks = tasks.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     # Filtreleme
     status_filter = request.GET.get('status', '')
     priority_filter = request.GET.get('priority', '')
     assigned_to_filter = request.GET.get('assigned_to', '')
     search_query = request.GET.get('search', '')
-    
-    tasks = CleaningTask.objects.filter(
-        hotel=hotel,
-        is_deleted=False
-    )
     
     if status_filter:
         tasks = tasks.filter(status=status_filter)
@@ -142,7 +156,7 @@ def task_list(request):
             Q(notes__icontains=search_query)
         )
     
-    tasks = tasks.select_related('room_number', 'assigned_to', 'assigned_by').order_by('-created_at')
+    tasks = tasks.select_related('room_number', 'assigned_to', 'assigned_by', 'hotel').order_by('-created_at')
     
     # Sayfalama
     paginator = Paginator(tasks, 25)
@@ -151,19 +165,32 @@ def task_list(request):
     
     # Atanan personel listesi
     from django.contrib.auth.models import User
-    assigned_users = User.objects.filter(
-        assigned_cleaning_tasks__hotel=hotel,
-        assigned_cleaning_tasks__is_deleted=False
-    ).distinct()
+    if hotel_id:
+        assigned_users = User.objects.filter(
+            assigned_cleaning_tasks__hotel_id=hotel_id,
+            assigned_cleaning_tasks__is_deleted=False
+        ).distinct()
+    else:
+        assigned_users = User.objects.filter(
+            assigned_cleaning_tasks__is_deleted=False
+        ).distinct()
+    
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
     
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'tasks': page_obj,
         'status_filter': status_filter,
         'priority_filter': priority_filter,
         'assigned_to_filter': assigned_to_filter,
         'search_query': search_query,
         'assigned_users': assigned_users,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'housekeeping/tasks/list.html', context)
@@ -404,19 +431,33 @@ def task_inspect(request, pk):
 @require_housekeeping_permission('view')
 def missing_item_list(request):
     """Eksik Malzeme Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    items = MissingItem.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                items = items.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin eksik malzemelerini göster
+            # Sadece aktif otelin eksik malzemelerini göster
+            items = items.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
-    
-    items = MissingItem.objects.filter(
-        hotel=hotel,
-        is_deleted=False
-    )
     
     if status_filter:
         items = items.filter(status=status_filter)
@@ -427,17 +468,25 @@ def missing_item_list(request):
             Q(item_name__icontains=search_query)
         )
     
-    items = items.select_related('room_number', 'reported_by', 'replaced_by').order_by('-reported_at')
+    items = items.select_related('room_number', 'reported_by', 'replaced_by', 'hotel').order_by('-reported_at')
     
     paginator = Paginator(items, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'items': page_obj,
         'status_filter': status_filter,
         'search_query': search_query,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'housekeeping/missing_items/list.html', context)
@@ -480,19 +529,32 @@ def missing_item_create(request):
 @require_housekeeping_permission('view')
 def laundry_list(request):
     """Çamaşır Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    items = LaundryItem.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                items = items.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Sadece aktif otelin çamaşırlarını göster
+            items = items.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
-    
-    items = LaundryItem.objects.filter(
-        hotel=hotel,
-        is_deleted=False
-    )
     
     if status_filter:
         items = items.filter(status=status_filter)
@@ -502,17 +564,25 @@ def laundry_list(request):
             Q(room_number__number__icontains=search_query)
         )
     
-    items = items.select_related('room_number', 'collected_by', 'delivered_by').order_by('-collected_at')
+    items = items.select_related('room_number', 'collected_by', 'delivered_by', 'hotel').order_by('-collected_at')
     
     paginator = Paginator(items, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'items': page_obj,
         'status_filter': status_filter,
         'search_query': search_query,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'housekeeping/laundry/list.html', context)
@@ -524,20 +594,34 @@ def laundry_list(request):
 @require_housekeeping_permission('view')
 def maintenance_request_list(request):
     """Bakım Talepleri Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    requests = MaintenanceRequest.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                requests = requests.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin bakım taleplerini göster
+            # Sadece aktif otelin bakım taleplerini göster
+            requests = requests.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     status_filter = request.GET.get('status', '')
     priority_filter = request.GET.get('priority', '')
     search_query = request.GET.get('search', '')
-    
-    requests = MaintenanceRequest.objects.filter(
-        hotel=hotel,
-        is_deleted=False
-    )
     
     if status_filter:
         requests = requests.filter(status=status_filter)
@@ -551,18 +635,26 @@ def maintenance_request_list(request):
             Q(description__icontains=search_query)
         )
     
-    requests = requests.select_related('room_number', 'reported_by', 'assigned_to').order_by('-reported_at')
+    requests = requests.select_related('room_number', 'reported_by', 'assigned_to', 'hotel').order_by('-reported_at')
     
     paginator = Paginator(requests, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'requests': page_obj,
         'status_filter': status_filter,
         'priority_filter': priority_filter,
         'search_query': search_query,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'housekeeping/maintenance/list.html', context)

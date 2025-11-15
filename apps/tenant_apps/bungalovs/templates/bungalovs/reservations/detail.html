@@ -13,6 +13,9 @@
                 <a href="{% url 'bungalovs:reservation_update' reservation.pk %}" class="vb-button primary">
                     <i class="fas fa-edit"></i> Düzenle
                 </a>
+                <a href="{% url 'bungalovs:reservation_payment_add' reservation.pk %}" class="vb-button" style="background: #28a745; color: white; border-color: #28a745;">
+                    <i class="fas fa-money-bill-wave"></i> Ödeme Ekle
+                </a>
                 {% if reservation.can_check_in %}
                 <a href="{% url 'bungalovs:reservation_checkin' reservation.pk %}" class="vb-button success">
                     <i class="fas fa-sign-in-alt"></i> Check-in

@@ -1,0 +1,337 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Gün Sonu İşlemi Detayı - {{ operation.operation_date|date:"d.m.Y" }}{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-info-circle"></i> Gün Sonu İşlemi Detayı - {{ operation.operation_date|date:"d.m.Y" }}
+            <div style="float: right;">
+                {% if can_rollback %}
+                <form method="post" action="{% url 'reception:end_of_day_operation_rollback' operation.pk %}" style="display: inline;" onsubmit="return confirm('Bu işlemi geri almak istediğinizden emin misiniz?');">
+                    {% csrf_token %}
+                    <button type="submit" class="vb-button" style="background: #dc3545; color: white; border-color: #dc3545;">
+                        <i class="fas fa-undo"></i> Geri Al (Rollback)
+                    </button>
+                </form>
+                {% endif %}
+                <a href="{% url 'reception:end_of_day_operation_list' %}{% if operation.hotel %}?hotel_id={{ operation.hotel.id }}{% endif %}" class="vb-button">
+                    <i class="fas fa-arrow-left"></i> Geri
+                </a>
+            </div>
+        </div>
+        <div class="groupbox-body">
+            <!-- Temel Bilgiler -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-info-circle"></i> Temel Bilgiler
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Otel:</span>
+                            <span class="voucher-value">{{ operation.hotel.name }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">İşlem Tarihi:</span>
+                            <span class="voucher-value">{{ operation.operation_date|date:"d.m.Y" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Program Tarihi:</span>
+                            <span class="voucher-value">{{ operation.program_date|date:"d.m.Y" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Durum:</span>
+                            <span class="voucher-value">
+                                <span class="badge badge-{% if operation.status == 'completed' %}success{% elif operation.status == 'failed' %}danger{% elif operation.status == 'running' %}warning{% else %}secondary{% endif %}">
+                                    {{ operation.get_status_display }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Otomasyon Türü:</span>
+                            <span class="voucher-value">{{ operation.get_automation_type_display }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Asenkron:</span>
+                            <span class="voucher-value">{% if operation.is_async %}Evet{% else %}Hayır{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-clock"></i> Zaman Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Başlangıç:</span>
+                            <span class="voucher-value">
+                                {% if operation.started_at %}
+                                {{ operation.started_at|date:"d.m.Y H:i:s" }}
+                                {% else %}
+                                <span style="color: #666;">Henüz başlamadı</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Bitiş:</span>
+                            <span class="voucher-value">
+                                {% if operation.completed_at %}
+                                {{ operation.completed_at|date:"d.m.Y H:i:s" }}
+                                {% else %}
+                                <span style="color: #666;">Henüz bitmedi</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Süre:</span>
+                            <span class="voucher-value">
+                                {% if duration %}
+                                {{ duration }}
+                                {% else %}
+                                <span style="color: #666;">-</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">İlerleme:</span>
+                            <span class="voucher-value">
+                                <div style="width: 100%; background: #e0e0e0; border-radius: 3px; height: 20px; margin-top: 5px;">
+                                    <div style="width: {{ progress_percentage }}%; background: {% if operation.status == 'completed' %}#28a745{% elif operation.status == 'failed' %}#dc3545{% else %}#ffc107{% endif %}; height: 100%; border-radius: 3px; transition: width 0.3s;"></div>
+                                </div>
+                                <span style="font-size: 12px; color: #666;">{{ progress_percentage }}%</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-groupbox">
+                    <div class="groupbox-header">
+                        <i class="fas fa-user"></i> Kullanıcı Bilgileri
+                    </div>
+                    <div class="groupbox-body">
+                        <div class="voucher-row">
+                            <span class="voucher-label">Oluşturan:</span>
+                            <span class="voucher-value">{{ operation.created_by.get_full_name|default:operation.created_by.username }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Oluşturulma:</span>
+                            <span class="voucher-value">{{ operation.created_at|date:"d.m.Y H:i:s" }}</span>
+                        </div>
+                        <div class="voucher-row">
+                            <span class="voucher-label">Güncellenme:</span>
+                            <span class="voucher-value">{{ operation.updated_at|date:"d.m.Y H:i:s" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hata Mesajı -->
+            {% if operation.error_message %}
+            <div class="form-groupbox" style="margin-bottom: 20px; background: #f8d7da; border: 1px solid #f5c6cb;">
+                <div class="groupbox-header" style="color: #721c24;">
+                    <i class="fas fa-exclamation-triangle"></i> Hata Mesajı
+                </div>
+                <div class="groupbox-body" style="color: #721c24;">
+                    <pre style="white-space: pre-wrap; margin: 0;">{{ operation.error_message }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- İşlem Adımları -->
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-tasks"></i> İşlem Adımları ({{ steps|length }})
+                </div>
+                <div class="groupbox-body">
+                    {% if steps %}
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">Sıra</th>
+                                <th>Adım Adı</th>
+                                <th>Durum</th>
+                                <th>Başlangıç</th>
+                                <th>Bitiş</th>
+                                <th>Süre</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for step in steps %}
+                            <tr>
+                                <td>{{ step.step_order }}</td>
+                                <td>{{ step.step_name }}</td>
+                                <td>
+                                    <span class="badge badge-{% if step.status == 'completed' %}success{% elif step.status == 'failed' %}danger{% elif step.status == 'running' %}warning{% else %}secondary{% endif %}">
+                                        {{ step.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{% if step.started_at %}{{ step.started_at|date:"H:i:s" }}{% else %}-{% endif %}</td>
+                                <td>{% if step.completed_at %}{{ step.completed_at|date:"H:i:s" }}{% else %}-{% endif %}</td>
+                                <td>
+                                    {% if step.get_execution_time %}
+                                    {{ step.get_execution_time }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% if step.error_message %}
+                            <tr>
+                                <td colspan="6" style="background: #fee; color: #c00; padding: 10px;">
+                                    <strong>Hata:</strong> {{ step.error_message }}
+                                    {% if step.result_data %}
+                                    {% with result_data=step.result_data %}
+                                    <div style="margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 3px;">
+                                        <strong>Detaylar:</strong>
+                                        {% if result_data.errors %}
+                                        <div style="margin-top: 5px;">
+                                            <strong>Hatalar:</strong>
+                                            <ul style="margin: 5px 0; padding-left: 20px;">
+                                                {% for error in result_data.errors %}
+                                                <li>
+                                                    {% if error.message %}{{ error.message }}{% else %}{{ error }}{% endif %}
+                                                    {% if error.details %}
+                                                    <ul style="margin: 5px 0; padding-left: 20px; font-size: 12px;">
+                                                        {% for detail in error.details|slice:":5" %}
+                                                        <li>
+                                                            {% if detail.room %}{{ detail.room }}{% endif %}
+                                                            {% if detail.reservation_code %}{{ detail.reservation_code }}{% endif %}
+                                                            {% if detail.balance %}(Bakiye: {{ detail.balance }} TRY){% endif %}
+                                                        </li>
+                                                        {% endfor %}
+                                                        {% if error.details|length > 5 %}
+                                                        <li>... ve {{ error.details|length|add:"-5" }} tane daha</li>
+                                                        {% endif %}
+                                                    </ul>
+                                                    {% endif %}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        {% if result_data.warnings %}
+                                        <div style="margin-top: 5px;">
+                                            <strong>Uyarılar:</strong>
+                                            <ul style="margin: 5px 0; padding-left: 20px;">
+                                                {% for warning in result_data.warnings %}
+                                                <li>{% if warning.message %}{{ warning.message }}{% else %}{{ warning }}{% endif %}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endwith %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="text-align: center; color: #666; padding: 20px;">Henüz adım bulunmamaktadır.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Raporlar -->
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-file-alt"></i> Raporlar ({{ reports|length }})
+                </div>
+                <div class="groupbox-body">
+                    {% if reports %}
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Rapor Türü</th>
+                                <th>Format</th>
+                                <th>Oluşturulma</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr>
+                                <td>{{ report.get_report_type_display }}</td>
+                                <td>{{ report.get_export_format_display|upper }}</td>
+                                <td>{{ report.generated_at|date:"d.m.Y H:i:s" }}</td>
+                                <td>
+                                    <a href="{% url 'reception:end_of_day_report_detail' report.pk %}" class="vb-button small">
+                                        <i class="fas fa-eye"></i> Görüntüle
+                                    </a>
+                                    {% if report.report_file %}
+                                    <a href="{% url 'reception:end_of_day_report_download' report.pk %}" class="vb-button small">
+                                        <i class="fas fa-download"></i> İndir
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="text-align: center; color: #666; padding: 20px;">Henüz rapor oluşturulmamıştır.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Muhasebe Fişleri -->
+            {% if journal_entries %}
+            <div class="form-groupbox" style="margin-bottom: 20px;">
+                <div class="groupbox-header">
+                    <i class="fas fa-book"></i> Muhasebe Fişleri ({{ journal_entries|length }})
+                </div>
+                <div class="groupbox-body">
+                    <table class="vb-datagrid">
+                        <thead>
+                            <tr>
+                                <th>Fiş Türü</th>
+                                <th>Departman</th>
+                                <th>Pazar Segmenti</th>
+                                <th>Tutar</th>
+                                <th>Para Birimi</th>
+                                <th>Yevmiye Kaydı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in journal_entries %}
+                            <tr>
+                                <td>{{ entry.get_entry_type_display }}</td>
+                                <td>{{ entry.get_department_display }}</td>
+                                <td>{{ entry.get_market_segment_display|default:"-" }}</td>
+                                <td>{{ entry.amount|floatformat:2 }}</td>
+                                <td>{{ entry.currency }}</td>
+                                <td>
+                                    <a href="{% url 'accounting:journal_entry_detail' entry.journal_entry.pk %}" target="_blank" class="vb-button small">
+                                        <i class="fas fa-external-link-alt"></i> {{ entry.journal_entry.entry_number }}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Notlar -->
+            {% if operation.notes %}
+            <div class="form-groupbox">
+                <div class="groupbox-header">
+                    <i class="fas fa-sticky-note"></i> Notlar
+                </div>
+                <div class="groupbox-body">
+                    <pre style="white-space: pre-wrap; margin: 0;">{{ operation.notes }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

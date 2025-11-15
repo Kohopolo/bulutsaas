@@ -176,7 +176,6 @@
 
 {% block inline_js %}
 // Room Rack specific JavaScript
-console.log('Room Rack loaded');
 
 // View mode toggle
 const gridViewBtn = document.getElementById('grid-view');
@@ -315,7 +314,6 @@ document.querySelectorAll('[data-action="view"]').forEach(function(button) {
     button.addEventListener('click', function(e) {
         e.stopPropagation();
         const roomId = this.dataset.roomId;
-        console.log('View room:', roomId);
         VBComponents.notify('Oda detayları açılıyor...', 'info');
     });
 });
@@ -325,7 +323,6 @@ document.querySelectorAll('[data-action="checkin"]').forEach(function(button) {
         e.stopPropagation();
         const roomId = this.dataset.roomId;
         VBComponents.confirm('Bu odaya check-in yapmak istiyor musunuz?', function() {
-            console.log('Check-in to room:', roomId);
             VBComponents.notify('Check-in işlemi başlatıldı', 'success');
         });
     });
@@ -333,7 +330,6 @@ document.querySelectorAll('[data-action="checkin"]').forEach(function(button) {
 
 // Auto-refresh every 2 minutes
 setInterval(function() {
-    console.log('Auto-refreshing room rack...');
     // Add your AJAX refresh logic here
 }, 120000); // 2 minutes
 {% endblock %}

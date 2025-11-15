@@ -23,7 +23,34 @@ from .decorators import require_refunds_module
 @require_refunds_module
 def policy_list(request):
     """İade politikaları listesi"""
-    policies = RefundPolicy.objects.filter(is_deleted=False)
+    policies = RefundPolicy.objects.filter(is_deleted=False).select_related('hotel')
+    
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                policies = policies.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel politikalar (otel yok)
+                policies = policies.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel politikalar için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin politikalarını göster
+            # Sadece aktif otelin politikalarını göster (genel politikaları gösterme)
+            policies = policies.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
     
     # Filtreleme
     module = request.GET.get('module')
@@ -56,9 +83,21 @@ def policy_list(request):
     page = request.GET.get('page')
     policies = paginator.get_page(page)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = list(request.accessible_hotels) if request.accessible_hotels else []
+    # Eğer accessible_hotels boşsa ama active_hotel varsa, onu ekle
+    if not accessible_hotels and hasattr(request, 'active_hotel') and request.active_hotel:
+        accessible_hotels = [request.active_hotel]
+    
     context = {
         'policies': policies,
         'policy_types': RefundPolicy.POLICY_TYPE_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/refunds/policies/list.html', context)
 
@@ -86,11 +125,18 @@ def policy_create(request):
     if request.method == 'POST':
         form = RefundPolicyForm(request.POST)
         if form.is_valid():
-            policy = form.save()
+            policy = form.save(commit=False)
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not policy.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                policy.hotel = request.active_hotel
+            policy.save()
             messages.success(request, f'İade politikası "{policy.name}" başarıyla oluşturuldu.')
             return redirect('refunds:policy_detail', pk=policy.pk)
     else:
         form = RefundPolicyForm()
+        # Varsayılan olarak aktif oteli seç
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            form.fields['hotel'].initial = request.active_hotel
     
     context = {'form': form}
     return render(request, 'tenant/refunds/policies/form.html', context)
@@ -139,7 +185,34 @@ def policy_delete(request, pk):
 @require_refunds_module
 def request_list(request):
     """İade talepleri listesi"""
-    requests = RefundRequest.objects.filter(is_deleted=False)
+    requests = RefundRequest.objects.filter(is_deleted=False).select_related('hotel')
+    
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                requests = requests.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel talepler (otel yok)
+                requests = requests.filter(hotel__isnull=True)
+                hotel_id = 0  # Genel talepler için 0 olarak işaretle
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin taleplerini göster
+            # Sadece aktif otelin taleplerini göster (genel talepleri gösterme)
+            requests = requests.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id  # Context için hotel_id'yi set et
     
     # Filtreleme
     status = request.GET.get('status')
@@ -177,9 +250,21 @@ def request_list(request):
     page = request.GET.get('page')
     requests = paginator.get_page(page)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = list(request.accessible_hotels) if request.accessible_hotels else []
+    # Eğer accessible_hotels boşsa ama active_hotel varsa, onu ekle
+    if not accessible_hotels and hasattr(request, 'active_hotel') and request.active_hotel:
+        accessible_hotels = [request.active_hotel]
+    
     context = {
         'requests': requests,
         'statuses': RefundRequest.STATUS_CHOICES,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     return render(request, 'tenant/refunds/requests/list.html', context)
 
@@ -207,6 +292,9 @@ def request_create(request):
         if form.is_valid():
             refund_request = form.save(commit=False)
             refund_request.created_by = request.user
+            # Eğer hotel seçilmemişse ve aktif otel varsa, aktif oteli ata
+            if not refund_request.hotel and hasattr(request, 'active_hotel') and request.active_hotel:
+                refund_request.hotel = request.active_hotel
             
             # İade tutarını hesapla (politika varsa)
             if refund_request.refund_policy:
@@ -225,6 +313,9 @@ def request_create(request):
             return redirect('refunds:request_detail', pk=refund_request.pk)
     else:
         form = RefundRequestForm()
+        # Varsayılan olarak aktif oteli seç
+        if hasattr(request, 'active_hotel') and request.active_hotel:
+            form.fields['hotel'].initial = request.active_hotel
     
     context = {'form': form}
     return render(request, 'tenant/refunds/requests/form.html', context)

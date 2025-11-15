@@ -23,6 +23,9 @@
                 <button onclick="changeTicketStatus({{ ticket.pk }})" class="vb-button" style="background: #6c757d; color: white; border-color: #6c757d;">
                     <i class="fas fa-exchange-alt"></i> Durum Değiştir
                 </button>
+                <a href="{% url 'ferry_tickets:ticket_payment_add' ticket.pk %}" class="vb-button" style="background: #28a745; color: white; border-color: #28a745;">
+                    <i class="fas fa-money-bill-wave"></i> Ödeme Ekle
+                </a>
                 <a href="{% url 'ferry_tickets:ticket_voucher_create' ticket.pk %}" class="vb-button" style="background: #17a2b8; color: white; border-color: #17a2b8;">
                     <i class="fas fa-ticket-alt"></i> Voucher Oluştur
                 </a>
@@ -552,9 +555,8 @@ function openTicketEditModal(ticketId) {
                 if (typeof initTicketForm === 'function') {
                     try {
                         initTicketForm();
-                        console.log('✓ initTicketForm başarıyla çağrıldı (düzenleme - detail)');
                     } catch (error) {
-                        console.error('✗ initTicketForm çağrılırken hata:', error);
+                        // Hata yönetimi
                     }
                 } else {
                     retryCount++;

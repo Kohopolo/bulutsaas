@@ -59,17 +59,33 @@ def dashboard(request):
 @require_quality_control_permission('view')
 def inspection_list(request):
     """Kalite Kontrol Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    inspections = RoomQualityInspection.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                inspections = inspections.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Sadece aktif otelin kontrollerini göster
+            inspections = inspections.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     status_filter = request.GET.get('status', '')
     type_filter = request.GET.get('type', '')
     search_query = request.GET.get('search', '')
-    
-    inspections = RoomQualityInspection.objects.filter(hotel=hotel, is_deleted=False)
     
     if status_filter:
         inspections = inspections.filter(status=status_filter)
@@ -78,18 +94,26 @@ def inspection_list(request):
     if search_query:
         inspections = inspections.filter(Q(room_number__number__icontains=search_query) | Q(notes__icontains=search_query))
     
-    inspections = inspections.select_related('room_number', 'inspected_by').order_by('-inspected_at')
+    inspections = inspections.select_related('room_number', 'inspected_by', 'hotel').order_by('-inspected_at')
     
     paginator = Paginator(inspections, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'inspections': page_obj,
         'status_filter': status_filter,
         'type_filter': type_filter,
         'search_query': search_query,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'quality_control/inspections/list.html', context)
@@ -155,17 +179,33 @@ def inspection_detail(request, pk):
 @require_quality_control_permission('view')
 def complaint_list(request):
     """Müşteri Şikayetleri Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    complaints = CustomerComplaint.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                complaints = complaints.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Sadece aktif otelin şikayetlerini göster
+            complaints = complaints.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     status_filter = request.GET.get('status', '')
     priority_filter = request.GET.get('priority', '')
     search_query = request.GET.get('search', '')
-    
-    complaints = CustomerComplaint.objects.filter(hotel=hotel, is_deleted=False)
     
     if status_filter:
         complaints = complaints.filter(status=status_filter)
@@ -174,18 +214,26 @@ def complaint_list(request):
     if search_query:
         complaints = complaints.filter(Q(description__icontains=search_query))
     
-    complaints = complaints.select_related('reservation', 'customer', 'reported_by').order_by('-reported_at')
+    complaints = complaints.select_related('customer', 'reported_by', 'hotel').order_by('-reported_at')
     
     paginator = Paginator(complaints, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'complaints': page_obj,
         'status_filter': status_filter,
         'priority_filter': priority_filter,
         'search_query': search_query,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'quality_control/complaints/list.html', context)

@@ -88,6 +88,23 @@ def tenant_modules(request):
             except:
                 pass
     
+    # Settings modülü her zaman aktif (paket kontrolü olmadan)
+    # Ayarlar modülü tüm tenant'larda kullanılabilir olmalı
+    if 'settings' not in enabled_module_codes:
+        try:
+            settings_module = Module.objects.filter(code='settings', is_active=True).first()
+            if settings_module:
+                enabled_module_codes.append('settings')
+                user_accessible_modules.append('settings')  # Settings modülü her zaman erişilebilir
+                enabled_modules.append({
+                    'code': settings_module.code,
+                    'name': settings_module.name,
+                    'icon': settings_module.icon,
+                    'url_prefix': settings_module.url_prefix,
+                })
+        except:
+            pass
+    
     # Kullanıcı giriş yapmamışsa, tüm paket modüllerini erişilebilir olarak işaretle
     if not request.user.is_authenticated:
         user_accessible_modules = enabled_module_codes.copy()
@@ -112,6 +129,7 @@ def tenant_modules(request):
         'has_ferry_tickets_module': 'ferry_tickets' in enabled_module_codes and 'ferry_tickets' in user_accessible_modules,
         'has_bungalovs_module': 'bungalovs' in enabled_module_codes and 'bungalovs' in user_accessible_modules,
         'has_backup_module': 'backup' in enabled_module_codes and 'backup' in user_accessible_modules,
+        'has_settings_module': True,  # Settings modülü her zaman aktif (core modül gibi)
         'has_users_module': True,  # Core modül, her zaman aktif
         'has_roles_module': True,  # Core modül, her zaman aktif
         'has_permissions_module': True,  # Core modül, her zaman aktif

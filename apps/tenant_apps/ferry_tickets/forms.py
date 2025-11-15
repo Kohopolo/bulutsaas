@@ -219,15 +219,38 @@ class FerryTicketForm(forms.ModelForm):
         if not self.instance or not self.instance.currency:
             self.fields['currency'].initial = 'TRY'
         
-        # Schedule queryset'i filtrele (sadece gelecek seferler)
+        # Schedule queryset'i filtrele (sadece gelecek seferler ve geçmiş olmayan seferler)
         if not self.instance or not self.instance.pk:
             from django.utils import timezone
-            today = timezone.now().date()
-            self.fields['schedule'].queryset = FerrySchedule.objects.filter(
-                departure_date__gte=today,
+            from datetime import datetime
+            
+            now = timezone.now()
+            today = now.date()
+            
+            # Geçmiş tarihleri filtrele
+            schedules = FerrySchedule.objects.filter(
                 is_active=True,
-                is_cancelled=False
-            ).select_related('route', 'ferry').order_by('departure_date', 'departure_time')
+                is_cancelled=False,
+                departure_date__gte=today
+            )
+            
+            # Aynı gün içindeki geçmiş saatleri de filtrele
+            today_schedules = schedules.filter(departure_date=today)
+            valid_schedule_ids = []
+            
+            for schedule in today_schedules:
+                if not schedule.is_expired():
+                    valid_schedule_ids.append(schedule.pk)
+            
+            # Gelecekteki seferler + bugünkü geçerli seferler
+            future_schedules = schedules.exclude(departure_date=today)
+            if valid_schedule_ids:
+                valid_today_schedules = FerrySchedule.objects.filter(pk__in=valid_schedule_ids)
+                schedules = future_schedules | valid_today_schedules
+            else:
+                schedules = future_schedules
+            
+            self.fields['schedule'].queryset = schedules.select_related('route', 'ferry').order_by('departure_date', 'departure_time')
         
         # Reservation agent queryset'i filtrele
         from apps.tenant_apps.sales.models import Agency

@@ -59,5 +59,18 @@ urlpatterns = [
            path('api/room-numbers/', views.api_room_numbers, name='api_room_numbers'),
            path('api/room-status-update/', views.api_room_status_update, name='api_room_status_update'),
            path('api/room-detail/<int:room_number_id>/', views.api_room_detail, name='api_room_detail'),
+           
+           # Gün Sonu İşlemleri (End of Day / Night Audit)
+           path('end-of-day/', views.end_of_day_dashboard, name='end_of_day_dashboard'),
+           path('end-of-day/settings/', views.end_of_day_settings, name='end_of_day_settings'),
+           path('end-of-day/settings/<int:hotel_id>/', views.end_of_day_settings, name='end_of_day_settings_hotel'),
+           path('end-of-day/run/', views.end_of_day_run, name='end_of_day_run'),
+           path('end-of-day/run/<int:hotel_id>/', views.end_of_day_run, name='end_of_day_run_hotel'),
+           path('end-of-day/operations/', views.end_of_day_operation_list, name='end_of_day_operation_list'),
+           path('end-of-day/operations/<int:pk>/', views.end_of_day_operation_detail, name='end_of_day_operation_detail'),
+           path('end-of-day/operations/<int:pk>/rollback/', views.end_of_day_operation_rollback, name='end_of_day_operation_rollback'),
+           path('end-of-day/reports/', views.end_of_day_report_list, name='end_of_day_report_list'),
+           path('end-of-day/reports/<int:pk>/', views.end_of_day_report_detail, name='end_of_day_report_detail'),
+           path('end-of-day/reports/<int:pk>/download/', views.end_of_day_report_download, name='end_of_day_report_download'),
        ]
 

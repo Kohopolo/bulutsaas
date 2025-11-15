@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django_tenants.utils import get_tenant_model
 
@@ -32,10 +33,43 @@ def gateway_list(request):
         is_deleted=False
     ).order_by('sort_order', 'name')
     
-    # Tenant'ın yapılandırdığı gateway'ler
-    tenant_gateways = TenantPaymentGateway.objects.filter(
-        tenant=tenant
-    ).select_related('gateway').order_by('gateway__sort_order', 'gateway__name')
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                tenant_gateways = TenantPaymentGateway.objects.filter(
+                    tenant=tenant,
+                    hotel_id=hotel_id
+                ).select_related('gateway').order_by('gateway__sort_order', 'gateway__name')
+            else:
+                tenant_gateways = TenantPaymentGateway.objects.filter(
+                    tenant=tenant,
+                    hotel__isnull=True
+                ).select_related('gateway').order_by('gateway__sort_order', 'gateway__name')
+                hotel_id = 0
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and not hotel_id and hasattr(request, 'active_hotel') and request.active_hotel:
+        # Sadece aktif otelin gateway'lerini göster
+        tenant_gateways = TenantPaymentGateway.objects.filter(
+            tenant=tenant,
+            hotel=request.active_hotel
+        ).select_related('gateway').order_by('gateway__sort_order', 'gateway__name')
+        hotel_id = request.active_hotel.id
+    elif not hotel_id:
+        # Tüm gateway'ler
+        tenant_gateways = TenantPaymentGateway.objects.filter(
+            tenant=tenant
+        ).select_related('gateway').order_by('gateway__sort_order', 'gateway__name')
     
     # Gateway ID'lerine göre mapping
     configured_gateway_ids = {tg.gateway_id for tg in tenant_gateways}
@@ -43,11 +77,19 @@ def gateway_list(request):
     # Yapılandırılmamış gateway'ler
     unconfigured_gateways = [gw for gw in all_gateways if gw.id not in configured_gateway_ids]
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
         'tenant': tenant,
         'all_gateways': all_gateways,
         'tenant_gateways': tenant_gateways,
         'unconfigured_gateways': unconfigured_gateways,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'payment_management/gateway_list.html', context)

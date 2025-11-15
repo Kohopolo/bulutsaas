@@ -23,21 +23,31 @@
                         <i class="fas fa-info-circle"></i> Bilet Bilgileri
                     </div>
                     <div class="groupbox-body">
-                        <div class="voucher-row">
-                            <span class="voucher-label">Bilet Kodu:</span>
-                            <span class="voucher-value">{{ ticket.ticket_code }}</span>
-                        </div>
-                        <div class="voucher-row">
-                            <span class="voucher-label">Toplam Tutar:</span>
-                            <span class="voucher-value">{{ ticket.total_amount|floatformat:2 }} {{ ticket.currency }}</span>
-                        </div>
-                        <div class="voucher-row">
-                            <span class="voucher-label">Ödenen:</span>
-                            <span class="voucher-value">{{ ticket.total_paid|floatformat:2 }} {{ ticket.currency }}</span>
-                        </div>
-                        <div class="voucher-row">
-                            <span class="voucher-label">Kalan:</span>
-                            <span class="voucher-value" style="color: red; font-weight: bold;">{{ ticket.get_remaining_amount|floatformat:2 }} {{ ticket.currency }}</span>
+                        <div class="voucher-row" style="background: #e3f2fd; padding: 15px; margin-bottom: 20px; border-radius: 5px;">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                                <div>
+                                    <span class="voucher-label">Bilet Kodu:</span>
+                                    <span class="voucher-value" style="font-size: 16px; font-weight: bold;">{{ ticket.ticket_code }}</span>
+                                </div>
+                                <div>
+                                    <span class="voucher-label">Toplam Tutar:</span>
+                                    <span class="voucher-value" style="font-size: 18px; font-weight: bold; color: #1976d2;">
+                                        {{ ticket.total_amount|floatformat:2 }} {{ ticket.currency }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="voucher-label">Ödenen:</span>
+                                    <span class="voucher-value" style="font-size: 18px; font-weight: bold; color: #388e3c;">
+                                        {{ total_paid|default:0|floatformat:2 }} {{ ticket.currency }}
+                                    </span>
+                                </div>
+                                <div style="grid-column: span 2; border-top: 2px solid #90caf9; padding-top: 10px; margin-top: 10px;">
+                                    <span class="voucher-label">Kalan:</span>
+                                    <span class="voucher-value" style="font-size: 20px; font-weight: bold; color: #d32f2f;">
+                                        {{ remaining_amount|default:ticket.total_amount|floatformat:2 }} {{ ticket.currency }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -60,22 +70,26 @@
                             <div>
                                 <input type="number" name="payment_amount" 
                                        step="0.01" 
-                                       max="{{ ticket.get_remaining_amount }}" 
-                                       value="{{ ticket.get_remaining_amount }}" 
+                                       min="0.01"
+                                       max="{{ remaining_amount|default:ticket.total_amount }}" 
+                                       value="{{ remaining_amount|default:ticket.total_amount }}" 
                                        class="form-control" 
                                        required>
-                                <small style="color: #666;">Maksimum: {{ ticket.get_remaining_amount|floatformat:2 }} {{ ticket.currency }}</small>
+                                <small style="color: #666;">Maksimum: {{ remaining_amount|default:ticket.total_amount|floatformat:2 }} {{ ticket.currency }}</small>
                             </div>
                             
                             <div class="form-label">Ödeme Yöntemi *</div>
                             <div>
                                 <select name="payment_method" class="form-control" required>
+                                    <option value="">Seçiniz...</option>
                                     <option value="cash">Nakit</option>
                                     <option value="credit_card">Kredi Kartı</option>
                                     <option value="debit_card">Banka Kartı</option>
-                                    <option value="transfer">Havale/EFT</option>
+                                    <option value="bank_transfer">Havale/EFT</option>
                                     <option value="check">Çek</option>
-                                    <option value="online">Online Ödeme</option>
+                                    <option value="iyzico">İyzico</option>
+                                    <option value="paytr">PayTR</option>
+                                    <option value="other">Diğer</option>
                                 </select>
                             </div>
                             
@@ -83,7 +97,22 @@
                             <div>
                                 <input type="text" name="payment_reference" 
                                        class="form-control" 
-                                       placeholder="Banka referans numarası, işlem ID vb.">
+                                       placeholder="Ödeme referans numarası">
+                            </div>
+                            
+                            <div class="form-label">İşlem ID</div>
+                            <div>
+                                <input type="text" name="transaction_id" 
+                                       class="form-control" 
+                                       placeholder="İşlem numarası veya referans">
+                            </div>
+                            
+                            <div class="form-label">Notlar</div>
+                            <div>
+                                <textarea name="notes" 
+                                          rows="3"
+                                          class="form-control"
+                                          placeholder="Ödeme ile ilgili notlar"></textarea>
                             </div>
                         </div>
                     </div>

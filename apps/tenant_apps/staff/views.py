@@ -54,16 +54,33 @@ def dashboard(request):
 @require_staff_permission('view')
 def staff_list(request):
     """Personel Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    staff_list = Staff.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                staff_list = staff_list.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin personelini göster
+            # Sadece aktif otelin personelini göster
+            staff_list = staff_list.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     department_filter = request.GET.get('department', '')
     search_query = request.GET.get('search', '')
-    
-    staff_list = Staff.objects.filter(hotel=hotel, is_deleted=False)
     
     if department_filter:
         staff_list = staff_list.filter(department=department_filter)
@@ -72,17 +89,25 @@ def staff_list(request):
             Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query) | Q(employee_id__icontains=search_query)
         )
     
-    staff_list = staff_list.select_related('user').order_by('last_name', 'first_name')
+    staff_list = staff_list.select_related('user', 'hotel').order_by('last_name', 'first_name')
     
     paginator = Paginator(staff_list, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'staff_list': page_obj,
         'department_filter': department_filter,
         'search_query': search_query,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'staff/staff/list.html', context)
@@ -117,17 +142,33 @@ def staff_create(request):
 @require_staff_permission('view')
 def shift_list(request):
     """Vardiya Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    shifts = Shift.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                shifts = shifts.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Sadece aktif otelin vardiyalarını göster
+            shifts = shifts.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     date_from = request.GET.get('date_from', '')
     date_to = request.GET.get('date_to', '')
     status_filter = request.GET.get('status', '')
-    
-    shifts = Shift.objects.filter(hotel=hotel, is_deleted=False)
     
     if date_from:
         shifts = shifts.filter(shift_date__gte=date_from)
@@ -136,18 +177,26 @@ def shift_list(request):
     if status_filter:
         shifts = shifts.filter(status=status_filter)
     
-    shifts = shifts.select_related('staff').order_by('-shift_date', 'start_time')
+    shifts = shifts.select_related('staff', 'hotel').order_by('-shift_date', 'start_time')
     
     paginator = Paginator(shifts, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'shifts': page_obj,
         'date_from': date_from,
         'date_to': date_to,
         'status_filter': status_filter,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'staff/shifts/list.html', context)
@@ -243,33 +292,57 @@ def leave_create(request):
 @require_staff_permission('view')
 def salary_list(request):
     """Maaş Kayıtları Listesi"""
-    if not hasattr(request, 'active_hotel') or not request.active_hotel:
-        messages.error(request, 'Aktif otel seçilmedi.')
-        return redirect('hotels:select_hotel')
+    salaries = SalaryRecord.objects.filter(is_deleted=False)
     
-    hotel = request.active_hotel
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():  # Boş string kontrolü
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                salaries = salaries.filter(hotel_id=hotel_id)
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Sadece aktif otelin maaşlarını göster
+            salaries = salaries.filter(hotel=request.active_hotel)
+            hotel_id = request.active_hotel.id
     
     month_filter = request.GET.get('month', '')
     paid_filter = request.GET.get('paid', '')
-    
-    salaries = SalaryRecord.objects.filter(hotel=hotel, is_deleted=False)
     
     if month_filter:
         salaries = salaries.filter(salary_month__year=month_filter[:4], salary_month__month=month_filter[5:])
     if paid_filter:
         salaries = salaries.filter(paid=(paid_filter == '1'))
     
-    salaries = salaries.select_related('staff').order_by('-salary_month')
+    salaries = salaries.select_related('staff', 'hotel').order_by('-salary_month')
     
     paginator = Paginator(salaries, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Otel listesi (filtreleme için)
+    accessible_hotels = []
+    if hasattr(request, 'accessible_hotels'):
+        accessible_hotels = request.accessible_hotels
+    
     context = {
-        'hotel': hotel,
+        'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
         'salaries': page_obj,
         'month_filter': month_filter,
         'paid_filter': paid_filter,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
     }
     
     return render(request, 'staff/salaries/list.html', context)

@@ -7,14 +7,31 @@ from .models import CashAccount, CashTransaction, CashFlow
 
 class CashAccountForm(forms.ModelForm):
     """Kasa Hesabı Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel Kasa Hesabı (Tüm Oteller) ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa tüm oteller için genel kasa hesabı olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = CashAccount
-        fields = ['name', 'code', 'account_type', 'currency', 'bank_name', 'branch_name',
+        fields = ['name', 'code', 'hotel', 'account_type', 'currency', 'bank_name', 'branch_name',
                  'account_number', 'iban', 'initial_balance', 'description', 'is_active', 
                  'is_default', 'sort_order']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'hotel': forms.Select(attrs={'class': 'form-control'}),
             'account_type': forms.Select(attrs={'class': 'form-control'}),
             'currency': forms.Select(attrs={'class': 'form-control'}),
             'bank_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -30,6 +47,7 @@ class CashAccountForm(forms.ModelForm):
         labels = {
             'name': 'Hesap Adı',
             'code': 'Hesap Kodu',
+            'hotel': 'Otel',
             'account_type': 'Hesap Tipi',
             'currency': 'Para Birimi',
             'bank_name': 'Banka Adı',
@@ -45,6 +63,7 @@ class CashAccountForm(forms.ModelForm):
         help_texts = {
             'name': 'Kasa hesabının adı (örn: Ana Kasa, İş Bankası TL)',
             'code': 'Benzersiz hesap kodu (otomatik oluşturulur)',
+            'hotel': 'Boş bırakılırsa tüm oteller için genel kasa hesabı olur',
             'account_type': 'Hesap tipini seçin (Nakit, Banka, Kredi Kartı vb.)',
             'currency': 'Hesabın para birimi',
             'bank_name': 'Banka hesabı ise banka adı',
@@ -61,13 +80,30 @@ class CashAccountForm(forms.ModelForm):
 
 class CashTransactionForm(forms.ModelForm):
     """Kasa İşlemi Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel İşlem ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa genel kasa işlemi olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = CashTransaction
-        fields = ['account', 'transaction_type', 'amount', 'currency', 'to_account',
+        fields = ['account', 'hotel', 'transaction_type', 'amount', 'currency', 'to_account',
                  'source_module', 'source_id', 'source_reference', 'payment_method',
                  'payment_date', 'due_date', 'description', 'notes', 'status']
         widgets = {
             'account': forms.Select(attrs={'class': 'form-control'}),
+            'hotel': forms.Select(attrs={'class': 'form-control'}),
             'transaction_type': forms.Select(attrs={'class': 'form-control'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'currency': forms.Select(attrs={'class': 'form-control'}),
@@ -84,6 +120,7 @@ class CashTransactionForm(forms.ModelForm):
         }
         labels = {
             'account': 'Kasa Hesabı',
+            'hotel': 'Otel',
             'transaction_type': 'İşlem Tipi',
             'amount': 'Tutar',
             'currency': 'Para Birimi',

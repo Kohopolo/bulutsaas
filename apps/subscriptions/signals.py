@@ -10,6 +10,44 @@ from django_tenants.utils import schema_context, get_public_schema_name
 from .models import Subscription
 from apps.tenant_apps.core.models import TenantUser, UserType, Role, UserRole, RolePermission, Permission
 from apps.modules.models import Module
+from apps.tenants.models import Tenant
+
+
+@receiver(post_save, sender=Subscription)
+def sync_tenant_package(sender, instance, created, **kwargs):
+    """
+    Subscription değiştiğinde tenant.package'ı senkronize et
+    """
+    if instance.status == 'active' and instance.package:
+        tenant = instance.tenant
+        if tenant.package != instance.package:
+            tenant.package = instance.package
+            tenant.save(update_fields=['package'])
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f'Tenant {tenant.name} paketi güncellendi: {instance.package.name}')
+
+
+@receiver(post_save, sender=Tenant)
+def sync_subscription_package(sender, instance, created, **kwargs):
+    """
+    Tenant.package değiştiğinde subscription.package'ı senkronize et
+    """
+    if instance.package:
+        # Aktif subscription'ı bul
+        subscription = Subscription.objects.filter(
+            tenant=instance,
+            status='active'
+        ).first()
+        
+        if subscription and subscription.package != instance.package:
+            subscription.package = instance.package
+            subscription.amount = instance.package.price_monthly
+            subscription.currency = instance.package.currency
+            subscription.save(update_fields=['package', 'amount', 'currency'])
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f'Subscription {subscription.id} paketi güncellendi: {instance.package.name}')
 
 
 @receiver(post_save, sender=Subscription)

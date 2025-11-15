@@ -7,9 +7,25 @@ from .models import RefundPolicy, RefundRequest, RefundTransaction
 
 class RefundPolicyForm(forms.ModelForm):
     """İade Politikası Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel Politika (Tüm Oteller) ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa tüm oteller için genel politika olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = RefundPolicy
-        fields = ['name', 'code', 'module', 'description', 'policy_type', 'refund_percentage',
+        fields = ['name', 'code', 'hotel', 'module', 'description', 'policy_type', 'refund_percentage',
                  'refund_amount', 'days_before_start', 'days_after_booking', 'max_refund_days',
                  'refund_method', 'processing_fee_percentage', 'processing_fee_amount',
                  'is_active', 'is_default', 'priority', 'custom_rules', 'sort_order']
@@ -57,9 +73,25 @@ class RefundPolicyForm(forms.ModelForm):
 
 class RefundRequestForm(forms.ModelForm):
     """İade Talebi Formu"""
+    hotel = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        empty_label='--- Genel Talep ---',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text='Boş bırakılırsa genel iade talebi olur'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            self.fields['hotel'].queryset = Hotel.objects.filter(is_deleted=False).order_by('name')
+        except:
+            self.fields['hotel'].queryset = Hotel.objects.none()
+    
     class Meta:
         model = RefundRequest
-        fields = ['source_module', 'source_id', 'source_reference', 'customer_name',
+        fields = ['source_module', 'source_id', 'source_reference', 'hotel', 'customer_name',
                  'customer_email', 'customer_phone', 'original_amount', 'original_payment_method',
                  'original_payment_date', 'refund_policy', 'refund_method', 'reason',
                  'customer_notes', 'status']
@@ -67,6 +99,7 @@ class RefundRequestForm(forms.ModelForm):
             'source_module': forms.TextInput(attrs={'class': 'form-control'}),
             'source_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'source_reference': forms.TextInput(attrs={'class': 'form-control'}),
+            'hotel': forms.Select(attrs={'class': 'form-control'}),
             'customer_name': forms.TextInput(attrs={'class': 'form-control'}),
             'customer_email': forms.EmailInput(attrs={'class': 'form-control'}),
             'customer_phone': forms.TextInput(attrs={'class': 'form-control'}),
@@ -83,6 +116,7 @@ class RefundRequestForm(forms.ModelForm):
             'source_module': 'Kaynak Modül',
             'source_id': 'Kaynak ID',
             'source_reference': 'Kaynak Referans',
+            'hotel': 'Otel',
             'customer_name': 'Müşteri Adı',
             'customer_email': 'Müşteri E-posta',
             'customer_phone': 'Müşteri Telefon',

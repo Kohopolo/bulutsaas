@@ -227,6 +227,17 @@ class FerrySchedule(TimeStampedModel, SoftDeleteModel):
             FerryVehicleType.CARAVAN: self.caravan_price,
         }
         return price_map.get(vehicle_type, Decimal('0'))
+    
+    def is_expired(self):
+        """Sefer tarihi ve saati geçmiş mi?"""
+        from django.utils import timezone
+        from datetime import datetime
+        
+        now = timezone.now()
+        departure_datetime = datetime.combine(self.departure_date, self.departure_time)
+        departure_datetime = timezone.make_aware(departure_datetime)
+        
+        return now > departure_datetime
 
 
 # ==================== FERİBOT BİLETİ ====================

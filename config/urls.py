@@ -1,15 +1,17 @@
 """
 URL configuration for SaaS 2026 project.
+Tenant URL'leri için - Admin paneli yok (sadece public schema'da)
 """
-from django.contrib import admin
+# from django.contrib import admin  # KALDIRILDI - Tenant domain'lerinde admin yok
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
-    # Admin Panel
-    path('admin/', admin.site.urls),
+    # Admin Panel KALDIRILDI - Tenant domain'lerinde admin paneli olmamalı
+    # Admin paneli sadece public schema'da (config.urls_public) kullanılmalı
+    # path('admin/', admin.site.urls),  # KALDIRILDI
     
     # VB Theme Frontend (ElektraWeb Desktop Style) - Tenant URL'leri için
     # Public schema için config.urls_public kullanılır
@@ -82,6 +84,9 @@ urlpatterns = [
     # Yedekleme Yönetimi (Backup)
     path('backup/', include('apps.tenant_apps.backup.urls')),
     
+    # Ayarlar Modülü (Settings - SMS entegrasyonları)
+    path('settings/', include('apps.tenant_apps.settings.urls')),
+    
     # Tenant Apps (tenant üyelerine özel) - Şimdilik kapalı
     # path('reservations/', include('apps.tenant_apps.reservations.urls')),
     # path('housekeeping/', include('apps.tenant_apps.housekeeping.urls')),
@@ -105,10 +110,11 @@ if settings.DEBUG:
     except ImportError:
         pass
 
-# Admin site customization
-admin.site.site_header = "SaaS 2026 Super Admin"
-admin.site.site_title = "SaaS 2026"
-admin.site.index_title = "Hoş Geldiniz"
+# Admin site customization - Sadece public schema için (urls_public.py'de kullanılır)
+# Tenant domain'lerinde admin paneli yok
+# admin.site.site_header = "SaaS 2026 Super Admin"
+# admin.site.site_title = "SaaS 2026"
+# admin.site.index_title = "Hoş Geldiniz"
 
 # Import HttpResponse
 from django.http import HttpResponse

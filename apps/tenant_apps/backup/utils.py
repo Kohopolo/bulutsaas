@@ -72,7 +72,9 @@ def delete_old_backups(days=30):
             backup.save()
             deleted_count += 1
         except Exception as e:
-            print(f"Yedek silinirken hata: {str(e)}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Yedek silinirken hata: {str(e)}", exc_info=True)
     
     return deleted_count
 

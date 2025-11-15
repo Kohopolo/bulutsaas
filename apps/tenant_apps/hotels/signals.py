@@ -87,6 +87,7 @@ def create_refund_request_on_hotel_cancellation(sender, instance, **kwargs):
                             original_payment_date=instance.created_at.date() if instance.created_at else timezone.now().date(),
                             reason=f'Otel rezervasyon iptali - {instance.hotel.name}',
                             created_by=instance.created_by if hasattr(instance, 'created_by') else None,
+                            hotel=instance.hotel,  # Otel bilgisi eklendi
                         )
                     except Exception as e:
                         import logging

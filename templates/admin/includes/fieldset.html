@@ -11,9 +11,31 @@
             {% for field in line %}
                 <div class="form-field{% if line.fields|length == 1 and line.errors %} errors{% endif %}{% if not line.has_visible_field %} hidden{% endif %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% if 'description' in field.field.name or 'notes' in field.field.name or 'content' in field.field.name or 'body' in field.field.name or 'text' in field.field.name %} col-span-full{% endif %}">
                     {% if line.fields|length == 1 %}
-                        {{ line.errors }}
+                        {% if line.errors %}
+                        <div class="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+                            <ul class="errorlist text-red-700 m-0 p-0 list-none">
+                                {% for error in line.errors %}
+                                <li class="flex items-start">
+                                    <span class="mr-1">•</span>
+                                    <span><strong>{{ line.fields.0.label|default:line.fields.0.field.label }}:</strong> {{ error }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     {% elif not field.is_readonly %}
-                        {{ field.errors }}
+                        {% if field.errors %}
+                        <div class="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+                            <ul class="errorlist text-red-700 m-0 p-0 list-none">
+                                {% for error in field.errors %}
+                                <li class="flex items-start">
+                                    <span class="mr-1">•</span>
+                                    <span><strong>{{ field.label|default:field.field.label }}:</strong> {{ error }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     {% endif %}
                     
                     <div class="field-wrapper{% if not field.is_readonly and field.errors %} errors{% endif %}{% if field.field.is_hidden %} hidden{% endif %}">
