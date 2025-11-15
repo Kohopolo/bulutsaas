@@ -106,3 +106,7 @@ Thumbs.db
 *.backup
 *.old
 
+# Large files
+*.zip
+bulutacente.zip
+
