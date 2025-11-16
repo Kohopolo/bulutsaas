@@ -1,11 +1,57 @@
 FROM nginx:alpine
 
-# Nginx konfigürasyonunu kopyala
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+# Nginx konfigürasyonunu oluştur
+RUN echo 'user nginx;' > /etc/nginx/nginx.conf && \
+    echo 'worker_processes auto;' >> /etc/nginx/nginx.conf && \
+    echo 'error_log /var/log/nginx/error.log warn;' >> /etc/nginx/nginx.conf && \
+    echo 'pid /var/run/nginx.pid;' >> /etc/nginx/nginx.conf && \
+    echo '' >> /etc/nginx/nginx.conf && \
+    echo 'events {' >> /etc/nginx/nginx.conf && \
+    echo '    worker_connections 1024;' >> /etc/nginx/nginx.conf && \
+    echo '}' >> /etc/nginx/nginx.conf && \
+    echo '' >> /etc/nginx/nginx.conf && \
+    echo 'http {' >> /etc/nginx/nginx.conf && \
+    echo '    include /etc/nginx/mime.types;' >> /etc/nginx/nginx.conf && \
+    echo '    default_type application/octet-stream;' >> /etc/nginx/nginx.conf && \
+    echo '    sendfile on;' >> /etc/nginx/nginx.conf && \
+    echo '    keepalive_timeout 65;' >> /etc/nginx/nginx.conf && \
+    echo '    gzip on;' >> /etc/nginx/nginx.conf && \
+    echo '    gzip_vary on;' >> /etc/nginx/nginx.conf && \
+    echo '    gzip_proxied any;' >> /etc/nginx/nginx.conf && \
+    echo '    gzip_comp_level 6;' >> /etc/nginx/nginx.conf && \
+    echo '    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript;' >> /etc/nginx/nginx.conf && \
+    echo '' >> /etc/nginx/nginx.conf && \
+    echo '    upstream django {' >> /etc/nginx/nginx.conf && \
+    echo '        server web:8000;' >> /etc/nginx/nginx.conf && \
+    echo '    }' >> /etc/nginx/nginx.conf && \
+    echo '' >> /etc/nginx/nginx.conf && \
+    echo '    server {' >> /etc/nginx/nginx.conf && \
+    echo '        listen 80;' >> /etc/nginx/nginx.conf && \
+    echo '        server_name _;' >> /etc/nginx/nginx.conf && \
+    echo '        client_max_body_size 50M;' >> /etc/nginx/nginx.conf && \
+    echo '' >> /etc/nginx/nginx.conf && \
+    echo '        location /static/ {' >> /etc/nginx/nginx.conf && \
+    echo '            alias /app/staticfiles/;' >> /etc/nginx/nginx.conf && \
+    echo '            expires 30d;' >> /etc/nginx/nginx.conf && \
+    echo '        }' >> /etc/nginx/nginx.conf && \
+    echo '' >> /etc/nginx/nginx.conf && \
+    echo '        location /media/ {' >> /etc/nginx/nginx.conf && \
+    echo '            alias /app/media/;' >> /etc/nginx/nginx.conf && \
+    echo '            expires 7d;' >> /etc/nginx/nginx.conf && \
+    echo '        }' >> /etc/nginx/nginx.conf && \
+    echo '' >> /etc/nginx/nginx.conf && \
+    echo '        location / {' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_pass http://django;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header Host $host;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header X-Real-IP $remote_addr;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_set_header X-Forwarded-Proto $scheme;' >> /etc/nginx/nginx.conf && \
+    echo '            proxy_redirect off;' >> /etc/nginx/nginx.conf && \
+    echo '        }' >> /etc/nginx/nginx.conf && \
+    echo '    }' >> /etc/nginx/nginx.conf && \
+    echo '}' >> /etc/nginx/nginx.conf
 
 # Port'ları expose et
 EXPOSE 80 443
 
 CMD ["nginx", "-g", "daemon off;"]
-
