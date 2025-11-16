@@ -124,26 +124,26 @@ services:
       - saas_network
     restart: unless-stopped
 
-  # Nginx (Reverse Proxy & Static Files)
-  nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile.nginx
-    container_name: saas2026_nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - static_volume:/app/staticfiles:ro
-      - media_volume:/app/media:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL sertifikaları
-      - ./certbot/www:/var/www/certbot:ro     # Certbot webroot
-    depends_on:
-      - web
-    networks:
-      - saas_network
-    restart: unless-stopped
+  # Nginx servisi kaldırıldı - Host üzerinde Nginx kullanıyoruz
+  # nginx:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.nginx
+  #   container_name: saas2026_nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/conf.d:/etc/nginx/conf.d:ro
+  #     - static_volume:/app/staticfiles:ro
+  #     - media_volume:/app/media:ro
+  #     - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL sertifikaları
+  #     - ./certbot/www:/var/www/certbot:ro     # Certbot webroot
+  #   depends_on:
+  #     - web
+  #   networks:
+  #     - saas_network
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:
