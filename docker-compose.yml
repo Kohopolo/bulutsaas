@@ -91,9 +91,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
-      - web
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_healthy
     networks:
       - saas_network
     restart: unless-stopped
@@ -111,9 +114,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
-      - web
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_healthy
     networks:
       - saas_network
     restart: unless-stopped
