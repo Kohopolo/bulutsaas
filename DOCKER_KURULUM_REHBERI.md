@@ -108,11 +108,36 @@ ls -la
 
 # Olması gerekenler:
 # - Dockerfile
-# - docker-compose.yml
 # - docker-compose.prod.yml
 # - env.example
 # - requirements.txt
 # - manage.py
+# - apps/core/management/commands/wait_for_db.py (Database bekleme komutu)
+```
+
+**Not**: `.dockerignore` dosyası opsiyoneldir ama önerilir. Eğer yoksa oluşturabilirsiniz:
+
+```bash
+# .dockerignore dosyası oluştur
+cat > .dockerignore << EOF
+.git
+.gitignore
+.env
+*.pyc
+__pycache__
+*.log
+*.sql
+*.sql.gz
+backupdatabase/
+venv/
+env/
+.venv/
+node_modules/
+.DS_Store
+*.swp
+*.swo
+*~
+EOF
 ```
 
 ---
@@ -138,6 +163,7 @@ SECRET_KEY=your-super-secret-key-here-change-this-in-production
 ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com,YOUR_VPS_IP
 
 # Database (PostgreSQL - Container içinde)
+DATABASE_URL=postgresql://saas_user:GÜÇLÜ_ŞİFRE_BURAYA@db:5432/saas_db
 POSTGRES_DB=saas_db
 POSTGRES_USER=saas_user
 POSTGRES_PASSWORD=GÜÇLÜ_ŞİFRE_BURAYA
@@ -153,6 +179,7 @@ CELERY_BROKER_URL=redis://:GÜÇLÜ_REDIS_ŞİFRE_BURAYA@redis:6379/0
 CELERY_RESULT_BACKEND=redis://:GÜÇLÜ_REDIS_ŞİFRE_BURAYA@redis:6379/0
 
 # Email Ayarları (Gmail örneği)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
@@ -172,6 +199,16 @@ TENANT_MODEL=tenants.Tenant
 TENANT_DOMAIN_MODEL=tenants.Domain
 PUBLIC_SCHEMA_NAME=public
 PUBLIC_SCHEMA_URLCONF=config.urls_public
+
+# Subscription Settings
+TRIAL_PERIOD_DAYS=14
+SUBSCRIPTION_GRACE_PERIOD_DAYS=3
+
+# Limits (Default değerler)
+DEFAULT_MAX_HOTELS=1
+DEFAULT_MAX_ROOMS=10
+DEFAULT_MAX_USERS=3
+DEFAULT_MAX_RESERVATIONS_PER_MONTH=50
 ```
 
 ### 4.3. SECRET_KEY Oluşturma
@@ -212,6 +249,9 @@ docker compose -f docker-compose.prod.yml exec db pg_isready -U saas_user
 ### 5.3. Database Migration (Django-Tenants için)
 
 ```bash
+# Database'in hazır olmasını bekle (wait_for_db komutu otomatik çalışır ama manuel kontrol için)
+docker compose -f docker-compose.prod.yml exec db pg_isready -U saas_user -d saas_db
+
 # Shared schema migration (public schema)
 docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate_schemas --shared
 
@@ -221,6 +261,15 @@ docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate_
 # Migration durumunu kontrol et
 docker compose -f docker-compose.prod.yml run --rm web python manage.py showmigrations
 ```
+
+**Not**: `docker-compose.prod.yml` dosyasında `web` servisi başlatıldığında otomatik olarak:
+1. `wait_for_db` komutu çalışır (database hazır olana kadar bekler)
+2. Shared schema migration çalıştırılır
+3. Tenant schema migration çalıştırılır
+4. Static files toplanır
+5. Gunicorn başlatılır
+
+Bu adımları manuel olarak çalıştırmak isterseniz yukarıdaki komutları kullanabilirsiniz.
 
 ### 5.4. Static Files Toplama
 
@@ -472,11 +521,31 @@ docker compose -f docker-compose.prod.yml logs -f celery_beat
 ### 9.3. Health Check
 
 ```bash
-# Web servisi health check
-curl http://localhost:8000/health/
+# Web servisi health check (Docker container içinden)
+docker compose -f docker-compose.prod.yml exec web curl -f http://localhost:8000/health/
+
+# Veya host üzerinden (Nginx üzerinden)
+curl http://localhost/health/
 
 # Veya browser'dan
 # http://YOUR_VPS_IP/health/
+# https://yourdomain.com/health/ (SSL kurulduysa)
+```
+
+**Not**: Health check endpoint'i (`/health/`) Django URL yapılandırmasında tanımlı olmalıdır. Eğer yoksa, `config/urls.py` veya `config/urls_public.py` dosyasına ekleyin:
+
+```python
+# config/urls_public.py veya config/urls.py
+from django.http import JsonResponse
+from django.urls import path
+
+def health_check(request):
+    return JsonResponse({'status': 'ok'}, status=200)
+
+urlpatterns = [
+    # ... diğer URL'ler
+    path('health/', health_check, name='health_check'),
+]
 ```
 
 ---
@@ -594,6 +663,44 @@ sudo chmod -R 755 /var/www/bulutacente
 
 # Media dizini izinleri
 sudo chmod -R 775 /var/www/bulutacente/media
+
+# Static files dizini izinleri
+sudo chmod -R 755 /var/www/bulutacente/staticfiles
+```
+
+### 12.5. Container Logları ve Debug
+
+```bash
+# Tüm container loglarını görüntüle
+docker compose -f docker-compose.prod.yml logs
+
+# Belirli bir container'ın loglarını görüntüle
+docker compose -f docker-compose.prod.yml logs web
+docker compose -f docker-compose.prod.yml logs db
+docker compose -f docker-compose.prod.yml logs redis
+
+# Son 100 satır log
+docker compose -f docker-compose.prod.yml logs --tail=100 web
+
+# Canlı log takibi
+docker compose -f docker-compose.prod.yml logs -f web
+
+# Container içine gir (debug için)
+docker compose -f docker-compose.prod.yml exec web sh
+docker compose -f docker-compose.prod.yml exec db psql -U saas_user -d saas_db
+```
+
+### 12.6. Database Backup ve Restore
+
+```bash
+# Database backup (container içinden)
+docker compose -f docker-compose.prod.yml exec db pg_dump -U saas_user saas_db > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Database restore
+docker compose -f docker-compose.prod.yml exec -T db psql -U saas_user saas_db < backup_20250116_120000.sql
+
+# Veya Django management command ile
+docker compose -f docker-compose.prod.yml exec web python manage.py backup_database --schema=public
 ```
 
 ---
@@ -654,6 +761,60 @@ docker compose -f docker-compose.prod.yml logs -f
 - [Docker Compose Dokümantasyonu](https://docs.docker.com/compose/)
 - [Django Deployment Guide](https://docs.djangoproject.com/en/stable/howto/deployment/)
 - [Nginx Dokümantasyonu](https://nginx.org/en/docs/)
+
+---
+
+---
+
+## 📝 Önemli Notlar
+
+### Docker Compose Otomatik İşlemler
+
+`docker-compose.prod.yml` dosyasındaki `web` servisi başlatıldığında otomatik olarak şu işlemler yapılır:
+
+1. **Database Bekleme**: `wait_for_db` komutu database hazır olana kadar bekler
+2. **Migration**: Shared ve tenant schema migration'ları çalıştırılır
+3. **Static Files**: `collectstatic` komutu çalıştırılır
+4. **Gunicorn**: Web sunucusu başlatılır
+
+Bu nedenle ilk kurulumda sadece servisleri başlatmanız yeterlidir:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Volume Yönetimi
+
+Docker Compose aşağıdaki volume'ları kullanır:
+
+- `postgres_data`: PostgreSQL veritabanı verileri
+- `redis_data`: Redis verileri
+- `static_volume`: Static files (CSS, JS, images)
+- `media_volume`: Kullanıcı yüklenen dosyalar (media)
+
+Bu volume'lar Docker tarafından yönetilir ve container'lar silinse bile veriler korunur.
+
+### Production İçin Öneriler
+
+1. **Güvenlik**:
+   - `.env` dosyasını asla Git'e commit etmeyin
+   - `SECRET_KEY` ve şifreleri güçlü tutun
+   - Firewall kurallarını yapılandırın (sadece 80, 443, 22 portları açık)
+
+2. **Performans**:
+   - Gunicorn worker sayısını CPU sayısına göre ayarlayın
+   - Redis cache kullanın
+   - Static files için CDN kullanmayı düşünün
+
+3. **Monitoring**:
+   - Log aggregation (ELK, Loki) kurun
+   - Application monitoring (Sentry, New Relic) ekleyin
+   - Database monitoring (pgAdmin, Grafana) yapılandırın
+
+4. **Backup**:
+   - Otomatik database backup'ları yapılandırın
+   - Backup dosyalarını harici bir depolama alanına kopyalayın
+   - Backup restore testleri yapın
 
 ---
 
