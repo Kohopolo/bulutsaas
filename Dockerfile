@@ -28,18 +28,12 @@ RUN apk add --no-cache \
     curl \
     && rm -rf /var/cache/apk/*
 
-# Python bağımlılıklarını kopyala ve kur
-# requirements.txt dosyasını kopyala (varsa)
-COPY requirements.txt* ./
-RUN if [ -f requirements.txt ]; then \
-        pip install --upgrade pip && \
-        pip install -r requirements.txt; \
-    else \
-        echo "WARNING: requirements.txt not found, skipping pip install"; \
-    fi
-
-# Proje dosyalarını kopyala
+# Önce tüm dosyaları kopyala (requirements.txt dahil)
 COPY . .
+
+# Python bağımlılıklarını kur
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
 
 # Static ve media klasörleri oluştur
 RUN mkdir -p /app/staticfiles /app/media /app/logs
