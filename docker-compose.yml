@@ -54,18 +54,14 @@ services:
       gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120
       "
     volumes:
+      - .:/app  # Proje dosyalarını mount et (middleware dahil)
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - ./logs:/app/logs
     ports:
-      - "8000:8000"
-    environment:
-      - DEBUG=True
-      - SECRET_KEY=django-insecure-development-key-change-in-production
-      - DATABASE_URL=postgresql://saas_user:saas_password_2026@db:5432/saas_db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - "127.0.0.1:8000:8000"  # Sadece localhost'tan erişilebilir (Nginx üzerinden)
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -74,6 +70,12 @@ services:
     networks:
       - saas_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Celery Worker (Arka plan işleri)
   celery:
@@ -82,13 +84,12 @@ services:
       dockerfile: Dockerfile
     container_name: saas2026_celery
     command: celery -A config worker -l info --concurrency=2
-    environment:
-      - DEBUG=True
-      - SECRET_KEY=django-insecure-development-key-change-in-production
-      - DATABASE_URL=postgresql://saas_user:saas_password_2026@db:5432/saas_db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app  # Proje dosyalarını mount et
+      - media_volume:/app/media
+      - ./logs:/app/logs
+    env_file:
+      - .env
     depends_on:
       - db
       - redis
@@ -104,13 +105,11 @@ services:
       dockerfile: Dockerfile
     container_name: saas2026_celery_beat
     command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    environment:
-      - DEBUG=True
-      - SECRET_KEY=django-insecure-development-key-change-in-production
-      - DATABASE_URL=postgresql://saas_user:saas_password_2026@db:5432/saas_db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app  # Proje dosyalarını mount et
+      - ./logs:/app/logs
+    env_file:
+      - .env
     depends_on:
       - db
       - redis
@@ -129,8 +128,11 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # SSL sertifikaları
+      - ./certbot/www:/var/www/certbot:ro     # Certbot webroot
     depends_on:
       - web
     networks:
@@ -150,6 +152,3 @@ volumes:
 networks:
   saas_network:
     driver: bridge
-
-
-
