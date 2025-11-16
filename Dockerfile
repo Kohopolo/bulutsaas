@@ -29,9 +29,14 @@ RUN apk add --no-cache \
     && rm -rf /var/cache/apk/*
 
 # Python bağımlılıklarını kopyala ve kur
-COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+# requirements.txt dosyasını kopyala (varsa)
+COPY requirements.txt* ./
+RUN if [ -f requirements.txt ]; then \
+        pip install --upgrade pip && \
+        pip install -r requirements.txt; \
+    else \
+        echo "WARNING: requirements.txt not found, skipping pip install"; \
+    fi
 
 # Proje dosyalarını kopyala
 COPY . .
