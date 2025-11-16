@@ -2,7 +2,7 @@
 # VPS GitHub Kurulum Scripti
 # Docker Compose yeniden kurulumu için
 
-set -e  # Hata durumunda dur
+# set -e kaldırıldı - hataları manuel kontrol edeceğiz
 
 echo "=========================================="
 echo "🚀 Docker Compose GitHub Kurulumu"
@@ -13,14 +13,22 @@ echo ""
 echo "📁 Proje klasörü kontrol ediliyor..."
 if [ ! -d "/docker/bulutsaas" ]; then
     echo "⚠️  /docker/bulutsaas klasörü bulunamadı, oluşturuluyor..."
-    sudo mkdir -p /docker/bulutsaas
-    sudo chown $USER:$USER /docker/bulutsaas
+    mkdir -p /docker/bulutsaas 2>/dev/null || sudo mkdir -p /docker/bulutsaas
+    chown $USER:$USER /docker/bulutsaas 2>/dev/null || sudo chown $USER:$USER /docker/bulutsaas
+    echo "✅ Klasör oluşturuldu: /docker/bulutsaas"
+fi
+
+if [ ! -d "/docker/bulutsaas" ]; then
+    echo "❌ Hata: /docker/bulutsaas klasörü oluşturulamadı!"
+    echo "💡 Manuel olarak oluşturun: sudo mkdir -p /docker/bulutsaas && sudo chown $USER:$USER /docker/bulutsaas"
+    exit 1
 fi
 
 cd /docker/bulutsaas || {
     echo "❌ Hata: /docker/bulutsaas klasörüne geçilemedi!"
     exit 1
 }
+echo "✅ Klasöre geçildi: $(pwd)"
 
 # 2. Git durumunu kontrol et
 echo ""
