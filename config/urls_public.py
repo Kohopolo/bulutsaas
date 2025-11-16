@@ -6,12 +6,21 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from apps.core.views import landing_page
+
+def landing_page(request):
+    """Bulut Acente - Landing Page veya Admin'e yönlendirme"""
+    # Eğer landing page template'i yoksa admin'e yönlendir
+    try:
+        from apps.core.views import landing_page as core_landing_page
+        return core_landing_page(request)
+    except:
+        # Template yoksa admin paneline yönlendir
+        return HttpResponseRedirect('/admin/')
 
 urlpatterns = [
-    # Ana sayfa - Landing Page
+    # Ana sayfa - Landing Page veya Admin'e yönlendirme
     path('', landing_page, name='landing'),
     
     # Ödeme Sistemi
@@ -31,8 +40,9 @@ urlpatterns = [
     # path('api/', include('apps.core.urls')),
     # path('api/packages/', include('apps.packages.urls')),
     
-    # Health Check
+    # Health Check (trailing slash olmadan da çalışsın)
     path('health/', lambda request: HttpResponse('OK')),
+    path('health', lambda request: HttpResponse('OK')),
 ]
 
 if settings.DEBUG:

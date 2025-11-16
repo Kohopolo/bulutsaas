@@ -96,8 +96,9 @@ urlpatterns = [
     # path('housekeeping/', include('apps.tenant_apps.housekeeping.urls')),
     # path('channels/', include('apps.tenant_apps.channels.urls')),
     
-    # Health Check
+    # Health Check (trailing slash olmadan da çalışsın)
     path('health/', lambda request: HttpResponse('OK')),
+    path('health', lambda request: HttpResponse('OK')),
 ]
 
 # Static ve Media dosyalar (development)
