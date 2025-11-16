@@ -9,10 +9,16 @@ echo "🚀 Docker Compose GitHub Kurulumu"
 echo "=========================================="
 echo ""
 
-# 1. Proje klasörüne git
-echo "📁 Proje klasörüne gidiliyor..."
+# 1. Proje klasörüne git veya oluştur
+echo "📁 Proje klasörü kontrol ediliyor..."
+if [ ! -d "/docker/bulutsaas" ]; then
+    echo "⚠️  /docker/bulutsaas klasörü bulunamadı, oluşturuluyor..."
+    sudo mkdir -p /docker/bulutsaas
+    sudo chown $USER:$USER /docker/bulutsaas
+fi
+
 cd /docker/bulutsaas || {
-    echo "❌ Hata: /docker/bulutsaas klasörü bulunamadı!"
+    echo "❌ Hata: /docker/bulutsaas klasörüne geçilemedi!"
     exit 1
 }
 
@@ -21,10 +27,13 @@ echo ""
 echo "🔍 Git durumu kontrol ediliyor..."
 if [ ! -d ".git" ]; then
     echo "⚠️  Git repository bulunamadı. İlk kurulum yapılıyor..."
-    git init
-    git remote add origin https://github.com/Kohopolo/bulutsaas.git || true
-    git fetch origin
-    git checkout -b main origin/main || git checkout main || true
+    echo "📥 GitHub'dan proje klonlanıyor..."
+    git clone https://github.com/Kohopolo/bulutsaas.git .
+    if [ $? -ne 0 ]; then
+        echo "❌ Hata: Git clone başarısız!"
+        exit 1
+    fi
+    echo "✅ Proje klonlandı"
 else
     echo "✅ Git repository bulundu"
     git remote set-url origin https://github.com/Kohopolo/bulutsaas.git || true
