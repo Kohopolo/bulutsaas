@@ -40,6 +40,12 @@ VPS_IP = env('VPS_IP', default=None)
 if VPS_IP:
     ALLOWED_HOSTS.append(VPS_IP)
 
+# Hostinger VPS domain ve IP adresleri
+ALLOWED_HOSTS.extend([
+    'srv1132080.hstgr.cloud',
+    '88.255.216.16',
+])
+
 # Production'da tüm host'lara izin ver (güvenlik için sadece DEBUG=False ise)
 if not DEBUG:
     # DynamicAllowedHostsMiddleware ile domain kontrolü yapılacak
