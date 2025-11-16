@@ -1,0 +1,11 @@
+FROM nginx:alpine
+
+# Nginx konfigürasyonunu kopyala
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+
+# Port'ları expose et
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]
+
