@@ -35,6 +35,17 @@ ALLOWED_HOSTS.extend([
     'test-otel.127.0.0.1',
 ])
 
+# Production VPS IP adresini ekle (environment variable'dan)
+VPS_IP = env('VPS_IP', default=None)
+if VPS_IP:
+    ALLOWED_HOSTS.append(VPS_IP)
+
+# Production'da tüm host'lara izin ver (güvenlik için sadece DEBUG=False ise)
+if not DEBUG:
+    # DynamicAllowedHostsMiddleware ile domain kontrolü yapılacak
+    # Burada sadece temel IP ve domain'leri ekliyoruz
+    pass
+
 # Application definition
 SHARED_APPS = [
     # Django Tenants (ilk sırada olmalı!)
@@ -116,8 +127,8 @@ PUBLIC_SCHEMA_URLCONF = 'config.urls_public'
 SHOW_PUBLIC_IF_NO_TENANT_FOUND = True
 
 MIDDLEWARE = [
-    # Django Tenants Middleware (ilk sırada!)
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    # Django Tenants Middleware (ilk sırada!) - Custom middleware ile değiştirildi
+    'apps.tenants.middleware.tenant_middleware.CustomTenantMainMiddleware',
     
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
