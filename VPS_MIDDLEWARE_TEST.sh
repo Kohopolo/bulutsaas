@@ -5,19 +5,18 @@
 echo "🔍 Middleware import testi yapılıyor..."
 echo ""
 
-docker exec saas2026_web python manage.py shell << 'EOF'
+docker exec saas2026_web python manage.py shell -c "
 import sys
 sys.path.insert(0, '/app')
-
 try:
     from apps.tenants.middleware.tenant_middleware import CustomTenantMainMiddleware
     print('✅ Middleware import başarılı!')
-    print(f'✅ CustomTenantMainMiddleware sınıfı: {CustomTenantMainMiddleware}')
+    print('✅ CustomTenantMainMiddleware sınıfı:', CustomTenantMainMiddleware)
 except Exception as e:
-    print(f'❌ Import hatası: {e}')
+    print('❌ Import hatası:', e)
     import traceback
     traceback.print_exc()
-EOF
+"
 
 echo ""
 echo "✅ Test tamamlandı!"
