@@ -44,7 +44,7 @@ Bu rehber, Django multi-tenant uygulamanızı Hostinger VPS'e Docker Compose kul
 
 ```bash
 # SSH ile bağlanın
-ssh root@88.255.216.16
+ssh root@72.62.35.155
 
 # Veya domain ile
 ssh root@bulutacente.com.tr
@@ -139,7 +139,7 @@ cd /var/www/bulutsaas
 git clone https://github.com/Kohopolo/bulutsaas.git .
 
 # Veya dosyaları SCP ile kopyala
-# scp -r /local/path/to/project/* root@88.255.216.16:/var/www/bulutsaas/
+# scp -r /local/path/to/project/* root@72.62.35.155:/var/www/bulutsaas/
 ```
 
 ### 3. Gerekli Dosyaları Kontrol Etme
@@ -171,7 +171,7 @@ nano .env
 # Django Settings
 DEBUG=False
 SECRET_KEY=GÜÇLÜ_SECRET_KEY_BURAYA_OLUŞTURUN
-ALLOWED_HOSTS=bulutacente.com.tr,www.bulutacente.com.tr,88.255.216.16,localhost,127.0.0.1
+ALLOWED_HOSTS=bulutacente.com.tr,www.bulutacente.com.tr,72.62.35.155,localhost,127.0.0.1
 
 # Database (Docker container içindeki PostgreSQL)
 DATABASE_URL=postgresql://saas_user:saas_password_2026@db:5432/saas_db
@@ -202,7 +202,7 @@ DEFAULT_FROM_EMAIL=noreply@bulutacente.com.tr
 # Digital Ocean DNS (Opsiyonel)
 DO_API_TOKEN=your_digital_ocean_api_token
 DO_DOMAIN=bulutacente.com.tr
-DO_DROPLET_IP=88.255.216.16
+DO_DROPLET_IP=72.62.35.155
 ```
 
 ### 3. Secret Key Oluşturma
@@ -339,7 +339,7 @@ upstream django {
 
 server {
     listen 80;
-    server_name bulutacente.com.tr www.bulutacente.com.tr 88.255.216.16;
+    server_name bulutacente.com.tr www.bulutacente.com.tr 72.62.35.155;
     client_max_body_size 50M;
 
     # Security Headers
@@ -484,12 +484,12 @@ Hostinger DNS yönetiminde:
 ```
 Type: A
 Name: @
-Value: 88.255.216.16
+Value: 72.62.35.155
 TTL: 3600
 
 Type: A
 Name: www
-Value: 88.255.216.16
+Value: 72.62.35.155
 TTL: 3600
 ```
 
