@@ -1,2 +1,0 @@
-# Tenant AI Management App
-

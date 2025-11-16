@@ -1,2 +1,0 @@
-# Kalite Kontrol Modülü
-

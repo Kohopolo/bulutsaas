@@ -1,2 +1,0 @@
-# Satış Yönetimi Modülü
-

@@ -1,2 +1,0 @@
-# Teknik Servis Modülü
-

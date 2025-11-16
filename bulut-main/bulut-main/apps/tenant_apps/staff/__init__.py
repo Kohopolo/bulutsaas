@@ -1,2 +1,0 @@
-# Personel Yönetimi Modülü
-
