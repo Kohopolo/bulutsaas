@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}CarpetOS - Raporlar{% endblock %}
+
+{% block banner_text %}Raporlar ve Analizler{% endblock %}
+
+{% block center_panel %}
+<div class="tabs">
+    <div class="tab active">SATIŞ RAPORLARI</div>
+    <div class="tab">MÜŞTERİ RAPORLARI</div>
+    <div class="tab">ÜRÜN RAPORLARI</div>
+    <div class="tab">GÜNLÜK RAPOR</div>
+    <div class="tab">AYLIK RAPOR</div>
+</div>
+
+<div class="date-navigation" style="margin-bottom: 10px;">
+    <input type="date" class="date-picker" id="startDate" value="">
+    <input type="date" class="date-picker" id="endDate" value="">
+    <button class="btn btn-primary" onclick="generateReport()">Rapor Oluştur</button>
+    <button class="btn btn-success" onclick="exportExcel()">Excel'e Aktar</button>
+    <button class="btn btn-danger" onclick="exportPdf()">PDF'e Aktar</button>
+</div>
+
+<div class="summary-panel" style="margin-bottom: 20px;">
+    <div class="summary-item">
+        <div class="summary-label">TOPLAM SATIŞ</div>
+        <div class="summary-value" id="totalSales">0.00 ₺</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-label">TOPLAM SİPARİŞ</div>
+        <div class="summary-value" id="totalOrders">0</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-label">ORTALAMA SİPARİŞ</div>
+        <div class="summary-value" id="avgOrder">0.00 ₺</div>
+    </div>
+</div>
+
+<table class="orders-table">
+    <thead>
+        <tr>
+            <th>Tarih</th>
+            <th>Sipariş Sayısı</th>
+            <th>Toplam Tutar</th>
+            <th>Müşteri Sayısı</th>
+        </tr>
+    </thead>
+    <tbody id="reportsTableBody">
+        <tr>
+            <td colspan="4" class="text-center">Rapor oluşturmak için tarih aralığı seçin</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function generateReport() {
+        alert('Rapor oluşturulacak');
+    }
+    
+    function exportExcel() {
+        alert('Excel\'e aktarılacak');
+    }
+    
+    function exportPdf() {
+        alert('PDF\'e aktarılacak');
+    }
+    
+    // Set default dates
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById('startDate').valueAsDate = firstDay;
+    document.getElementById('endDate').valueAsDate = today;
+</script>
+{% endblock %}
+

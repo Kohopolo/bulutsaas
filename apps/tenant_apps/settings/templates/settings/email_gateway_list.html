@@ -5,148 +5,107 @@
 
 {% block content %}
 <div class="content-body">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h1 class="text-2xl font-bold text-vb-navy-500">
+            <i class="fas fa-envelope mr-2 text-vb-primary"></i>Email Gateway'ler
+        </h1>
+        <a href="{% url 'settings:email_gateway_create' %}" class="vb-button primary">
+            <i class="fas fa-plus mr-2"></i>Yeni Gateway
+        </a>
+    </div>
+    
+    {% if hotels_module_enabled and accessible_hotels %}
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+        <form method="get" style="display: flex; gap: 8px; align-items: center;">
+            <label style="font-size: 11px; font-weight: 600; color: #333; white-space: nowrap;">Otel:</label>
+            <select name="hotel" onchange="this.form.submit()" style="padding: 4px 8px; font-size: 11px; border: 1px solid #D4D4D4; border-radius: 3px; min-width: 200px;">
+                <option value="">Tüm Oteller</option>
+                <option value="0" {% if request.GET.hotel == '0' %}selected{% endif %}>Genel Gateway'ler</option>
+                {% for hotel in accessible_hotels %}
+                <option value="{{ hotel.id }}" {% if request.GET.hotel == hotel.id|stringformat:"s" or selected_hotel_id == hotel.id %}selected{% endif %}>
+                    {{ hotel.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    {% endif %}
+    
     <div class="groupbox">
         <div class="groupbox-header">
             <i class="fas fa-envelope"></i> Email Gateway'ler
-            <div style="float: right;">
-                <a href="{% url 'settings:email_gateway_create' %}" class="vb-button primary">
-                    <i class="fas fa-plus"></i> Yeni Gateway
-                </a>
-            </div>
         </div>
         <div class="groupbox-body">
-            <table class="vb-table">
-                <thead>
-                    <tr>
-                        <th>Gateway Adı</th>
-                        <th>Tip</th>
-                        <th>Durum</th>
-                        <th>Varsayılan</th>
-                        <th>Gönderilen</th>
-                        <th>Başarısız</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for gateway in gateways %}
-                    <tr>
-                        <td><strong>{{ gateway.name }}</strong></td>
-                        <td>{{ gateway.get_gateway_type_display }}</td>
-                        <td>
-                            {% if gateway.is_active %}
-                                <span class="badge badge-success">Aktif</span>
-                            {% else %}
-                                <span class="badge badge-danger">Pasif</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if gateway.is_default %}
-                                <span class="badge badge-primary">Varsayılan</span>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ gateway.total_sent }}</td>
-                        <td>{{ gateway.total_failed }}</td>
-                        <td>
-                            <a href="{% url 'settings:email_gateway_detail' gateway.pk %}" class="vb-button small">
-                                <i class="fas fa-eye"></i> Detay
-                            </a>
-                            <a href="{% url 'settings:email_gateway_edit' gateway.pk %}" class="vb-button small">
-                                <i class="fas fa-edit"></i> Düzenle
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 20px;">
-                            <i class="fas fa-info-circle"></i> Henüz email gateway eklenmemiş.
-                            <a href="{% url 'settings:email_gateway_create' %}">İlk gateway'i ekleyin</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="datagrid">
+                <div class="vb-datagrid-container">
+                    <table class="vb-datagrid" style="width: 100%; table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%;">Gateway Adı</th>
+                                {% if hotels_module_enabled %}
+                                <th style="width: 15%;">Otel</th>
+                                {% endif %}
+                                <th style="width: 12%;">Tip</th>
+                                <th style="width: 10%;">Durum</th>
+                                <th style="width: 10%;">Varsayılan</th>
+                                <th style="width: 12%; text-align: right;">Gönderilen</th>
+                                <th style="width: 12%; text-align: right;">Başarısız</th>
+                                <th style="width: {% if hotels_module_enabled %}19%{% else %}34%{% endif %}; text-align: center;">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for gateway in gateways %}
+                            <tr>
+                                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><strong>{{ gateway.name }}</strong></td>
+                                {% if hotels_module_enabled %}
+                                <td>
+                                    {% if gateway.hotel %}
+                                    <span style="display: inline-block; padding: 2px 6px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">{{ gateway.hotel.name }}</span>
+                                    {% else %}
+                                    <span style="display: inline-block; padding: 2px 6px; background: #f3f4f6; color: #374151; border-radius: 3px; font-size: 10px;">Genel</span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ gateway.get_gateway_type_display }}</td>
+                                <td>
+                                    {% if gateway.is_active %}
+                                        <span style="display: inline-block; padding: 2px 6px; background: #d1fae5; color: #065f46; border-radius: 3px; font-size: 10px; font-weight: 600; white-space: nowrap;">Aktif</span>
+                                    {% else %}
+                                        <span style="display: inline-block; padding: 2px 6px; background: #fee2e2; color: #991b1b; border-radius: 3px; font-size: 10px; font-weight: 600; white-space: nowrap;">Pasif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if gateway.is_default %}
+                                        <span style="display: inline-block; padding: 2px 6px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 10px; font-weight: 600; white-space: nowrap;">Varsayılan</span>
+                                    {% else %}
+                                        <span style="color: #999;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right; white-space: nowrap;">{{ gateway.total_sent }}</td>
+                                <td style="text-align: right; white-space: nowrap;">{{ gateway.total_failed }}</td>
+                                <td style="text-align: center; white-space: nowrap;">
+                                    <a href="{% url 'settings:email_gateway_detail' gateway.pk %}" class="vb-button small" style="padding: 2px 6px; font-size: 11px;">
+                                        <i class="fas fa-eye"></i> Detay
+                                    </a>
+                                    <a href="{% url 'settings:email_gateway_edit' gateway.pk %}" class="vb-button small" style="padding: 2px 6px; font-size: 11px;">
+                                        <i class="fas fa-edit"></i> Düzenle
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if hotels_module_enabled %}8{% else %}7{% endif %}" style="text-align: center; padding: 40px; color: #999;">
+                                    <i class="fas fa-inbox" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                                    Henüz email gateway eklenmemiş.
+                                    <a href="{% url 'settings:email_gateway_create' %}">İlk gateway'i ekleyin</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
-
-
-
-{% load static %}
-
-{% block title %}Email Gateway'ler{% endblock %}
-
-{% block content %}
-<div class="content-body">
-    <div class="groupbox">
-        <div class="groupbox-header">
-            <i class="fas fa-envelope"></i> Email Gateway'ler
-            <div style="float: right;">
-                <a href="{% url 'settings:email_gateway_create' %}" class="vb-button primary">
-                    <i class="fas fa-plus"></i> Yeni Gateway
-                </a>
-            </div>
-        </div>
-        <div class="groupbox-body">
-            <table class="vb-table">
-                <thead>
-                    <tr>
-                        <th>Gateway Adı</th>
-                        <th>Tip</th>
-                        <th>Durum</th>
-                        <th>Varsayılan</th>
-                        <th>Gönderilen</th>
-                        <th>Başarısız</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for gateway in gateways %}
-                    <tr>
-                        <td><strong>{{ gateway.name }}</strong></td>
-                        <td>{{ gateway.get_gateway_type_display }}</td>
-                        <td>
-                            {% if gateway.is_active %}
-                                <span class="badge badge-success">Aktif</span>
-                            {% else %}
-                                <span class="badge badge-danger">Pasif</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if gateway.is_default %}
-                                <span class="badge badge-primary">Varsayılan</span>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>{{ gateway.total_sent }}</td>
-                        <td>{{ gateway.total_failed }}</td>
-                        <td>
-                            <a href="{% url 'settings:email_gateway_detail' gateway.pk %}" class="vb-button small">
-                                <i class="fas fa-eye"></i> Detay
-                            </a>
-                            <a href="{% url 'settings:email_gateway_edit' gateway.pk %}" class="vb-button small">
-                                <i class="fas fa-edit"></i> Düzenle
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 20px;">
-                            <i class="fas fa-info-circle"></i> Henüz email gateway eklenmemiş.
-                            <a href="{% url 'settings:email_gateway_create' %}">İlk gateway'i ekleyin</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-
-
-

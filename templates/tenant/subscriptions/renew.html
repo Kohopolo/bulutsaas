@@ -5,125 +5,112 @@
 {% block page_title %}Paket Yenileme{% endblock %}
 
 {% block content %}
-<div class="p-6">
-    <!-- Geri Dön Butonu -->
-    <div class="mb-4">
-        <a href="{% url 'tenant_subscriptions:dashboard' %}" class="text-vb-primary hover:text-blue-600">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Paket Yönetimine Dön
-        </a>
-    </div>
-    
+<div class="content-body">
     <!-- Mevcut Abonelik Bilgileri -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
-        <h2 class="text-2xl font-bold text-vb-navy mb-4">
-            <i class="fas fa-sync-alt mr-2 text-vb-primary"></i>
-            Aboneliği Yenile
-        </h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-<h3 class="vb-section-title text-gray-900 mb-3">Mevcut Abonelik</h3>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Paket:</span>
-                        <span class="font-semibold">{{ package.name }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Durum:</span>
-                        <span class="px-3 py-1 rounded-lg text-sm font-semibold {% if subscription.status == 'active' %}bg-green-100 text-green-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                            {{ subscription.get_status_display }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Bitiş Tarihi:</span>
-                        <span class="font-semibold {% if subscription.days_remaining <= 7 %}text-red-600{% elif subscription.days_remaining <= 30 %}text-yellow-600{% else %}text-green-600{% endif %}">
-                            {{ subscription.end_date|date:"d.m.Y" }}
-                        </span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Kalan Gün:</span>
-                        <span class="font-semibold text-lg {% if subscription.days_remaining <= 7 %}text-red-600{% elif subscription.days_remaining <= 30 %}text-yellow-600{% else %}text-green-600{% endif %}">
-                            {{ subscription.days_remaining }} gün
-                        </span>
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-sync-alt"></i> Aboneliği Yenile
+        </div>
+        <div class="groupbox-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3 style="font-size: 13px; font-weight: bold; color: #2C5F8D; margin-bottom: 10px;">Mevcut Abonelik</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 12px; color: #666;">Paket:</span>
+                            <span style="font-weight: 600; font-size: 12px;">{{ package.name }}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 12px; color: #666;">Durum:</span>
+                            <span style="padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; {% if subscription.status == 'active' %}background-color: #d4edda; color: #155724;{% else %}background-color: #fff3cd; color: #856404;{% endif %}">
+                                {{ subscription.get_status_display }}
+                            </span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 12px; color: #666;">Bitiş Tarihi:</span>
+                            <span style="font-weight: 600; font-size: 12px; {% if subscription.days_remaining <= 7 %}color: #dc3545;{% elif subscription.days_remaining <= 30 %}color: #ffc107;{% else %}color: #28a745;{% endif %}">
+                                {{ subscription.end_date|date:"d.m.Y" }}
+                            </span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-size: 12px; color: #666;">Kalan Gün:</span>
+                            <span style="font-weight: bold; font-size: 13pt; {% if subscription.days_remaining <= 7 %}color: #dc3545;{% elif subscription.days_remaining <= 30 %}color: #ffc107;{% else %}color: #0078D4;{% endif %}">
+                                {{ subscription.days_remaining }} gün
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div>
-<h3 class="vb-section-title text-gray-900 mb-3">Yenileme Seçenekleri</h3>
-                <form method="post" class="space-y-4">
-                    {% csrf_token %}
-                    
-                    <div class="space-y-3">
-                        <label class="flex items-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                            <input type="radio" name="period" value="monthly" checked class="mr-3 text-vb-primary">
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900">Aylık Yenileme</div>
-                                <div class="text-sm text-gray-600">
-                                    {{ package.price_monthly }} {{ package.currency }} / ay
-                                </div>
-                            </div>
-                        </label>
+                
+                <div>
+                    <h3 style="font-size: 13px; font-weight: bold; color: #2C5F8D; margin-bottom: 10px;">Yenileme Seçenekleri</h3>
+                    <form method="post" style="display: flex; flex-direction: column; gap: 12px;">
+                        {% csrf_token %}
                         
-                        {% if package.price_yearly %}
-                        <label class="flex items-center p-4 bg-gray-50 rounded-lg border-2 border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                            <input type="radio" name="period" value="yearly" class="mr-3 text-vb-primary">
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900">Yıllık Yenileme</div>
-                                <div class="text-sm text-gray-600">
-                                    {{ package.price_yearly }} {{ package.currency }} / yıl
-                                    {% if package.get_yearly_discount_percentage %}
-                                    <span class="text-green-600 font-semibold ml-2">
-                                        (%{{ package.get_yearly_discount_percentage }} indirim)
-                                    </span>
-                                    {% endif %}
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="display: flex; align-items: center; padding: 10px; background-color: #F8F9FA; border: 1px solid #D4D4D4; border-radius: 3px; cursor: pointer;">
+                                <input type="radio" name="period" value="monthly" checked style="margin-right: 10px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 12px; color: #333; margin-bottom: 2px;">Aylık Yenileme</div>
+                                    <div style="font-size: 11px; color: #666;">
+                                        {{ package.price_monthly }} {{ package.currency }} / ay
+                                    </div>
                                 </div>
-                            </div>
-                        </label>
-                        {% endif %}
-                    </div>
-                    
-                    {% if superadmin_gateway %}
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <p class="text-sm text-blue-800">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Ödeme işlemi için sistem ödeme yöntemi kullanılacaktır: <strong>{{ superadmin_gateway.gateway.name }}</strong>
-                        </p>
-                    </div>
-                    {% else %}
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                        <p class="text-sm text-yellow-800">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            <strong>Uyarı:</strong> Ödeme gateway ayarları bulunamadı. Lütfen sistem yöneticisine başvurun.
-                        </p>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                        <p class="text-sm text-green-800">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Aboneliğiniz mevcut bitiş tarihinden sonra seçtiğiniz dönem kadar uzatılacaktır.
-                        </p>
-                    </div>
-                    
-                    <div class="flex space-x-3">
+                            </label>
+                            
+                            {% if package.price_yearly %}
+                            <label style="display: flex; align-items: center; padding: 10px; background-color: #F8F9FA; border: 1px solid #D4D4D4; border-radius: 3px; cursor: pointer;">
+                                <input type="radio" name="period" value="yearly" style="margin-right: 10px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 12px; color: #333; margin-bottom: 2px;">Yıllık Yenileme</div>
+                                    <div style="font-size: 11px; color: #666;">
+                                        {{ package.price_yearly }} {{ package.currency }} / yıl
+                                        {% if package.get_yearly_discount_percentage %}
+                                        <span style="color: #28a745; font-weight: 600; margin-left: 5px;">
+                                            (%{{ package.get_yearly_discount_percentage }} indirim)
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </label>
+                            {% endif %}
+                        </div>
+                        
                         {% if superadmin_gateway %}
-                        <button type="submit" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
-                            <i class="fas fa-credit-card mr-2"></i>
-                            Ödemeye Geç
-                        </button>
+                        <div style="background-color: #cfe2ff; border: 1px solid #084298; border-radius: 3px; padding: 10px;">
+                            <p style="font-size: 11px; color: #084298;">
+                                <i class="fas fa-info-circle"></i> Ödeme işlemi için sistem ödeme yöntemi kullanılacaktır: <strong>{{ superadmin_gateway.gateway.name }}</strong>
+                            </p>
+                        </div>
                         {% else %}
-                        <button type="submit" class="flex-1 px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-semibold" disabled>
-                            <i class="fas fa-ban mr-2"></i>
-                            Ödeme Gateway Bulunamadı
-                        </button>
+                        <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 3px; padding: 10px;">
+                            <p style="font-size: 11px; color: #856404;">
+                                <i class="fas fa-exclamation-triangle"></i> <strong>Uyarı:</strong> Ödeme gateway ayarları bulunamadı. Lütfen sistem yöneticisine başvurun.
+                            </p>
+                        </div>
                         {% endif %}
-                        <a href="{% url 'tenant_subscriptions:dashboard' %}" class="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
-                            İptal
-                        </a>
-                    </div>
-                </form>
+                        
+                        <div style="background-color: #d4edda; border: 1px solid #28a745; border-radius: 3px; padding: 10px;">
+                            <p style="font-size: 11px; color: #155724;">
+                                <i class="fas fa-info-circle"></i> Aboneliğiniz mevcut bitiş tarihinden sonra seçtiğiniz dönem kadar uzatılacaktır.
+                            </p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            {% if superadmin_gateway %}
+                            <button type="submit" class="vb-button success" style="flex: 1; padding: 8px 16px; font-size: 12px;">
+                                <i class="fas fa-credit-card"></i> Ödemeye Geç
+                            </button>
+                            {% else %}
+                            <button type="submit" class="vb-button" style="flex: 1; padding: 8px 16px; font-size: 12px; background-color: #6c757d; color: white; cursor: not-allowed;" disabled>
+                                <i class="fas fa-ban"></i> Ödeme Gateway Bulunamadı
+                            </button>
+                            {% endif %}
+                            <button type="button" onclick="closeModal()" class="vb-button" style="padding: 8px 16px; font-size: 12px;">
+                                İptal
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

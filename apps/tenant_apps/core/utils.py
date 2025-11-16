@@ -232,41 +232,207 @@ def start_refund_process_for_deletion(obj, source_module, user, reason='Silme i�
         return None
 
 
+def get_filter_hotels(request):
+    """
+    Filtreleme için otel listesini döndürür
+    Eğer active_hotel varsa sadece onu döndürür, yoksa accessible_hotels'i döndürür
+    
+    Args:
+        request: Django request objesi
+    
+    Returns:
+        list: Otel listesi (Hotel instance'ları)
+    """
+    # Aktif otel varsa sadece onu göster
+    if hasattr(request, 'active_hotel') and request.active_hotel:
+        return [request.active_hotel]
+    
+    # Aktif otel yoksa accessible_hotels'i kullan
+    if hasattr(request, 'accessible_hotels'):
+        return list(request.accessible_hotels) if request.accessible_hotels else []
+    
+    return []
+
+
 def calculate_dynamic_price(base_price, check_in_date, check_out_date, **kwargs):
     """
     Dinamik fiyat hesaplama (hotels modülü için)
+    
+    FORMÜL:
+    1. Yetişkin Fiyatı:
+       - fixed: base_price (oda fiyatı, kişi sayısından bağımsız)
+       - per_person: base_price × adult_multiplier[adult_count] veya base_price × adults
+    
+    2. Çocuk Fiyatı:
+       - Her çocuk için: base_price × child_multiplier
+       - Ücretsiz çocuk kurallarına göre bazı çocuklar ücretsiz olabilir
+    
+    3. Ücretsiz Çocuk Hesaplama:
+       - free_children_rules listesindeki her kural için:
+         * Çocuk yaşı age_range içinde mi?
+         * Yetişkin sayısı >= adult_required mi?
+         * Ücretsiz çocuk sayısı limiti aşılmadı mı?
+    
+    4. Toplam Fiyat:
+       - Yetişkin fiyatı + (Ücretli çocuk sayısı × base_price × child_multiplier)
     
     Args:
         base_price: Temel fiyat
         check_in_date: Check-in tarihi
         check_out_date: Check-out tarihi
-        **kwargs: Diğer parametreler (pricing_type, adults, children, vb.)
+        **kwargs: Diğer parametreler:
+            - pricing_type: 'fixed' veya 'per_person'
+            - adults: Yetişkin sayısı
+            - children: Çocuk sayısı
+            - child_ages: Çocuk yaşları listesi [5, 8, 12]
+            - multipliers: Yetişkin çarpanları dict {1: 1.0, 2: 1.8, 3: 2.5}
+            - child_multiplier: Çocuk sabit çarpanı (örn: 0.5)
+            - free_children_rules: Ücretsiz çocuk kuralları listesi
+                [{'age_range': (0, 6), 'count': 2, 'with_adults': 2}]
     
     Returns:
         dict: Fiyat hesaplama sonucu
     """
     from decimal import Decimal
     
-    # Basit implementasyon - hotels modülünde detaylandırılabilir
-    # Şimdilik temel fiyatı döndür
-    pricing_type = kwargs.get('pricing_type', 'fixed')
-    adults = kwargs.get('adults', 1)
-    children = kwargs.get('children', 0)
+    # base_price'ı Decimal'e çevir
+    try:
+        # Eğer base_price bir string ve 'per_person' gibi bir değer ise hata ver
+        if isinstance(base_price, str) and base_price.lower().strip() == 'per_person':
+            raise ValueError(f"base_price geçersiz değer: '{base_price}'. Fiyat değeri bekleniyor.")
+        base_price = Decimal(str(base_price))
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"base_price geçersiz: {base_price}. Hata: {str(e)}")
     
-    # Eğer per_person ise yetişkin sayısı ile çarp
+    # Parametreleri al
+    pricing_type = kwargs.get('pricing_type', 'fixed')
+    adults = int(kwargs.get('adults', 1))
+    children = int(kwargs.get('children', 0))
+    child_ages = kwargs.get('child_ages', [])
+    multipliers = kwargs.get('multipliers', {})  # Yetişkin çarpanları
+    child_multiplier = kwargs.get('child_multiplier', Decimal('0.5'))  # Çocuk çarpanı (varsayılan 0.5)
+    free_children_rules = kwargs.get('free_children_rules', [])  # Ücretsiz çocuk kuralları
+    
+    # child_multiplier'ı Decimal'e çevir
+    if not isinstance(child_multiplier, Decimal):
+        child_multiplier = Decimal(str(child_multiplier))
+    
+    # ========== 1. YETİŞKİN FİYATI HESAPLAMA ==========
     if pricing_type == 'per_person':
-        total_price = base_price * Decimal(str(adults))
+        # Kişi başı fiyatlandırma
+        # Yetişkin çarpanı varsa kullan, yoksa yetişkin sayısı ile çarp
+        if multipliers and adults in multipliers:
+            adult_multiplier = Decimal(str(multipliers[adults]))
+            adult_price = base_price * adult_multiplier
+        else:
+            # Çarpan yoksa direkt yetişkin sayısı ile çarp
+            adult_price = base_price * Decimal(str(adults))
     else:
-        total_price = base_price
+        # Sabit oda fiyatı (kişi sayısından bağımsız)
+        adult_price = base_price
+    
+    # ========== 2. ÜCRETSİZ ÇOCUK HESAPLAMA ==========
+    free_children_count = 0
+    
+    # Debug: Ücretsiz çocuk hesaplama parametrelerini kontrol et
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # child_ages None ise boş liste yap
+    if child_ages is None:
+        child_ages = []
+    
+    logger.debug(f"Ücretsiz çocuk hesaplama - children: {children}, free_children_rules: {free_children_rules}, child_ages: {child_ages}")
+    
+    # Eğer child_ages boşsa, ücretsiz çocuk hesaplaması yapılamaz (yaş bilgisi yok)
+    # Ama eğer child_ages varsa ve en az bir yaş bilgisi varsa, hesaplama yapılabilir
+    if children > 0 and free_children_rules and child_ages and len(child_ages) > 0:
+        # Ücretsiz olarak işaretlenecek çocukları takip et (indeks bazlı)
+        free_children_indices = set()
+        
+        logger.debug(f"Ücretsiz çocuk kuralları sayısı: {len(free_children_rules)}")
+        
+        # Her ücretsiz çocuk kuralı için kontrol et
+        for rule_idx, rule in enumerate(free_children_rules):
+            age_range = rule.get('age_range', (0, 12))
+            max_free_count = rule.get('count', 0)
+            adult_required = rule.get('with_adults', 1)  # 'adult_required' veya 'with_adults' olabilir
+            
+            logger.debug(f"Kural {rule_idx}: age_range={age_range}, max_free_count={max_free_count}, adult_required={adult_required}, adults={adults}")
+            
+            # Yetişkin sayısı yeterli mi?
+            if adults < adult_required:
+                logger.debug(f"Kural {rule_idx} atlandı - yeterli yetişkin yok ({adults} < {adult_required})")
+                continue  # Bu kural için yeterli yetişkin yok
+            
+            # Yaş aralığına uyan çocukları bul (indeks ile birlikte)
+            # Sadece mevcut yaş bilgisi olan çocukları kontrol et
+            age_start, age_end = age_range
+            eligible_children_indices = [
+                idx for idx, age in enumerate(child_ages)
+                if age_start <= age <= age_end and idx not in free_children_indices
+            ]
+            
+            logger.debug(f"Kural {rule_idx} - Uygun çocuklar (indeks): {eligible_children_indices}, Yaşlar: {[child_ages[idx] for idx in eligible_children_indices]}")
+            
+            # Ücretsiz çocuk sayısını hesapla (limit dahilinde ve henüz ücretsiz olmayan çocuklar)
+            eligible_count = len(eligible_children_indices)
+            free_count_for_rule = min(eligible_count, max_free_count)
+            
+            logger.debug(f"Kural {rule_idx} - Ücretsiz çocuk sayısı: {free_count_for_rule} (eligible: {eligible_count}, max: {max_free_count})")
+            
+            # İlk N çocuğu ücretsiz olarak işaretle
+            for i in range(free_count_for_rule):
+                if i < len(eligible_children_indices):
+                    free_children_indices.add(eligible_children_indices[i])
+                    logger.debug(f"Çocuk {eligible_children_indices[i]} (yaş: {child_ages[eligible_children_indices[i]]}) ücretsiz olarak işaretlendi")
+        
+        # Toplam ücretsiz çocuk sayısı
+        free_children_count = len(free_children_indices)
+        logger.debug(f"Toplam ücretsiz çocuk sayısı: {free_children_count}")
+    else:
+        logger.debug(f"Ücretsiz çocuk hesaplama atlandı - children: {children}, free_children_rules: {bool(free_children_rules)}, child_ages uzunluğu: {len(child_ages) if child_ages else 0}")
+    
+    # Ücretsiz çocuk sayısı toplam çocuk sayısını aşamaz
+    free_children_count = min(free_children_count, children)
+    logger.debug(f"Final ücretsiz çocuk sayısı: {free_children_count}")
+    
+    # ========== 3. ÜCRETLİ ÇOCUK SAYISI ==========
+    paid_children_count = children - free_children_count
+    
+    # ========== 4. ÇOCUK FİYATI HESAPLAMA ==========
+    if pricing_type == 'per_person':
+        # Kişi başı fiyatlandırmada çocuklar da base_price × child_multiplier
+        child_price = base_price * child_multiplier * Decimal(str(paid_children_count))
+    else:
+        # Sabit oda fiyatında çocuklar ek ücret olarak eklenir
+        # Çocuk fiyatı = base_price × child_multiplier × ücretli çocuk sayısı
+        child_price = base_price * child_multiplier * Decimal(str(paid_children_count))
+    
+    # ========== 5. TOPLAM FİYAT ==========
+    total_price = adult_price + child_price
+    
+    # ========== 6. BREAKDOWN (DETAYLI BİLGİ) ==========
+    breakdown = {
+        'base_price': float(base_price),
+        'pricing_type': pricing_type,
+        'adults': adults,
+        'children': children,
+        'child_ages': child_ages,
+        'adult_price': float(adult_price),
+        'child_price': float(child_price),
+        'free_children_count': free_children_count,
+        'paid_children_count': paid_children_count,
+        'child_multiplier': float(child_multiplier),
+    }
+    
+    # Yetişkin çarpanı varsa breakdown'a ekle
+    if multipliers and adults in multipliers:
+        breakdown['adult_multiplier'] = float(multipliers[adults])
     
     return {
         'total_price': total_price,
-        'adult_price': base_price if pricing_type == 'per_person' else base_price,
-        'child_price': Decimal('0'),
-        'breakdown': {
-            'base_price': base_price,
-            'pricing_type': pricing_type,
-            'adults': adults,
-            'children': children,
-        }
+        'adult_price': adult_price,
+        'child_price': child_price,
+        'breakdown': breakdown,
     }

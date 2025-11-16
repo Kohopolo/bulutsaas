@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CarpetOS Halı Yıkama Otomasyonu{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Menu Strip - 24px yükseklik -->
+    <div class="menu-strip">
+        <span class="menu-item">Dosya</span>
+        <span class="menu-item">Müşteri İşlemler</span>
+        <span class="menu-item">Raporlar</span>
+        <span class="menu-item">Ayarlar</span>
+        <span class="menu-item">Yardım</span>
+        <span class="menu-right">SMS Bakiyesi: 1.250</span>
+    </div>
+
+    <!-- Header Panel - 80px yükseklik -->
+    <div class="header-panel">
+        <div class="header-top">
+            <div class="header-title">CARPETOS HALI YIKAMA OTOMASYONU</div>
+            <div class="header-license">LİSANS SAHİBİ: {{ session.user_name if session.user_name else 'ADA HALI YIKAMA' }}</div>
+        </div>
+        <div class="header-banner">{% block banner_text %}Okunmamış Online Sipariş Yok{% endblock %}</div>
+    </div>
+
+    <!-- Main Layout - 3 sütunlu -->
+    <div class="main-layout">
+        <!-- Sol Panel - %25 genişlik -->
+        <div class="left-panel">
+            {% block left_panel %}
+            <div class="panel-title">TOPLAM: <span id="totalCustomers">125</span> KAYIT</div>
+            
+            <table class="customer-table">
+                <thead>
+                    <tr>
+                        <th>MŞ. NO</th>
+                        <th>CARİ ADI</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody">
+                    <tr>
+                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <input type="text" class="search-box" placeholder="Ara..." id="searchInput">
+
+            <div class="recent-calls">
+                <div class="recent-calls-title">SON ÇAĞRILAR</div>
+                <div id="recentCalls">-</div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="refreshCustomers()">🔄 Yenile</button>
+                <button class="btn btn-primary" onclick="searchCustomers()">🔍 Ara</button>
+                <button class="btn btn-danger" onclick="deleteCustomer()">🗑️ Sil</button>
+            </div>
+            {% endblock %}
+        </div>
+
+        <!-- Orta Panel - %50 genişlik -->
+        <div class="center-panel">
+            {% block center_panel %}
+            <!-- İçerik buraya gelecek -->
+            {% endblock %}
+        </div>
+
+        <!-- Sağ Panel - %25 genişlik -->
+        <div class="right-panel">
+            {% block right_panel %}
+            <div class="shortcut-btn" title="Bilgisayar" onclick="window.location.href='/dashboard'">🖥️</div>
+            <div class="shortcut-btn" title="Online Sipariş" onclick="alert('Online Sipariş')">📱</div>
+            <div class="shortcut-btn" title="Telefon" onclick="alert('Telefon')">📞</div>
+            <div class="shortcut-btn" title="Müşteri Yönetimi" onclick="window.location.href='/customers'">👥</div>
+            <div class="shortcut-btn" title="Yeni Ekle" onclick="showAddModal()">➕</div>
+            <div class="shortcut-btn" title="Raporlar" onclick="window.location.href='/reports'">📊</div>
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Footer Panel - 60px yükseklik -->
+    <div class="footer-panel">
+        <div class="footer-icon" title="Yenile" onclick="refreshPage()">🔄</div>
+        <div class="footer-icon" title="Ara" onclick="showSearch()">🔍</div>
+        <div class="footer-icon" title="Sil" onclick="deleteSelected()">🗑️</div>
+        <div class="footer-icon" title="Bilgi" onclick="showInfo()">ℹ️</div>
+        <div class="footer-icon" title="Yardım" onclick="showHelp()">❓</div>
+        <div class="footer-icon" title="Ayarlar" onclick="window.location.href='/settings'">⚙️</div>
+        <div class="footer-icon" title="Mesajlar" onclick="showMessages()">💬</div>
+        <div class="footer-icon" title="Hesaplayıcı" onclick="showCalculator()">🔢</div>
+        <div class="footer-icon" title="Kullanıcı" onclick="showUserMenu()">👤</div>
+        <div class="footer-icon" title="Tema" onclick="toggleTheme()">🎨</div>
+        <div class="footer-icon" title="Bağlantı" onclick="checkConnection()">📡</div>
+        <div class="footer-icon" title="Finans" onclick="showFinance()">💰</div>
+        <div class="status-label" id="statusLabel">API Bağlı</div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

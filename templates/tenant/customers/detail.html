@@ -8,7 +8,7 @@
     <div class="groupbox">
         <div class="groupbox-header">
             <i class="fas fa-user-circle"></i> Müşteri Folyosu: {{ customer.get_full_name }}
-            <div style="float: right;">
+            <div style="display: flex; gap: 8px;">
                 <a href="{% url 'tenant:customer_list' %}" class="vb-button">
                     <i class="fas fa-arrow-left"></i> Geri
                 </a>
@@ -19,7 +19,7 @@
         </div>
         <div class="groupbox-body">
             <!-- Müşteri Bilgileri -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+            <div class="detail-grid-4">
                 <div class="form-groupbox">
                     <div class="groupbox-header">
                         <i class="fas fa-info-circle"></i> Temel Bilgiler
@@ -137,7 +137,7 @@
             
             <!-- Reception Rezervasyonları -->
             {% if reception_reservations %}
-            <div class="form-groupbox" style="margin-bottom: 20px;">
+            <div class="form-groupbox">
                 <div class="groupbox-header">
                     <i class="fas fa-calendar-check"></i> Otel Rezervasyonları ({{ reception_reservations|length }})
                 </div>
@@ -184,7 +184,7 @@
             
             <!-- Reception Ödemeleri -->
             {% if reception_payments %}
-            <div class="form-groupbox" style="margin-bottom: 20px;">
+            <div class="form-groupbox">
                 <div class="groupbox-header">
                     <i class="fas fa-credit-card"></i> Otel Ödemeleri ({{ reception_payments|length }})
                 </div>
@@ -223,7 +223,7 @@
             
             <!-- Accounting Faturaları -->
             {% if accounting_invoices %}
-            <div class="form-groupbox" style="margin-bottom: 20px;">
+            <div class="form-groupbox">
                 <div class="groupbox-header">
                     <i class="fas fa-file-invoice"></i> Faturalar ({{ accounting_invoices|length }})
                 </div>
@@ -256,7 +256,7 @@
             
             <!-- Finance Kasa İşlemleri -->
             {% if finance_transactions %}
-            <div class="form-groupbox" style="margin-bottom: 20px;">
+            <div class="form-groupbox">
                 <div class="groupbox-header">
                     <i class="fas fa-cash-register"></i> Kasa İşlemleri ({{ finance_transactions|length }})
                 </div>
@@ -291,7 +291,7 @@
             
             <!-- Tur Rezervasyonları -->
             {% if tour_reservations %}
-            <div class="form-groupbox" style="margin-bottom: 20px;">
+            <div class="form-groupbox">
                 <div class="groupbox-header">
                     <i class="fas fa-route"></i> Tur Rezervasyonları ({{ tour_reservations|length }})
                 </div>
@@ -324,7 +324,7 @@
             
             <!-- Sadakat Geçmişi -->
             {% if loyalty_history %}
-            <div class="form-groupbox" style="margin-bottom: 20px;">
+            <div class="form-groupbox">
                 <div class="groupbox-header">
                     <i class="fas fa-star"></i> Sadakat Geçmişi
                 </div>
@@ -361,9 +361,9 @@
                 </div>
                 <div class="groupbox-body">
                     {% for note in notes %}
-                    <div style="padding: 10px; border-bottom: 1px solid #ddd; margin-bottom: 10px;">
-                        <p style="margin: 0; color: #333;">{{ note.note }}</p>
-                        <small style="color: #999;">{{ note.created_at|date:"d.m.Y H:i" }}</small>
+                    <div class="note-item">
+                        <p class="note-text">{{ note.note }}</p>
+                        <small class="note-date">{{ note.created_at|date:"d.m.Y H:i" }}</small>
                     </div>
                     {% endfor %}
                 </div>
@@ -373,43 +373,4 @@
     </div>
 </div>
 
-<style>
-.voucher-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 14px;
-    padding: 5px 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.voucher-label {
-    font-weight: bold;
-    color: #333;
-}
-
-.voucher-value {
-    color: #666;
-}
-
-.form-groupbox {
-    background: #f8f9fa;
-    border: 1px solid #d4d4d4;
-    border-radius: 3px;
-    padding: 0;
-}
-
-.groupbox-header {
-    background: #e8f4f8;
-    border-bottom: 1px solid #c0d4e0;
-    padding: 8px 12px;
-    font-weight: bold;
-    font-size: 14px;
-    color: #2c5f8d;
-}
-
-.groupbox-body {
-    padding: 12px;
-}
-</style>
 {% endblock %}

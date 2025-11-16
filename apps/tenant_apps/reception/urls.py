@@ -60,6 +60,9 @@ urlpatterns = [
     path('api/room-status-update/', views.api_room_status_update, name='api_room_status_update'),
     path('api/room-detail/<int:room_number_id>/', views.api_room_detail, name='api_room_detail'),
     
+    # Fiyat Hesaplama
+    path('price-calculator/', views.price_calculator, name='price_calculator'),
+    
     # Gün Sonu İşlemleri (End of Day / Night Audit)
     path('end-of-day/', views.end_of_day_dashboard, name='end_of_day_dashboard'),
     path('end-of-day/settings/', views.end_of_day_settings, name='end_of_day_settings'),

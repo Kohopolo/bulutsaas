@@ -1,0 +1,195 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Ödeme Yönetimi - Kiracı Üye Paneli{% endblock %}
+{% block page_title %}Ödeme Yönetimi{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <!-- İstatistikler -->
+    <div style="display: grid; grid-template-columns: repeat(8, minmax(140px, auto)); gap: 6px; width: fit-content; max-width: 100%; margin-bottom: 15px;">
+        <div style="background-color: #0078D4; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Toplam Gateway</div>
+                <div style="font-size: 18pt; font-weight: bold; color: white;">{{ stats.total_gateways }}</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-credit-card" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+        
+        <div style="background-color: #28a745; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Aktif Gateway</div>
+                <div style="font-size: 18pt; font-weight: bold; color: white;">{{ stats.active_gateways }}</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-check-circle" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+        
+        <div style="background-color: #6f42c1; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Toplam İşlem</div>
+                <div style="font-size: 18pt; font-weight: bold; color: white;">{{ stats.total_transactions }}</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-exchange-alt" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+        
+        <div style="background-color: #ffc107; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Başarılı İşlem</div>
+                <div style="font-size: 18pt; font-weight: bold; color: white;">{{ stats.successful_transactions }}</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-check" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+        
+        <div style="background-color: #17a2b8; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Bekleyen İşlem</div>
+                <div style="font-size: 18pt; font-weight: bold; color: white;">{{ stats.pending_transactions }}</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-clock" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+        
+        <div style="background-color: #dc3545; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Başarısız İşlem</div>
+                <div style="font-size: 18pt; font-weight: bold; color: white;">{{ stats.failed_transactions }}</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-times-circle" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+        
+        <div style="background-color: #6610f2; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Bu Ay İşlem</div>
+                <div style="font-size: 18pt; font-weight: bold; color: white;">{{ stats.month_transactions }}</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-calendar-alt" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+        
+        <div style="background-color: #20c997; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+                <div style="font-size: 11px; color: rgba(255,255,255,0.9); margin-bottom: 4px;">Toplam Tutar</div>
+                <div style="font-size: 14pt; font-weight: bold; color: white;">{{ stats.total_amount|floatformat:2 }} ₺</div>
+            </div>
+            <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.2); border-radius: 3px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-lira-sign" style="font-size: 18px; color: white;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hızlı İşlemler -->
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-bolt"></i> Hızlı İşlemler
+        </div>
+        <div class="groupbox-body">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <a href="{% url 'payment_management:gateway_list' %}" class="vb-button primary" style="padding: 8px 16px; font-size: 12px;">
+                    <i class="fas fa-credit-card"></i> Gateway Yönetimi
+                </a>
+                <a href="{% url 'payment_management:transaction_list' %}" class="vb-button primary" style="padding: 8px 16px; font-size: 12px;">
+                    <i class="fas fa-list"></i> İşlemler Listesi
+                </a>
+                <a href="{% url 'payment_management:gateway_create' %}" class="vb-button success" style="padding: 8px 16px; font-size: 12px;">
+                    <i class="fas fa-plus"></i> Yeni Gateway Ekle
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- İki Sütunlu Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+        <!-- Aktif Gateway'ler -->
+        <div class="groupbox">
+            <div class="groupbox-header">
+                <i class="fas fa-check-circle"></i> Aktif Gateway'ler
+            </div>
+            <div class="groupbox-body">
+                {% if active_gateways %}
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    {% for gateway in active_gateways %}
+                    <div style="background-color: #F8F9FA; border: 1px solid #D4D4D4; border-radius: 3px; padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-weight: 600; font-size: 12px; color: #333; margin-bottom: 4px;">{{ gateway.gateway.name }}</p>
+                                <p style="font-size: 11px; color: #666;">
+                                    {% if gateway.hotel %}
+                                        Otel: {{ gateway.hotel.name }}
+                                    {% else %}
+                                        Genel
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div style="color: #28a745;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #666; padding: 20px; font-size: 12px;">Aktif gateway bulunmuyor.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Son İşlemler -->
+        <div class="groupbox">
+            <div class="groupbox-header">
+                <i class="fas fa-history"></i> Son İşlemler
+            </div>
+            <div class="groupbox-body">
+                {% if recent_transactions %}
+                <div class="vb-datagrid-container" style="max-height: 400px; overflow-y: auto;">
+                    <table class="vb-datagrid" style="width: 100%; table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Tarih</th>
+                                <th style="width: 25%;">Gateway</th>
+                                <th style="width: 20%;">Tutar</th>
+                                <th style="width: 25%;">Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in recent_transactions %}
+                            <tr>
+                                <td style="font-size: 11px;">{{ transaction.created_at|date:"d.m.Y H:i" }}</td>
+                                <td style="font-size: 11px;">{{ transaction.gateway.name|default:"-" }}</td>
+                                <td style="font-size: 11px; font-weight: 600;">{{ transaction.amount }} {{ transaction.currency }}</td>
+                                <td>
+                                    {% if transaction.status == 'completed' %}
+                                    <span style="padding: 2px 6px; background-color: #d4edda; color: #155724; border-radius: 2px; font-size: 10px;">Başarılı</span>
+                                    {% elif transaction.status == 'pending' %}
+                                    <span style="padding: 2px 6px; background-color: #fff3cd; color: #856404; border-radius: 2px; font-size: 10px;">Bekliyor</span>
+                                    {% elif transaction.status == 'failed' %}
+                                    <span style="padding: 2px 6px; background-color: #f8d7da; color: #721c24; border-radius: 2px; font-size: 10px;">Başarısız</span>
+                                    {% else %}
+                                    <span style="padding: 2px 6px; background-color: #e0e0e0; color: #666; border-radius: 2px; font-size: 10px;">{{ transaction.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #666; padding: 20px; font-size: 12px;">İşlem bulunmuyor.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

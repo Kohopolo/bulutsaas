@@ -5,49 +5,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{% block title %}SaaS 2026{% endblock %} - Super Admin Panel</title>
+    <title>{% block title %}BULUT ACENTE{% endblock %} - Yönetim Sistemi</title>
     
-    <!-- VB Layout CSS (DEĞİŞMEZ!) -->
-    <link rel="stylesheet" href="{% static 'css/vb-layout.css' %}">
+    <!-- Standalone Layout CSS -->
+    <link rel="stylesheet" href="{% static 'css/standalone-layout.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom CSS (Opsiyonel) -->
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- VB Tarzı Tam Ekran Uygulama -->
-    <div class="desktop-app">
+    <!-- Standalone Tarzı Tam Ekran Uygulama -->
+    <div class="standalone-app">
         
-        <!-- Title Bar (Üst Başlık Çubuğu) -->
-        {% include 'includes/titlebar.html' %}
+        <!-- Menu Strip (VB MenuStrip) -->
+        {% include 'includes/menu_strip.html' %}
         
-        <!-- Toolbar (Menü & Araç Çubuğu) -->
-        {% include 'includes/toolbar.html' %}
+        <!-- Header Panel (VB Form Header) -->
+        {% include 'includes/header_panel.html' %}
         
-        <!-- Main Container (Sidebar + Content) -->
-        <div class="main-container">
+        <!-- Main Layout (3 Sütunlu) -->
+        <div class="main-layout">
             
-            <!-- Sidebar (Sol Menü) -->
-            {% include 'includes/sidebar.html' %}
+            <!-- Left Panel (Modül Menüsü) -->
+            {% include 'includes/module_sidebar.html' %}
             
-            <!-- Content Area (Sağ İçerik) -->
-            <div class="content-area">
+            <!-- Center Panel (Modül İçeriği) -->
+            <div class="center-panel" id="centerPanel">
                 {% block content %}
-                <!-- Sayfa içeriği buraya gelecek -->
+                <!-- Modül içeriği buraya yüklenecek -->
+                <div class="welcome-message">
+                    <h2>Hoş Geldiniz!</h2>
+                    <p>Sol menüden bir modül seçin veya kısayol butonlarını kullanın.</p>
+                </div>
                 {% endblock %}
             </div>
             
+            <!-- Right Panel (Kısayollar) -->
+            {% include 'includes/shortcuts_panel.html' %}
+            
         </div>
         
-        <!-- Status Bar (Alt Durum Çubuğu) -->
-        {% include 'includes/statusbar.html' %}
+        <!-- Footer Panel (Kısayollar + Status) -->
+        {% include 'includes/footer_panel.html' %}
         
     </div>
     
-    <!-- VB Layout JS -->
-    <script src="{% static 'js/vb-layout.js' %}"></script>
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
     
-    <!-- DataGrid Filters JS (Otomatik tablo filtreleme) -->
-    <script src="{% static 'js/datagrid-filters.js' %}"></script>
+    <!-- Module Loader JS -->
+    <script src="{% static 'js/module-loader.js' %}"></script>
+    
+    <!-- Modal System JS -->
+    <script src="{% static 'js/modal-system.js' %}"></script>
+    
+    <!-- Footer Functions JS -->
+    <script src="{% static 'js/footer-functions.js' %}"></script>
     
     <!-- Custom JS (Opsiyonel) -->
     {% block extra_js %}{% endblock %}

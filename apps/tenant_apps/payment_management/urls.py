@@ -7,6 +7,9 @@ from . import views
 app_name = 'payment_management'
 
 urlpatterns = [
+    # Dashboard (Ana sayfa)
+    path('', views.dashboard, name='dashboard'),
+    
     # Gateway Yönetimi
     path('gateways/', views.gateway_list, name='gateway_list'),
     path('gateways/create/', views.gateway_create, name='gateway_create'),

@@ -266,16 +266,42 @@ Options -Indexes
         file_name = f"backup_{schema_display_name}_{timestamp}.sql.gz"
         file_path = backup_dir / file_name
         
-        # Backup kaydı oluştur
-        backup_record = DatabaseBackup.objects.create(
-            backup_type=backup_type,
-            status='in_progress',
-            file_name=file_name,
-            file_path=str(file_path),
-            schema_name=schema_name,
-            database_name=db_config['NAME'],
-            started_by_id=user_id,
-        )
+        # Tenant schema'da backup kaydı oluştur
+        # Eğer public schema değilse, tenant schema context'inde çalış
+        from django_tenants.utils import tenant_context, get_tenant_model
+        
+        backup_record_id = None
+        tenant = None
+        
+        if schema_name == get_public_schema_name():
+            # Public schema için backup kaydı public schema'da oluşturulmaz
+            # (backup modülü tenant-specific olduğu için)
+            self.stdout.write(self.style.WARNING('Public schema için backup kaydı oluşturulamaz (backup modülü tenant-specific).'))
+        else:
+            # Tenant schema için backup kaydı oluştur
+            try:
+                Tenant = get_tenant_model()
+                tenant = Tenant.objects.get(schema_name=schema_name)
+                
+                with tenant_context(tenant):
+                    # Tenant schema context'inde backup kaydı oluştur
+                    backup_record = DatabaseBackup.objects.create(
+                        backup_type=backup_type,
+                        status='in_progress',
+                        file_name=file_name,
+                        file_path=str(file_path),
+                        schema_name=schema_name,
+                        database_name=db_config['NAME'],
+                        started_by_id=user_id,
+                    )
+                    backup_record_id = backup_record.id
+                    self.stdout.write(f'Backup kaydı oluşturuldu (ID: {backup_record_id})')
+            except Tenant.DoesNotExist:
+                self.stdout.write(self.style.ERROR(f'Tenant bulunamadı: {schema_name}'))
+                raise CommandError(f'Tenant bulunamadı: {schema_name}')
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'Backup kaydı oluşturulurken hata: {str(e)}'))
+                raise CommandError(f'Backup kaydı oluşturulurken hata: {str(e)}')
         
         try:
             # Önce pg_dump'ı kontrol et, yoksa Python alternatifini kullan
@@ -291,11 +317,17 @@ Options -Indexes
             # Dosya boyutunu al
             file_size = file_path.stat().st_size
             
-            # Backup kaydını güncelle
-            backup_record.status = 'completed'
-            backup_record.file_size = file_size
-            backup_record.completed_at = datetime.now()
-            backup_record.save()
+            # Backup kaydını güncelle (tenant schema context'inde)
+            if backup_record_id and tenant:
+                with tenant_context(tenant):
+                    try:
+                        backup_record = DatabaseBackup.objects.get(id=backup_record_id)
+                        backup_record.status = 'completed'
+                        backup_record.file_size = file_size
+                        backup_record.completed_at = datetime.now()
+                        backup_record.save()
+                    except DatabaseBackup.DoesNotExist:
+                        self.stdout.write(self.style.WARNING(f'Backup kaydı bulunamadı (ID: {backup_record_id})'))
             
             self.stdout.write(
                 self.style.SUCCESS(
@@ -305,10 +337,21 @@ Options -Indexes
             
         except Exception as e:
             error_msg = str(e)
-            backup_record.status = 'failed'
-            backup_record.error_message = error_msg
-            backup_record.completed_at = datetime.now()
-            backup_record.save()
+            
+            # Backup kaydını güncelle (hata durumunda)
+            if backup_record_id and tenant:
+                try:
+                    with tenant_context(tenant):
+                        backup_record = DatabaseBackup.objects.get(id=backup_record_id)
+                        backup_record.status = 'failed'
+                        backup_record.error_message = error_msg
+                        backup_record.completed_at = datetime.now()
+                        backup_record.save()
+                except DatabaseBackup.DoesNotExist:
+                    self.stdout.write(self.style.WARNING(f'Backup kaydı bulunamadı (ID: {backup_record_id})'))
+                except Exception as update_error:
+                    self.stdout.write(self.style.ERROR(f'Backup kaydı güncellenirken hata: {str(update_error)}'))
+            
             raise CommandError(f'Yedekleme hatası: {error_msg}')
     
     def find_pg_dump(self):

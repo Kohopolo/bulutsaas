@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}CarpetOS - Müşteriler{% endblock %}
+
+{% block banner_text %}Müşteri Yönetimi{% endblock %}
+
+{% block center_panel %}
+<div class="tabs">
+    <div class="tab active">MÜŞTERİLER</div>
+</div>
+
+<div class="date-navigation" style="margin-bottom: 10px;">
+    <input type="text" class="search-box" id="customerSearchInput" placeholder="Müşteri ara..." style="flex: 1;">
+    <select class="date-picker" id="categoryFilter">
+        <option value="">Tüm Kategoriler</option>
+        <option value="VIP">VIP</option>
+        <option value="Kurumsal">Kurumsal</option>
+        <option value="Bireysel">Bireysel</option>
+    </select>
+    <button class="btn btn-primary" onclick="loadCustomers()">Getir</button>
+</div>
+
+<table class="orders-table">
+    <thead>
+        <tr>
+            <th>Müşteri No</th>
+            <th>Ad Soyad</th>
+            <th>Telefon</th>
+            <th>E-posta</th>
+            <th>Kategori</th>
+            <th>Son Sipariş</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody id="customersTableBody">
+        <tr>
+            <td colspan="7" class="text-center">Yükleniyor...</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="summary-panel">
+    <div class="summary-item">
+        <div class="summary-label">TOPLAM MÜŞTERİ</div>
+        <div class="summary-value" id="totalCustomersSummary">0</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-label">VIP MÜŞTERİ</div>
+        <div class="summary-value" id="vipCustomersSummary">0</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-label">KURUMSAL</div>
+        <div class="summary-value" id="corporateCustomersSummary">0</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-label">BİREYSEL</div>
+        <div class="summary-value" id="individualCustomersSummary">0</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let customers = [];
+    
+    async function loadCustomers() {
+        try {
+            const response = await fetch('/api/customers');
+            const data = await response.json();
+            if (data.success) {
+                customers = data.data;
+                renderCustomers(customers);
+                updateSummary();
+            }
+        } catch (error) {
+            console.error('Error loading customers:', error);
+        }
+    }
+    
+    function renderCustomers(customerList) {
+        const tbody = document.getElementById('customersTableBody');
+        if (customerList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Müşteri bulunamadı</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = customerList.map(customer => `
+            <tr onclick="selectCustomer(${customer.id})">
+                <td>${customer.customer_number || ''}</td>
+                <td>${customer.first_name} ${customer.last_name}</td>
+                <td>${customer.phone || ''}</td>
+                <td>${customer.email || ''}</td>
+                <td>${customer.category || ''}</td>
+                <td>${customer.last_order_date ? new Date(customer.last_order_date).toLocaleDateString('tr-TR') : '-'}</td>
+                <td>
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); editCustomer(${customer.id})" style="padding: 2px 8px; font-size: 8pt;">Düzenle</button>
+                    <button class="btn btn-danger" onclick="event.stopPropagation(); deleteCustomerById(${customer.id})" style="padding: 2px 8px; font-size: 8pt;">Sil</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    function updateSummary() {
+        document.getElementById('totalCustomersSummary').textContent = customers.length;
+        document.getElementById('vipCustomersSummary').textContent = customers.filter(c => c.category === 'VIP').length;
+        document.getElementById('corporateCustomersSummary').textContent = customers.filter(c => c.category === 'Kurumsal').length;
+        document.getElementById('individualCustomersSummary').textContent = customers.filter(c => c.category === 'Bireysel').length;
+    }
+    
+    function filterCustomers() {
+        const searchTerm = document.getElementById('customerSearchInput').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+        
+        let filtered = customers.filter(c => {
+            const matchesSearch = !searchTerm || 
+                (c.first_name + ' ' + c.last_name).toLowerCase().includes(searchTerm) ||
+                (c.phone || '').includes(searchTerm) ||
+                (c.email || '').toLowerCase().includes(searchTerm);
+            
+            const matchesCategory = !category || c.category === category;
+            
+            return matchesSearch && matchesCategory;
+        });
+        
+        renderCustomers(filtered);
+    }
+    
+    document.getElementById('customerSearchInput').addEventListener('keyup', filterCustomers);
+    document.getElementById('categoryFilter').addEventListener('change', filterCustomers);
+    
+    async function deleteCustomerById(id) {
+        if (confirm('Bu müşteriyi silmek istediğinize emin misiniz?')) {
+            try {
+                const response = await fetch(`/api/customers/${id}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadCustomers();
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        }
+    }
+    
+    function editCustomer(id) {
+        alert('Müşteri düzenleme formu açılacak: ' + id);
+    }
+    
+    // Override base.js'deki loadCustomers
+    window.loadCustomers = loadCustomers;
+    
+    loadCustomers();
+</script>
+{% endblock %}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarpetOS Halı Yıkama Otomasyonu - Ayarlar</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <div class="menu-strip">
+        <span class="menu-item">Dosya</span>
+        <span class="menu-item">Müşteri İşlemler</span>
+        <span class="menu-item">Raporlar</span>
+        <span class="menu-item">Ayarlar</span>
+        <span class="menu-item">Yardım</span>
+        <span class="menu-right">SMS Bakiyesi: 1.250</span>
+    </div>
+
+    <div class="header-panel">
+        <div class="header-top">
+            <div class="header-title">CARPETOS HALI YIKAMA OTOMASYONU</div>
+            <div class="header-license">LİSANS SAHİBİ: ADA HALI YIKAMA</div>
+        </div>
+        <div class="header-banner">Sistem Ayarları</div>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="panel-title">AYAR KATEGORİLERİ</div>
+            <div style="padding: 10px;">
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 5px;" onclick="switchSettingsTab('general')">⚙️ Genel Ayarlar</button>
+                <button class="btn" style="width: 100%; margin-bottom: 5px;" onclick="switchSettingsTab('pricing')">💰 Fiyat Ayarları</button>
+                <button class="btn" style="width: 100%; margin-bottom: 5px;" onclick="switchSettingsTab('integrations')">🔌 Entegrasyonlar</button>
+                <button class="btn" style="width: 100%; margin-bottom: 5px;" onclick="switchSettingsTab('database')">🗄️ Veritabanı</button>
+                <button class="btn" style="width: 100%; margin-bottom: 5px;" onclick="switchSettingsTab('license')">🔑 Lisans</button>
+            </div>
+        </div>
+
+        <div class="center-panel">
+            <div class="tabs">
+                <div class="tab active" id="tab-general" onclick="switchSettingsTab('general')">GENEL AYARLAR</div>
+                <div class="tab" id="tab-pricing" onclick="switchSettingsTab('pricing')">FİYAT AYARLARI</div>
+                <div class="tab" id="tab-integrations" onclick="switchSettingsTab('integrations')">ENTEGRASYONLAR</div>
+                <div class="tab" id="tab-database" onclick="switchSettingsTab('database')">VERİTABANI</div>
+                <div class="tab" id="tab-license" onclick="switchSettingsTab('license')">LİSANS</div>
+            </div>
+
+            <div id="settingsContent" style="padding: 20px; overflow-y: auto;">
+                <div id="generalSettings" style="display: block;">
+                    <div style="font-size: 12pt; font-weight: bold; color: #1E3A8A; margin-bottom: 15px;">Genel Ayarlar</div>
+                    <form id="settingsForm">
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">Firma Adı</label>
+                            <input type="text" class="search-box" name="company_name" value="Ada Halı Yıkama" style="width: 100%;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">Telefon</label>
+                            <input type="tel" class="search-box" name="phone" value="" style="width: 100%;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">E-posta</label>
+                            <input type="email" class="search-box" name="email" value="" style="width: 100%;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">Adres</label>
+                            <textarea class="search-box" name="address" rows="3" style="width: 100%; resize: vertical;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                    </form>
+                </div>
+
+                <div id="pricingSettings" style="display: none;">
+                    <div style="font-size: 12pt; font-weight: bold; color: #1E3A8A; margin-bottom: 15px;">Fiyat Ayarları</div>
+                    <p>Fiyat ayarları burada olacak</p>
+                </div>
+
+                <div id="integrationsSettings" style="display: none;">
+                    <div style="font-size: 12pt; font-weight: bold; color: #1E3A8A; margin-bottom: 15px;">Entegrasyonlar</div>
+                    <p>Entegrasyon ayarları burada olacak</p>
+                </div>
+
+                <div id="databaseSettings" style="display: none;">
+                    <div style="font-size: 12pt; font-weight: bold; color: #1E3A8A; margin-bottom: 15px;">Veritabanı Ayarları</div>
+                    <p>Veritabanı ayarları burada olacak</p>
+                </div>
+
+                <div id="licenseSettings" style="display: none;">
+                    <div style="font-size: 12pt; font-weight: bold; color: #1E3A8A; margin-bottom: 15px;">Lisans Ayarları</div>
+                    <p>Lisans ayarları burada olacak</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="shortcut-btn" title="Bilgisayar" onclick="window.location.href='dashboard.html'">🖥️</div>
+            <div class="shortcut-btn" title="Online Sipariş" onclick="alert('Online Sipariş')">📱</div>
+            <div class="shortcut-btn" title="Telefon" onclick="alert('Telefon')">📞</div>
+            <div class="shortcut-btn" title="Müşteri Yönetimi" onclick="window.location.href='customers.html'">👥</div>
+            <div class="shortcut-btn" title="Yeni Ekle" onclick="showAddModal()">➕</div>
+            <div class="shortcut-btn" title="Raporlar" onclick="window.location.href='reports.html'">📊</div>
+        </div>
+    </div>
+
+    <div class="footer-panel">
+        <div class="footer-icon" title="Yenile" onclick="refreshPage()">🔄</div>
+        <div class="footer-icon" title="Ara" onclick="showSearch()">🔍</div>
+        <div class="footer-icon" title="Sil" onclick="deleteSelected()">🗑️</div>
+        <div class="footer-icon" title="Bilgi" onclick="showInfo()">ℹ️</div>
+        <div class="footer-icon" title="Yardım" onclick="showHelp()">❓</div>
+        <div class="footer-icon" title="Ayarlar" onclick="window.location.href='settings.html'">⚙️</div>
+        <div class="footer-icon" title="Mesajlar" onclick="showMessages()">💬</div>
+        <div class="footer-icon" title="Hesaplayıcı" onclick="showCalculator()">🔢</div>
+        <div class="footer-icon" title="Kullanıcı" onclick="showUserMenu()">👤</div>
+        <div class="footer-icon" title="Tema" onclick="toggleTheme()">🎨</div>
+        <div class="footer-icon" title="Bağlantı" onclick="checkConnection()">📡</div>
+        <div class="footer-icon" title="Finans" onclick="showFinance()">💰</div>
+        <div class="status-label" id="statusLabel">API Bağlı</div>
+    </div>
+
+    <script>
+        function switchSettingsTab(tabName) {
+            // Hide all settings sections
+            document.getElementById('generalSettings').style.display = 'none';
+            document.getElementById('pricingSettings').style.display = 'none';
+            document.getElementById('integrationsSettings').style.display = 'none';
+            document.getElementById('databaseSettings').style.display = 'none';
+            document.getElementById('licenseSettings').style.display = 'none';
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            // Show selected section and activate tab
+            switch(tabName) {
+                case 'general':
+                    document.getElementById('generalSettings').style.display = 'block';
+                    document.getElementById('tab-general').classList.add('active');
+                    break;
+                case 'pricing':
+                    document.getElementById('pricingSettings').style.display = 'block';
+                    document.getElementById('tab-pricing').classList.add('active');
+                    break;
+                case 'integrations':
+                    document.getElementById('integrationsSettings').style.display = 'block';
+                    document.getElementById('tab-integrations').classList.add('active');
+                    break;
+                case 'database':
+                    document.getElementById('databaseSettings').style.display = 'block';
+                    document.getElementById('tab-database').classList.add('active');
+                    break;
+                case 'license':
+                    document.getElementById('licenseSettings').style.display = 'block';
+                    document.getElementById('tab-license').classList.add('active');
+                    break;
+            }
+        }
+        
+        document.getElementById('settingsForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Ayarlar kaydedilecek');
+        });
+        
+        function refreshPage() {
+            location.reload();
+        }
+        
+        function showSearch() {
+            alert('Arama');
+        }
+        
+        function deleteSelected() {
+            alert('Seçili öğeler silinecek');
+        }
+        
+        function showInfo() {
+            alert('CarpetOS v2.0\nHalı Yıkama İşletme Yönetim Sistemi');
+        }
+        
+        function showHelp() {
+            alert('Yardım sayfası açılacak');
+        }
+        
+        function showMessages() {
+            alert('Mesajlar');
+        }
+        
+        function showCalculator() {
+            alert('Hesaplayıcı');
+        }
+        
+        function showUserMenu() {
+            alert('Kullanıcı menüsü');
+        }
+        
+        function toggleTheme() {
+            alert('Tema değiştirilecek');
+        }
+        
+        function checkConnection() {
+            document.getElementById('statusLabel').textContent = 'Bağlantı kontrol ediliyor...';
+            setTimeout(() => {
+                document.getElementById('statusLabel').textContent = 'API Bağlı';
+            }, 1000);
+        }
+        
+        function showFinance() {
+            alert('Finans modülü');
+        }
+        
+        function showAddModal() {
+            alert('Yeni ekleme formu açılacak');
+        }
+    </script>
+</body>
+</html>
+

@@ -4,117 +4,116 @@
 {% block title %}Dashboard - Kiracı Üye Paneli{% endblock %}
 
 {% block content %}
-<div class="p-6">
-    <!-- Welcome Section -->
-    <div class="bg-gradient-to-r from-vb-primary to-purple-600 rounded-lg p-6 mb-6 text-white shadow-lg">
-        <h1 class="text-3xl font-bold mb-2">
-            {{ tenant_user.user.get_full_name|default:tenant_user.user.username }}, Hoş Geldiniz!
-        </h1>
-        <p class="text-gray-100">
-            {% if tenant_user.user_type %}
-                {{ tenant_user.user_type.name }} Paneli
-            {% else %}
-                Bulut Acente Yönetim Paneli
-            {% endif %}
-        </p>
-    </div>
-    
-    <!-- Modül Bazlı İstatistikler -->
-    {% if module_statistics %}
-        {% for module_stat in module_statistics %}
-        <div class="mb-6">
-            <h2 class="text-xl font-bold text-vb-navy mb-4 flex items-center">
-                <i class="fas {{ module_stat.icon }} mr-2 text-vb-primary"></i>
-                {{ module_stat.module_name }} İstatistikleriniz
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {% for item in module_stat.items %}
-                <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600 mb-1">{{ item.label }}</p>
-                            <p class="text-2xl font-bold text-vb-navy">{{ item.value }}</p>
+<div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px; padding: 20px;">
+    <!-- Sol Panel: İstatistikler -->
+    <div>
+        <!-- Welcome Section -->
+        <div class="bg-gradient-to-r from-vb-primary to-purple-600 rounded-lg p-6 mb-6 text-white shadow-lg">
+            <h1 class="text-3xl font-bold mb-2">
+                {{ tenant_user.user.get_full_name|default:tenant_user.user.username }}, Hoş Geldiniz!
+            </h1>
+        </div>
+        
+        <!-- Modül Bazlı İstatistikler -->
+        {% if module_statistics %}
+            {% for module_stat in module_statistics %}
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-vb-navy mb-4 flex items-center">
+                    <i class="fas {{ module_stat.icon }} mr-2 text-vb-primary"></i>
+                    {{ module_stat.module_name }} İstatistikleriniz
+                </h2>
+                <!-- İstatistikler - 2 Sütunlu Grid Yapısı -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 100%;">
+                    {% for item in module_stat.items %}
+                    <div style="background: #FFFFFF; border: 1px solid #D4D4D4; border-radius: 3px; padding: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#F8F9FA'; this.style.borderColor='#0078D4';" onmouseout="this.style.background='#FFFFFF'; this.style.borderColor='#D4D4D4';">
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; color: #666; margin-bottom: 6px; font-weight: 600;">{{ item.label }}</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #2C5F8D; line-height: 1.2;">{{ item.value }}</div>
                         </div>
-                        <div class="w-12 h-12 rounded-lg flex items-center justify-center
-                            {% if module_stat.color == 'blue' %}bg-blue-100
-                            {% elif module_stat.color == 'green' %}bg-green-100
-                            {% elif module_stat.color == 'purple' %}bg-purple-100
-                            {% elif module_stat.color == 'yellow' %}bg-yellow-100
-                            {% elif module_stat.color == 'red' %}bg-red-100
-                            {% else %}bg-gray-100{% endif %}">
-                            <i class="fas {{ item.icon }} text-xl
-                                {% if module_stat.color == 'blue' %}text-blue-600
-                                {% elif module_stat.color == 'green' %}text-green-600
-                                {% elif module_stat.color == 'purple' %}text-purple-600
-                                {% elif module_stat.color == 'yellow' %}text-yellow-600
-                                {% elif module_stat.color == 'red' %}text-red-600
-                                {% else %}text-gray-600{% endif %}"></i>
+                        <div style="width: 40px; height: 40px; background: {% if module_stat.color == 'blue' %}#E8F4F8{% elif module_stat.color == 'green' %}#E6F7E6{% elif module_stat.color == 'purple' %}#F3E5F5{% elif module_stat.color == 'yellow' %}#FFF9E6{% elif module_stat.color == 'red' %}#FFEBEE{% else %}#F5F5F5{% endif %}; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas {{ item.icon }}" style="font-size: 18px; color: {% if module_stat.color == 'blue' %}#2C5F8D{% elif module_stat.color == 'green' %}#107C10{% elif module_stat.color == 'purple' %}#7B1FA2{% elif module_stat.color == 'yellow' %}#F57C00{% elif module_stat.color == 'red' %}#D32F2F{% else %}#666666{% endif %};"></i>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <!-- Modül yoksa varsayılan mesaj -->
-        <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
-            <div class="text-center py-8">
-                <i class="fas fa-info-circle text-gray-400 text-4xl mb-4"></i>
-                <p class="text-gray-600 text-lg">Henüz aktif modül bulunmuyor.</p>
-                <p class="text-gray-500 text-sm mt-2">Paket yönetiminden modül ekleyebilirsiniz.</p>
-            </div>
-        </div>
-    {% endif %}
-    
-    <!-- User Info Card -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
-        <h2 class="text-xl font-bold text-vb-navy mb-4">Kullanıcı Bilgileri</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <p class="text-sm text-gray-600">Kullanıcı Tipi</p>
-                <p class="font-semibold text-gray-900">
-                    {% if tenant_user.user_type %}
-                        {{ tenant_user.user_type.icon }} {{ tenant_user.user_type.name }}
-                    {% else %}
-                        Belirtilmemiş
-                    {% endif %}
-                </p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Departman</p>
-                <p class="font-semibold text-gray-900">{{ tenant_user.department|default:"-" }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Pozisyon</p>
-                <p class="font-semibold text-gray-900">{{ tenant_user.position|default:"-" }}</p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Son Giriş</p>
-                <p class="font-semibold text-gray-900">
-                    {% if tenant_user.last_login_at %}
-                        {{ tenant_user.last_login_at|date:"d.m.Y H:i" }}
-                    {% else %}
-                        İlk Giriş
-                    {% endif %}
-                </p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Roles Card -->
-    {% if user_roles %}
-    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-        <h2 class="text-xl font-bold text-vb-navy mb-4">Rollerim</h2>
-        <div class="flex flex-wrap gap-3">
-            {% for user_role in user_roles %}
-            <div class="px-4 py-2 bg-vb-primary text-white rounded-lg">
-                <i class="{{ user_role.role.icon|default:'🛡️' }} mr-2"></i>
-                {{ user_role.role.name }}
             </div>
             {% endfor %}
+        {% else %}
+            <!-- Modül yoksa varsayılan mesaj -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
+                <div class="text-center py-8">
+                    <i class="fas fa-info-circle text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-600 text-lg">Henüz aktif modül bulunmuyor.</p>
+                    <p class="text-gray-500 text-sm mt-2">Paket yönetiminden modül ekleyebilirsiniz.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sağ Panel: Haberler ve Reklamlar -->
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <!-- Duyurular -->
+        <div class="groupbox" style="background: #FFFFFF; border: 1px solid #D4D4D4; border-radius: 3px;">
+            <div class="groupbox-header" style="background-color: #E8F4F8; border-bottom: 1px solid #D4D4D4; padding: 10px 12px; font-weight: 600; font-size: 13px; color: #2C5F8D; display: flex; align-items: center; justify-content: space-between;">
+                <span>
+                    <i class="fas fa-bullhorn mr-2"></i>Duyurular
+                </span>
+            </div>
+            <div class="groupbox-body" style="padding: 12px;">
+                {% if announcements %}
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    {% for announcement in announcements %}
+                    <div style="border: 1px solid #D4D4D4; border-radius: 3px; padding: 10px; background: #F8F9FA; transition: all 0.2s;" onmouseover="this.style.borderColor='#0078D4'; this.style.background='#FFFFFF';" onmouseout="this.style.borderColor='#D4D4D4'; this.style.background='#F8F9FA';">
+                        <h3 style="font-weight: 600; font-size: 12px; color: #2C5F8D; margin-bottom: 6px;">{{ announcement.title }}</h3>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 6px; line-height: 1.4;">
+                            {{ announcement.content|safe|truncatewords:20 }}
+                        </div>
+                        <div style="font-size: 10px; color: #999;">
+                            <i class="fas fa-calendar mr-1"></i>{{ announcement.created_at|date:"d.m.Y" }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #999; font-size: 11px; padding: 20px 0;">Henüz duyuru yok</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Reklamlar -->
+        <div class="groupbox" style="background: #FFFFFF; border: 1px solid #D4D4D4; border-radius: 3px;">
+            <div class="groupbox-header" style="background-color: #E8F4F8; border-bottom: 1px solid #D4D4D4; padding: 10px 12px; font-weight: 600; font-size: 13px; color: #2C5F8D; display: flex; align-items: center; justify-content: space-between;">
+                <span>
+                    <i class="fas fa-ad mr-2"></i>Reklamlar
+                </span>
+            </div>
+            <div class="groupbox-body" style="padding: 12px;">
+                {% if advertisements %}
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    {% for ad in advertisements %}
+                    <div style="border: 1px solid #D4D4D4; border-radius: 3px; padding: 10px; background: #F8F9FA; transition: all 0.2s;" onmouseover="this.style.borderColor='#0078D4'; this.style.background='#FFFFFF';" onmouseout="this.style.borderColor='#D4D4D4'; this.style.background='#F8F9FA';">
+                        {% if ad.image %}
+                        <div style="margin-bottom: 8px;">
+                            <img src="{{ ad.image.url }}" alt="{{ ad.title }}" style="width: 100%; max-height: 120px; object-fit: cover; border-radius: 3px;">
+                        </div>
+                        {% endif %}
+                        <h3 style="font-weight: 600; font-size: 12px; color: #2C5F8D; margin-bottom: 6px;">{{ ad.title }}</h3>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 6px; line-height: 1.4;">
+                            {{ ad.content|safe|truncatewords:15 }}
+                        </div>
+                        {% if ad.link_url %}
+                        <a href="{{ ad.link_url }}" target="_blank" style="font-size: 11px; color: #0078D4; text-decoration: none; display: inline-flex; align-items: center; margin-top: 4px;" onmouseover="this.style.textDecoration='underline';" onmouseout="this.style.textDecoration='none';">
+                            {{ ad.link_text|default:"Detaylar" }} <i class="fas fa-external-link-alt ml-1" style="font-size: 9px;"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #999; font-size: 11px; padding: 20px 0;">Henüz reklam yok</p>
+                {% endif %}
+            </div>
         </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}

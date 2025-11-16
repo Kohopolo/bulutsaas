@@ -7,6 +7,9 @@ from . import views
 app_name = 'channel_management'
 
 urlpatterns = [
+    # Dashboard / Ana Sayfa
+    path('', views.configuration_list, name='dashboard'),
+    
     # Kanal Şablonları
     path('templates/', views.template_list, name='template_list'),
     path('templates/<int:pk>/', views.template_detail, name='template_detail'),

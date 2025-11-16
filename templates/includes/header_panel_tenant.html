@@ -1,0 +1,23 @@
+<!-- Header Panel (VB Form Header) - Tenant -->
+<div class="header-panel">
+    <div class="header-top">
+        <div class="header-title">{% block header_title %}BULUT ACENTE YÖNETİM SİSTEMİ{% endblock %}</div>
+        <div class="header-license">
+            {% if user.is_authenticated %}
+                Kullanıcı: {{ user.get_full_name|default:user.username }}
+                {% if request.tenant %}
+                    | Üye: {{ request.tenant.name }}
+                {% endif %}
+                <a href="{% url 'tenant:logout' %}" style="margin-left: 15px; color: #dc3545; text-decoration: none; font-weight: 600;" title="Çıkış Yap">
+                    <i class="fas fa-sign-out-alt"></i> Çıkış
+                </a>
+            {% else %}
+                Lütfen giriş yapın
+            {% endif %}
+        </div>
+    </div>
+    <div class="header-banner" id="headerBanner">
+        {% block header_banner %}Sistem Hazır{% endblock %}
+    </div>
+</div>
+

@@ -88,9 +88,9 @@ def account_list(request):
     accounts = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'accounts': accounts,
@@ -299,9 +299,9 @@ def transaction_list(request):
     accounts = CashAccount.objects.filter(is_active=True, is_deleted=False)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'transactions': transactions,

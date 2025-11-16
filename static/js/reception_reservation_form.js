@@ -5,7 +5,6 @@
 
 // Modal Açma/Kapama
 function openReservationModal(reservationId = null) {
-    console.log('openReservationModal çağrıldı, reservationId:', reservationId);
     // Flag'i sıfırla (yeni modal açıldığında veriler tekrar yüklensin)
     window.loadReservationDataExecuted = false;
     
@@ -17,7 +16,6 @@ function openReservationModal(reservationId = null) {
     
     // Yeni rezervasyon modal'ını bul
     const modal = document.getElementById('reservationModal');
-    console.log('Modal bulundu:', modal);
     if (modal) {
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -34,15 +32,12 @@ function openReservationModal(reservationId = null) {
                 if (!form.action.includes('/create/')) {
                     form.action = createUrl;
                 }
-            } else {
-                console.log('Düzenleme modu - Form resetlenmedi, Django değerleri korunuyor');
             }
         }
         
         // Eğer rezervasyon ID varsa, formu doldur (gelecekte implement edilecek)
         if (reservationId) {
             // loadReservationData(reservationId);
-            console.log('Rezervasyon yükleme henüz implement edilmedi:', reservationId);
         } else {
             // Sadece yeni rezervasyon için reset
             if (!form || !form.action.includes('/edit/')) {
@@ -176,6 +171,17 @@ function updateGuestForms() {
     
     // Çocuk yaşları
     updateChildAges(childCount);
+    
+    // Çocuk yaşları input alanlarına event listener ekle
+    setTimeout(() => {
+        const childAgeInputs = document.querySelectorAll('#child_ages_container input[type="number"]');
+        childAgeInputs.forEach(input => {
+            input.removeEventListener('change', handleChildAgeChange);
+            input.removeEventListener('input', handleChildAgeChange);
+            input.addEventListener('change', handleChildAgeChange);
+            input.addEventListener('input', handleChildAgeChange);
+        });
+    }, 100);
 }
 
 // Yetişkin Misafir Formları
@@ -248,7 +254,7 @@ function updateChildGuestForms(count) {
                 </div>
                 <div class="form-group">
                     <label>Yaş</label>
-                    <input type="number" name="child_guest_${i}_age" class="form-control" min="0" max="18">
+                    <input type="number" name="child_guest_${i}_age" class="form-control" min="0" max="${currentMaxChildAge}">
                 </div>
                 <div class="form-group">
                     <label>TC Kimlik No</label>
@@ -268,6 +274,45 @@ function updateChildGuestForms(count) {
     }
 }
 
+// Çocuk Yaşları - Maksimum yaş dinamik olarak ayarlanır
+let currentMaxChildAge = 12; // Varsayılan maksimum çocuk yaşı
+let roomsData = []; // Oda bilgileri (child_age_range dahil)
+
+// Sayfa yüklendiğinde roomsData'yı al (eğer template'de varsa)
+document.addEventListener('DOMContentLoaded', function() {
+    const roomsDataScript = document.getElementById('rooms_data_json');
+    if (roomsDataScript) {
+        try {
+            roomsData = JSON.parse(roomsDataScript.textContent);
+            console.log('Oda bilgileri yüklendi:', roomsData);
+        } catch (e) {
+            console.error('Oda bilgileri parse edilemedi:', e);
+        }
+    }
+});
+
+// Oda seçildiğinde maksimum çocuk yaşını güncelle
+function updateMaxChildAge(roomId) {
+    if (roomId && roomsData.length > 0) {
+        const roomData = roomsData.find(r => r.id === parseInt(roomId));
+        if (roomData && roomData.max_child_age) {
+            currentMaxChildAge = roomData.max_child_age;
+            console.log('Maksimum çocuk yaşı güncellendi:', currentMaxChildAge);
+            
+            // Mevcut çocuk yaş inputlarını güncelle
+            document.querySelectorAll('#child_ages_container input[type="number"]').forEach(input => {
+                input.setAttribute('max', currentMaxChildAge);
+                // Eğer mevcut değer maksimumdan büyükse, maksimuma ayarla
+                if (parseInt(input.value) > currentMaxChildAge) {
+                    input.value = currentMaxChildAge;
+                }
+            });
+        } else {
+            currentMaxChildAge = 12; // Varsayılan
+        }
+    }
+}
+
 // Çocuk Yaşları
 function updateChildAges(count) {
     const container = document.getElementById('child_ages_container');
@@ -277,12 +322,32 @@ function updateChildAges(count) {
         const ageInput = document.createElement('input');
         ageInput.type = 'number';
         ageInput.name = `child_age_${i}`;
-        ageInput.className = 'form-control';
+        ageInput.className = 'form-control child_age_input';
         ageInput.style.width = '80px';
         ageInput.placeholder = `Yaş ${i}`;
         ageInput.min = 0;
-        ageInput.max = 18;
+        ageInput.max = currentMaxChildAge; // Dinamik maksimum değer
+        
+        // Çocuk yaşı değiştiğinde otomatik fiyat hesapla
+        ageInput.addEventListener('change', handleChildAgeChange);
+        ageInput.addEventListener('input', handleChildAgeChange);
+        
         container.appendChild(ageInput);
+    }
+}
+
+// Çocuk yaşı değişikliği handler'ı
+function handleChildAgeChange() {
+    // Çocuk yaşı değiştiğinde otomatik fiyat hesapla (eğer gerekli alanlar doluysa)
+    const roomId = document.getElementById('id_room')?.value;
+    const checkIn = document.getElementById('id_check_in_date')?.value;
+    const checkOut = document.getElementById('id_check_out_date')?.value;
+    if (roomId && checkIn && checkOut) {
+        // Kısa bir gecikme ile hesapla (kullanıcı yazmayı bitirsin)
+        clearTimeout(window.childAgeCalculateTimeout);
+        window.childAgeCalculateTimeout = setTimeout(() => {
+            autoCalculatePrice();
+        }, 500);
     }
 }
 
@@ -437,11 +502,18 @@ function calculatePrice() {
     // Çocuk yaşları
     const childAges = [];
     const childAgeInputs = document.querySelectorAll('#child_ages_container input[type="number"]');
-    childAgeInputs.forEach(input => {
+    console.log('Çocuk yaş input alanları bulundu:', childAgeInputs.length);
+    childAgeInputs.forEach((input, index) => {
         if (input.value) {
-            childAges.push(parseInt(input.value));
+            const age = parseInt(input.value);
+            childAges.push(age);
+            console.log(`Çocuk ${index + 1} yaşı: ${age}`);
+        } else {
+            console.log(`Çocuk ${index + 1} yaşı boş`);
         }
     });
+    
+    console.log('Toplanan çocuk yaşları:', childAges);
     
     // AJAX ile fiyat hesapla (GET request)
     const calculatePriceUrl = '/reception/api/calculate-price/';
@@ -455,6 +527,9 @@ function calculatePrice() {
     
     if (childAges.length > 0) {
         params.append('child_ages', childAges.join(','));
+        console.log('child_ages parametresi eklendi:', childAges.join(','));
+    } else {
+        console.warn('⚠ child_ages parametresi eklenmedi - çocuk yaşları boş!');
     }
     if (agencyId) {
         params.append('agency_id', agencyId);
@@ -630,10 +705,15 @@ function attachEventListeners() {
         calculateBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+<<<<<<< HEAD
             console.log('Fiyat hesaplama butonu tıklandı');
             calculatePrice();
         });
         console.log('✓ Fiyat hesaplama butonu event listener eklendi');
+=======
+            calculatePrice();
+        });
+>>>>>>> 9949678 (feat: Docker kurulum rehberi ve deployment dokÃ¼mantasyonlarÄ± eklendi)
     } else {
         console.warn('⚠ calculatePriceBtn butonu bulunamadı!');
     }
@@ -665,6 +745,11 @@ function handleDateChange() {
 
 // Oda değişikliği handler'ı
 function handleRoomChange() {
+    const roomId = document.getElementById('id_room').value;
+    
+    // Maksimum çocuk yaşını güncelle
+    updateMaxChildAge(roomId);
+    
     filterRoomNumbers();
     // Oda değiştiğinde otomatik fiyat hesapla (eğer tarihler seçiliyse)
     const checkIn = document.getElementById('id_check_in_date').value;

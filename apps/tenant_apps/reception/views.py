@@ -168,6 +168,9 @@ def dashboard(request):
         payment.remaining_amount = payment.get_remaining_amount()
         pending_payments_with_remaining.append(payment)
     
+    # Form context'i ekle (modal için)
+    form = ReservationForm(initial={'hotel': hotel})
+    
     context = {
         'today_reservations': today_reservations,
         'pending_checkins': pending_checkins,
@@ -177,6 +180,8 @@ def dashboard(request):
         'stats': stats,
         'room_status_summary': room_status_summary,
         'today': today,
+        'form': form,  # Modal için form context'i
+        'hotel': hotel,  # Modal için hotel context'i
     }
     
     return render(request, 'reception/dashboard.html', context)
@@ -457,11 +462,44 @@ def reservation_create(request):
         form = ReservationForm(hotel=hotel)
         # Yeni rezervasyon için boş formset
         guest_formset = ReservationGuestFormSet(instance=None)
+        
+        # Odaları ve child_age_range bilgisini al (JavaScript için)
+        from apps.tenant_apps.hotels.models import Room, RoomPrice
+        import json
+        rooms = Room.objects.filter(hotel=hotel, is_deleted=False, is_active=True).select_related('room_type')
+        rooms_data = []
+        for room in rooms:
+            # Oda fiyatından child_age_range bilgisini al
+            room_price = RoomPrice.objects.filter(
+                room=room,
+                is_active=True,
+                is_deleted=False
+            ).first()
+            
+            child_age_range = '0-12'  # Varsayılan
+            if room_price and room_price.child_age_range:
+                child_age_range = room_price.child_age_range
+            
+            # Yaş aralığından maksimum değeri çıkar (örn: "0-12" -> 12)
+            max_age = 12  # Varsayılan
+            if '-' in child_age_range:
+                try:
+                    max_age = int(child_age_range.split('-')[1])
+                except (ValueError, IndexError):
+                    max_age = 12
+            
+            rooms_data.append({
+                'id': room.id,
+                'name': room.name,
+                'child_age_range': child_age_range,
+                'max_child_age': max_age,
+            })
     
     context = {
         'form': form,
         'guest_formset': guest_formset,
         'hotel': hotel,
+        'rooms_json': json.dumps(rooms_data) if 'rooms_data' in locals() else '[]',  # JavaScript için JSON
     }
     
     # AJAX isteği ise sadece form HTML'ini döndür
@@ -3044,7 +3082,48 @@ def api_calculate_price(request):
     from django.http import JsonResponse
     from .utils import calculate_room_price_with_utility
     
-    hotel = request.active_hotel
+    # Hotel ID'yi GET parametresinden veya request.active_hotel'den al
+    hotel_id_param = request.GET.get('hotel_id')
+    if hotel_id_param:
+        try:
+            from apps.tenant_apps.hotels.models import Hotel
+            hotel = Hotel.objects.get(id=int(hotel_id_param), is_active=True)
+            # Kullanıcının bu otelde yetkisi var mı kontrol et
+            if not request.user.is_superuser and not request.user.is_staff:
+                from apps.tenant_apps.core.models import TenantUser
+                from apps.tenant_apps.hotels.models import HotelUserPermission
+                try:
+                    tenant_user = TenantUser.objects.get(user=request.user, is_active=True)
+                    is_admin = tenant_user.has_module_permission('hotels', 'admin')
+                    if not is_admin:
+                        has_permission = HotelUserPermission.objects.filter(
+                            tenant_user=tenant_user,
+                            hotel=hotel,
+                            is_active=True
+                        ).exists()
+                        if not has_permission:
+                            return JsonResponse({
+                                'success': False,
+                                'error': 'Bu otel için yetkiniz bulunmamaktadır.'
+                            }, status=403)
+                except TenantUser.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Kullanıcı profili bulunamadı.'
+                    }, status=403)
+        except (Hotel.DoesNotExist, ValueError):
+            return JsonResponse({
+                'success': False,
+                'error': 'Geçersiz otel ID.'
+            }, status=400)
+    else:
+        # GET parametresinde yoksa request.active_hotel'i kullan
+        hotel = request.active_hotel
+        if not hotel:
+            return JsonResponse({
+                'success': False,
+                'error': 'Aktif otel seçilmedi.'
+            }, status=400)
     
     try:
         room_id = int(request.GET.get('room_id'))
@@ -3060,9 +3139,9 @@ def api_calculate_price(request):
         check_in = datetime.strptime(check_in_date, '%Y-%m-%d').date()
         check_out = datetime.strptime(check_out_date, '%Y-%m-%d').date()
         
-        # Oda bul
+        # Oda bul (otel bazlı kontrol)
         from apps.tenant_apps.hotels.models import Room
-        room = Room.objects.get(id=room_id, hotel=hotel)
+        room = Room.objects.get(id=room_id, hotel=hotel, is_active=True, is_deleted=False)
         
         # Çocuk yaşları
         child_ages = []
@@ -3084,12 +3163,45 @@ def api_calculate_price(request):
         )
         
         if result['success']:
-            return JsonResponse({
-                'success': True,
-                'avg_nightly_price': float(result['avg_nightly_price']),
-                'total_price': float(result['total_price']),
-                'nights': result['nights'],
-            })
+            try:
+                # avg_nightly_price ve total_price'ı float'a çevir
+                avg_nightly_price = result.get('avg_nightly_price', 0)
+                total_price = result.get('total_price', 0)
+                
+                # Eğer string ise ve 'per_person' gibi bir değer ise hata ver
+                if isinstance(avg_nightly_price, str) and avg_nightly_price.lower().strip() == 'per_person':
+                    raise ValueError("avg_nightly_price geçersiz değer: 'per_person'")
+                if isinstance(total_price, str) and total_price.lower().strip() == 'per_person':
+                    raise ValueError("total_price geçersiz değer: 'per_person'")
+                
+                response_data = {
+                    'success': True,
+                    'avg_nightly_price': float(avg_nightly_price),
+                    'total_price': float(total_price),
+                    'nights': result.get('nights', 0),
+                }
+                
+                # Breakdown varsa ekle
+                if 'breakdown' in result and result['breakdown']:
+                    # Breakdown'ı string key'li dict'e çevir
+                    breakdown_dict = {}
+                    for date_key, price_value in result['breakdown'].items():
+                        # Eğer price_value 'per_person' string'i ise atla
+                        if isinstance(price_value, str) and price_value.lower().strip() == 'per_person':
+                            continue
+                        try:
+                            breakdown_dict[str(date_key)] = float(price_value)
+                        except (ValueError, TypeError):
+                            continue
+                    if breakdown_dict:
+                        response_data['breakdown'] = breakdown_dict
+                
+                return JsonResponse(response_data)
+            except (ValueError, TypeError) as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Fiyat değeri geçersiz: {str(e)}'
+                }, status=400)
         else:
             return JsonResponse({
                 'success': False,
@@ -3097,10 +3209,66 @@ def api_calculate_price(request):
             }, status=400)
             
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=400)
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+
+
+@login_required
+@require_hotel_permission('view')
+def price_calculator(request):
+    """Fiyat Hesaplama Modülü"""
+    hotel = request.active_hotel
+    if not hotel:
+        messages.error(request, 'Aktif otel seçilmedi.')
+        return redirect('hotels:select_hotel')
+    
+    # Oda tiplerini ve odaları al (otel bazlı)
+    from apps.tenant_apps.hotels.models import RoomType, Room
+    room_types = RoomType.objects.filter(hotel=hotel, is_deleted=False, is_active=True).order_by('sort_order', 'name')
+    rooms = Room.objects.filter(hotel=hotel, is_deleted=False, is_active=True).select_related('room_type').order_by('room_type__name', 'name')
+    
+    # Odaları JSON formatına çevir (child_age_range dahil)
+    import json
+    from apps.tenant_apps.hotels.models import RoomPrice
+    rooms_data = []
+    for room in rooms:
+        # Oda fiyatından child_age_range bilgisini al
+        room_price = RoomPrice.objects.filter(
+            room=room,
+            is_active=True,
+            is_deleted=False
+        ).first()
+        
+        child_age_range = '0-12'  # Varsayılan
+        if room_price and room_price.child_age_range:
+            child_age_range = room_price.child_age_range
+        
+        # Yaş aralığından maksimum değeri çıkar (örn: "0-12" -> 12)
+        max_age = 12  # Varsayılan
+        if '-' in child_age_range:
+            try:
+                max_age = int(child_age_range.split('-')[1])
+            except (ValueError, IndexError):
+                max_age = 12
+        
+        rooms_data.append({
+            'id': room.id,
+            'name': room.name,
+            'room_type_id': room.room_type.id if room.room_type else None,
+            'child_age_range': child_age_range,
+            'max_child_age': max_age,
+        })
+    
+    context = {
+        'hotel': hotel,
+        'room_types': room_types,
+        'rooms': rooms,  # Template'de direkt kullanılacak
+        'rooms_json': json.dumps(rooms_data),  # JavaScript için JSON
+    }
+    
+    return render(request, 'reception/price_calculator.html', context)
 
 
 @login_required
@@ -3145,7 +3313,9 @@ def end_of_day_dashboard(request):
     Hotel bazlı çalışır - Çoklu otel yetkisi varsa kullanıcı seçim yapabilir
     """
     # Erişilebilir oteller
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     active_hotel = getattr(request, 'active_hotel', None)
     
     # Otel seçimi (GET parametresinden veya aktif otel)
@@ -3230,7 +3400,9 @@ def end_of_day_settings(request, hotel_id=None):
     Hotel bazlı çalışır - Çoklu otel yetkisi varsa kullanıcı seçim yapabilir
     """
     # Erişilebilir oteller
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     active_hotel = getattr(request, 'active_hotel', None)
     
     # Otel seçimi
@@ -3285,7 +3457,9 @@ def end_of_day_run(request, hotel_id=None):
     Hotel bazlı çalışır - Çoklu otel yetkisi varsa kullanıcı seçim yapabilir
     """
     # Erişilebilir oteller
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     active_hotel = getattr(request, 'active_hotel', None)
     
     # Otel seçimi
@@ -3370,7 +3544,9 @@ def end_of_day_operation_list(request):
     Hotel bazlı filtreleme ile
     """
     # Erişilebilir oteller
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     active_hotel = getattr(request, 'active_hotel', None)
     
     # Otel filtresi
@@ -3451,7 +3627,9 @@ def end_of_day_operation_detail(request, pk):
     )
     
     # Kullanıcının bu otelde yetkisi var mı kontrol et
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     if operation.hotel not in accessible_hotels:
         messages.error(request, 'Bu işleme erişim yetkiniz bulunmamaktadır.')
         return redirect('reception:end_of_day_operation_list')
@@ -3490,7 +3668,9 @@ def end_of_day_operation_rollback(request, pk):
     )
     
     # Kullanıcının bu otelde yetkisi var mı kontrol et
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     if operation.hotel not in accessible_hotels:
         messages.error(request, 'Bu işleme erişim yetkiniz bulunmamaktadır.')
         return redirect('reception:end_of_day_operation_list')
@@ -3519,7 +3699,9 @@ def end_of_day_report_list(request):
     Hotel bazlı filtreleme ile
     """
     # Erişilebilir oteller
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     active_hotel = getattr(request, 'active_hotel', None)
     
     # Otel filtresi
@@ -3596,7 +3778,9 @@ def end_of_day_report_detail(request, pk):
     report = get_object_or_404(EndOfDayReport, pk=pk)
     
     # Kullanıcının bu otelde yetkisi var mı kontrol et
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     if report.operation.hotel not in accessible_hotels:
         messages.error(request, 'Bu rapora erişim yetkiniz bulunmamaktadır.')
         return redirect('reception:end_of_day_report_list')
@@ -3616,7 +3800,9 @@ def end_of_day_report_download(request, pk):
     report = get_object_or_404(EndOfDayReport, pk=pk)
     
     # Kullanıcının bu otelde yetkisi var mı kontrol et
-    accessible_hotels = getattr(request, 'accessible_hotels', [])
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     if report.operation.hotel not in accessible_hotels:
         messages.error(request, 'Bu rapora erişim yetkiniz bulunmamaktadır.')
         return redirect('reception:end_of_day_report_list')

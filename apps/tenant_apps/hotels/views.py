@@ -70,12 +70,19 @@ def select_hotel(request):
                 hotel = Hotel.objects.get(pk=hotel_id, is_active=True)
                 request.session['active_hotel_id'] = hotel.pk
                 messages.success(request, f'{hotel.name} oteli seçildi.')
-                return redirect('hotels:hotel_list')
+                # Dashboard'a yönlendir
+                return redirect('tenant:dashboard')
             except Hotel.DoesNotExist:
                 messages.error(request, 'Otel bulunamadı.')
     
+    # Middleware'den accessible_hotels'i al, yoksa hotels'i kullan
+    accessible_hotels = getattr(request, 'accessible_hotels', None)
+    if not accessible_hotels:
+        accessible_hotels = hotels
+    
     context = {
         'hotels': hotels,
+        'accessible_hotels': accessible_hotels,
     }
     return render(request, 'tenant/hotels/select_hotel.html', context)
 
@@ -1298,6 +1305,10 @@ def hotel_list(request):
     """Otel listesi"""
     hotels = Hotel.objects.filter(is_deleted=False).order_by('sort_order', 'name')
     
+    # Aktif otel filtresi - Eğer active_hotel varsa sadece onu göster
+    if hasattr(request, 'active_hotel') and request.active_hotel:
+        hotels = hotels.filter(id=request.active_hotel.id)
+    
     # Filtreleme
     region_id = request.GET.get('region')
     city_id = request.GET.get('city')
@@ -1374,9 +1385,14 @@ def hotel_list(request):
     if hasattr(request, 'active_hotel') and request.active_hotel:
         active_hotel = request.active_hotel
     
+    # Otel listesi (filtreleme için - sadece aktif otel varsa onu göster)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
+    
     context = {
         'hotels': hotels,
         'active_hotel': active_hotel,
+        'accessible_hotels': accessible_hotels,
         'search': search,
         'regions': regions,
         'cities': cities,

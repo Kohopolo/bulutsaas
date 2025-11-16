@@ -23,31 +23,31 @@
         </div>
         <div class="groupbox-body">
             <!-- Ay Navigasyonu ve Filtreler -->
-            <div class="form-groupbox" style="margin-bottom: 20px;">
-                <div class="groupbox-header">
+            <div class="form-groupbox" style="margin-bottom: 10px;">
+                <div class="groupbox-header" style="padding: 6px 10px; font-size: 11px;">
                     <i class="fas fa-calendar"></i> Ay Navigasyonu
                 </div>
-                <div class="groupbox-body">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <a href="?year={{ prev_year }}&month={{ prev_month }}{% if current_floor %}&floor={{ current_floor }}{% endif %}" class="vb-button">
-                                <i class="fas fa-chevron-left"></i> Önceki Ay
+                <div class="groupbox-body" style="padding: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <a href="?year={{ prev_year }}&month={{ prev_month }}{% if current_floor %}&floor={{ current_floor }}{% endif %}" class="vb-button small" style="padding: 4px 8px; font-size: 10px;">
+                                <i class="fas fa-chevron-left"></i> Önceki
                             </a>
-                            <h2 style="margin: 0; font-size: 20px; min-width: 200px; text-align: center;">
+                            <h2 style="margin: 0; font-size: 14px; min-width: 150px; text-align: center; font-weight: bold;">
                                 {{ month|date:"F Y"|title }}
                             </h2>
-                            <a href="?year={{ next_year }}&month={{ next_month }}{% if current_floor %}&floor={{ current_floor }}{% endif %}" class="vb-button">
-                                Sonraki Ay <i class="fas fa-chevron-right"></i>
+                            <a href="?year={{ next_year }}&month={{ next_month }}{% if current_floor %}&floor={{ current_floor }}{% endif %}" class="vb-button small" style="padding: 4px 8px; font-size: 10px;">
+                                Sonraki <i class="fas fa-chevron-right"></i>
                             </a>
-                            <a href="?year={{ today.year }}&month={{ today.month }}{% if current_floor %}&floor={{ current_floor }}{% endif %}" class="vb-button">
+                            <a href="?year={{ today.year }}&month={{ today.month }}{% if current_floor %}&floor={{ current_floor }}{% endif %}" class="vb-button small" style="padding: 4px 8px; font-size: 10px;">
                                 <i class="fas fa-calendar-day"></i> Bugün
                             </a>
                         </div>
                         <div>
-                            <form method="get" style="display: flex; gap: 10px; align-items: center;">
+                            <form method="get" style="display: flex; gap: 6px; align-items: center;">
                                 <input type="hidden" name="year" value="{{ year }}">
                                 <input type="hidden" name="month" value="{{ month }}">
-                                <select name="floor" class="vb-select" onchange="this.form.submit()">
+                                <select name="floor" class="vb-select" onchange="this.form.submit()" style="padding: 4px 8px; font-size: 10px;">
                                     <option value="">Tüm Katlar</option>
                                     {% for floor in floors %}
                                     <option value="{{ floor.id }}" {% if current_floor == floor.id|stringformat:"s" %}selected{% endif %}>
@@ -62,17 +62,17 @@
             </div>
             
             <!-- Takvim Görünümü -->
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; background: white; font-size: 12px;">
+            <div style="overflow-x: auto; width: 100%; max-width: 100%;">
+                <table style="width: 100%; border-collapse: collapse; background: white; font-size: 9px; table-layout: fixed;">
                     <thead>
-                        <tr style="background: #f8f9fa; border-bottom: 2px solid #d4d4d4;">
-                            <th style="padding: 10px; border-right: 1px solid #d4d4d4; text-align: left; min-width: 150px; position: sticky; left: 0; background: #f8f9fa; z-index: 10;">
+                        <tr style="background: #f8f9fa; border-bottom: 1px solid #d4d4d4;">
+                            <th style="padding: 4px 6px; border-right: 1px solid #d4d4d4; text-align: left; width: 80px; position: sticky; left: 0; background: #f8f9fa; z-index: 10; font-size: 9px;">
                                 Oda
                             </th>
                             {% for day in days_of_month %}
-                            <th style="padding: 8px 4px; border-right: 1px solid #d4d4d4; text-align: center; min-width: 40px; {% if day == today %}background: #e8f4f8;{% endif %}">
-                                <div style="font-weight: bold;">{{ day|date:"d" }}</div>
-                                <div style="font-size: 10px; color: #666;">{{ day|date:"D"|slice:":3" }}</div>
+                            <th style="padding: 3px 2px; border-right: 1px solid #d4d4d4; text-align: center; width: calc((100% - 80px) / {{ days_of_month|length }}); {% if day == today %}background: #e8f4f8;{% endif %}">
+                                <div style="font-weight: bold; font-size: 9px;">{{ day|date:"d" }}</div>
+                                <div style="font-size: 7px; color: #666;">{{ day|date:"D"|slice:":3" }}</div>
                             </th>
                             {% endfor %}
                         </tr>
@@ -81,46 +81,50 @@
                         {% for room_cal in rooms_calendar %}
                         {% with room=room_cal.room %}
                         <tr style="border-bottom: 1px solid #e0e0e0;">
-                            <td style="padding: 8px; border-right: 1px solid #d4d4d4; background: #f8f9fa; position: sticky; left: 0; z-index: 5;">
-                                <div style="font-weight: bold;">{{ room.number }}</div>
-                                <div style="font-size: 10px; color: #666;">{{ room.room.name|default:"-" }}</div>
+                            <td style="padding: 3px 6px; border-right: 1px solid #d4d4d4; background: #f8f9fa; position: sticky; left: 0; z-index: 5; font-size: 9px;">
+                                <div style="font-weight: bold; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ room.number }}</div>
+                                <div style="font-size: 7px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ room.room.name|default:"-"|truncatechars:8 }}</div>
                                 {% if room.floor %}
-                                <div style="font-size: 10px; color: #999;">{{ room.floor.name }}</div>
+                                <div style="font-size: 7px; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ room.floor.name|truncatechars:6 }}</div>
                                 {% endif %}
                             </td>
                             {% for day in days_of_month %}
                             {% with day_str=day|date:"Y-m-d" %}
                             {% with day_status=room_cal.daily_status|get_item:day_str %}
-                            <td style="padding: 2px; border-right: 1px solid #e0e0e0; text-align: center; vertical-align: middle; {% if day == today %}background: #fff3cd;{% endif %}">
+                            <td style="padding: 1px; border-right: 1px solid #e0e0e0; text-align: center; vertical-align: middle; {% if day == today %}background: #fff3cd;{% endif %}">
                                 {% if day_status and day_status.reservation %}
                                     <div style="
                                         background: {% if day_status.is_checkin %}#28a745{% elif day_status.is_checkout %}#dc3545{% else %}#0078d4{% endif %};
                                         color: white;
-                                        padding: 4px 2px;
-                                        border-radius: 2px;
-                                        font-size: 10px;
+                                        padding: 2px 1px;
+                                        border-radius: 1px;
+                                        font-size: 8px;
                                         cursor: pointer;
-                                        {% if day_status.is_checkin %}border-left: 3px solid #155724;{% endif %}
-                                        {% if day_status.is_checkout %}border-right: 3px solid #721c24;{% endif %}
+                                        min-height: 16px;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        {% if day_status.is_checkin %}border-left: 2px solid #155724;{% endif %}
+                                        {% if day_status.is_checkout %}border-right: 2px solid #721c24;{% endif %}
                                     " 
                                     onclick="showReservationDetail({{ day_status.reservation.id }})"
                                     title="{{ day_status.reservation.reservation_code }} - {{ day_status.reservation.customer.get_full_name }}">
                                         {% if day_status.is_checkin %}
-                                            <i class="fas fa-sign-in-alt"></i>
+                                            <i class="fas fa-sign-in-alt" style="font-size: 8px;"></i>
                                         {% elif day_status.is_checkout %}
-                                            <i class="fas fa-sign-out-alt"></i>
+                                            <i class="fas fa-sign-out-alt" style="font-size: 8px;"></i>
                                         {% else %}
-                                            <i class="fas fa-bed"></i>
+                                            <i class="fas fa-bed" style="font-size: 8px;"></i>
                                         {% endif %}
                                     </div>
                                 {% else %}
                                     <div style="
-                                        width: 20px;
-                                        height: 20px;
+                                        width: 14px;
+                                        height: 14px;
                                         margin: 0 auto;
                                         border-radius: 50%;
                                         background: {% if day_status and day_status.status == 'available' %}#d4edda{% elif day_status and day_status.status == 'occupied' %}#f8d7da{% elif day_status and day_status.status == 'cleaning' or day_status.status == 'cleaning_pending' %}#cfe2ff{% elif day_status and day_status.status == 'maintenance' %}#fff3cd{% else %}#e2e3e5{% endif %};
-                                        border: 2px solid {% if day_status and day_status.status == 'available' %}#28a745{% elif day_status and day_status.status == 'occupied' %}#dc3545{% elif day_status and day_status.status == 'cleaning' or day_status.status == 'cleaning_pending' %}#0d6efd{% elif day_status and day_status.status == 'maintenance' %}#ffc107{% else %}#6c757d{% endif %};
+                                        border: 1px solid {% if day_status and day_status.status == 'available' %}#28a745{% elif day_status and day_status.status == 'occupied' %}#dc3545{% elif day_status and day_status.status == 'cleaning' or day_status.status == 'cleaning_pending' %}#0d6efd{% elif day_status and day_status.status == 'maintenance' %}#ffc107{% else %}#6c757d{% endif %};
                                         cursor: pointer;
                                     " 
                                     onclick="showRoomDetails({{ room.id }})"
@@ -135,8 +139,8 @@
                         {% endwith %}
                         {% empty %}
                         <tr>
-                            <td colspan="{{ days_of_month|length|add:1 }}" style="text-align: center; padding: 40px; color: #999;">
-                                <i class="fas fa-inbox" style="font-size: 32px; display: block; margin-bottom: 10px;"></i>
+                            <td colspan="{{ days_of_month|length|add:1 }}" style="text-align: center; padding: 20px; color: #999;">
+                                <i class="fas fa-inbox" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
                                 Oda bulunamadı.
                             </td>
                         </tr>
@@ -146,38 +150,38 @@
             </div>
             
             <!-- Açıklamalar -->
-            <div class="form-groupbox" style="margin-top: 20px;">
-                <div class="groupbox-header">
+            <div class="form-groupbox" style="margin-top: 10px;">
+                <div class="groupbox-header" style="padding: 6px 10px; font-size: 11px;">
                     <i class="fas fa-info-circle"></i> Açıklamalar
                 </div>
-                <div class="groupbox-body">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 20px; height: 20px; background: #0078d4; border-radius: 2px;"></div>
-                            <span>Rezervasyon (Ortada)</span>
+                <div class="groupbox-body" style="padding: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; font-size: 9px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 14px; height: 14px; background: #0078d4; border-radius: 1px; flex-shrink: 0;"></div>
+                            <span>Rezervasyon</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 20px; height: 20px; background: #28a745; border-radius: 2px; border-left: 3px solid #155724;"></div>
-                            <span>Check-in Günü</span>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 14px; height: 14px; background: #28a745; border-radius: 1px; border-left: 2px solid #155724; flex-shrink: 0;"></div>
+                            <span>Check-in</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 20px; height: 20px; background: #dc3545; border-radius: 2px; border-right: 3px solid #721c24;"></div>
-                            <span>Check-out Günü</span>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 1px; border-right: 2px solid #721c24; flex-shrink: 0;"></div>
+                            <span>Check-out</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 20px; height: 20px; background: #d4edda; border: 2px solid #28a745; border-radius: 50%;"></div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 14px; height: 14px; background: #d4edda; border: 1px solid #28a745; border-radius: 50%; flex-shrink: 0;"></div>
                             <span>Müsait</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 20px; height: 20px; background: #f8d7da; border: 2px solid #dc3545; border-radius: 50%;"></div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 14px; height: 14px; background: #f8d7da; border: 1px solid #dc3545; border-radius: 50%; flex-shrink: 0;"></div>
                             <span>Dolu</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 20px; height: 20px; background: #cfe2ff; border: 2px solid #0d6efd; border-radius: 50%;"></div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 14px; height: 14px; background: #cfe2ff; border: 1px solid #0d6efd; border-radius: 50%; flex-shrink: 0;"></div>
                             <span>Temizlik</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 20px; height: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 50%;"></div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 14px; height: 14px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 50%; flex-shrink: 0;"></div>
                             <span>Bakım</span>
                         </div>
                     </div>
@@ -269,7 +273,7 @@ function closeRoomDetailModal() {
 }
 
 table {
-    font-size: 11px;
+    font-size: 9px;
 }
 
 table th {
@@ -280,6 +284,19 @@ table th {
 
 table tbody tr:hover {
     background: #f8f9fa;
+}
+
+/* Takvim tablosu için özel stiller */
+.content-body .groupbox-body table {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: visible;
+}
+
+.content-body .groupbox-body table th,
+.content-body .groupbox-body table td {
+    white-space: nowrap;
+    overflow: hidden;
 }
 </style>
 {% endblock %}

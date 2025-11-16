@@ -8,7 +8,7 @@ from apps.modules.models import Module
 from apps.tenant_apps.core.models import TenantUser
 from django.db import connection
 from django.utils import timezone
-from django_tenants.utils import get_public_schema_name
+from django_tenants.utils import get_public_schema_name, schema_context
 
 
 def tenant_modules(request):
@@ -34,11 +34,12 @@ def tenant_modules(request):
                 if active_subscription:
                     package = active_subscription.package
                     
-                    # Pakette aktif olan modülleri al
-                    package_modules = PackageModule.objects.filter(
-                        package=package,
-                        is_enabled=True
-                    ).select_related('module').order_by('module__sort_order', 'module__name')
+                    # Pakette aktif olan modülleri al (public schema'dan)
+                    with schema_context(get_public_schema_name()):
+                        package_modules = PackageModule.objects.filter(
+                            package=package,
+                            is_enabled=True
+                        ).select_related('module').order_by('module__sort_order', 'module__name')
                     
                     for pm in package_modules:
                         enabled_modules.append({
@@ -75,16 +76,17 @@ def tenant_modules(request):
         if core_code not in enabled_module_codes:
             enabled_module_codes.append(core_code)
             user_accessible_modules.append(core_code)  # Core modüller her zaman erişilebilir
-            # Modül bilgisini de ekle
+            # Modül bilgisini de ekle (public schema'dan)
             try:
-                core_module = Module.objects.filter(code=core_code).first()
-                if core_module:
-                    enabled_modules.append({
-                        'code': core_module.code,
-                        'name': core_module.name,
-                        'icon': core_module.icon,
-                        'url_prefix': core_module.url_prefix,
-                    })
+                with schema_context(get_public_schema_name()):
+                    core_module = Module.objects.filter(code=core_code).first()
+                    if core_module:
+                        enabled_modules.append({
+                            'code': core_module.code,
+                            'name': core_module.name,
+                            'icon': core_module.icon,
+                            'url_prefix': core_module.url_prefix,
+                        })
             except:
                 pass
     
@@ -92,16 +94,17 @@ def tenant_modules(request):
     # Ayarlar modülü tüm tenant'larda kullanılabilir olmalı
     if 'settings' not in enabled_module_codes:
         try:
-            settings_module = Module.objects.filter(code='settings', is_active=True).first()
-            if settings_module:
-                enabled_module_codes.append('settings')
-                user_accessible_modules.append('settings')  # Settings modülü her zaman erişilebilir
-                enabled_modules.append({
-                    'code': settings_module.code,
-                    'name': settings_module.name,
-                    'icon': settings_module.icon,
-                    'url_prefix': settings_module.url_prefix,
-                })
+            with schema_context(get_public_schema_name()):
+                settings_module = Module.objects.filter(code='settings', is_active=True).first()
+                if settings_module:
+                    enabled_module_codes.append('settings')
+                    user_accessible_modules.append('settings')  # Settings modülü her zaman erişilebilir
+                    enabled_modules.append({
+                        'code': settings_module.code,
+                        'name': settings_module.name,
+                        'icon': settings_module.icon,
+                        'url_prefix': settings_module.url_prefix,
+                    })
         except:
             pass
     
@@ -129,6 +132,9 @@ def tenant_modules(request):
         'has_ferry_tickets_module': 'ferry_tickets' in enabled_module_codes and 'ferry_tickets' in user_accessible_modules,
         'has_bungalovs_module': 'bungalovs' in enabled_module_codes and 'bungalovs' in user_accessible_modules,
         'has_backup_module': 'backup' in enabled_module_codes and 'backup' in user_accessible_modules,
+        'has_ai_module': 'ai' in enabled_module_codes and 'ai' in user_accessible_modules,
+        'has_reports_module': 'reports' in enabled_module_codes and 'reports' in user_accessible_modules,
+        'has_price_calculator_module': 'price_calculator' in enabled_module_codes and 'price_calculator' in user_accessible_modules,
         'has_settings_module': True,  # Settings modülü her zaman aktif (core modül gibi)
         'has_users_module': True,  # Core modül, her zaman aktif
         'has_roles_module': True,  # Core modül, her zaman aktif

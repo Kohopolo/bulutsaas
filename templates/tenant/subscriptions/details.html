@@ -14,7 +14,7 @@
         </a>
     </div>
     
-    <!-- Paket Bilgileri -->
+    <!-- Paket Bilgileri ve Limitleri -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
         <h2 class="text-2xl font-bold text-vb-navy mb-4">
             <i class="fas fa-box mr-2 text-vb-primary"></i>
@@ -22,9 +22,10 @@
         </h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Sol Taraf: Paket Bilgileri ve Fiyatlandırma -->
             <div>
-<h3 class="vb-section-title text-gray-900 mb-3">Paket Bilgileri</h3>
-                <div class="space-y-2">
+                <h3 class="vb-section-title text-gray-900 mb-3">Paket Bilgileri</h3>
+                <div class="space-y-2 mb-4">
                     <div class="flex justify-between">
                         <span class="text-gray-600">Paket Kodu:</span>
                         <span class="font-semibold">{{ package.code }}</span>
@@ -38,10 +39,8 @@
                         <span class="font-semibold">{{ package.currency }}</span>
                     </div>
                 </div>
-            </div>
-            
-            <div>
-<h3 class="vb-section-title text-gray-900 mb-3">Fiyatlandırma</h3>
+                
+                <h3 class="vb-section-title text-gray-900 mb-3">Fiyatlandırma</h3>
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <span class="text-gray-600">Aylık Fiyat:</span>
@@ -61,6 +60,63 @@
                     {% endif %}
                 </div>
             </div>
+            
+            <!-- Sağ Taraf: Paket Limitleri -->
+            {% if module_limits %}
+            <div>
+                <h3 class="vb-section-title text-gray-900 mb-3">
+                    <i class="fas fa-tachometer-alt mr-2 text-vb-primary"></i>
+                    Paket Limitleri
+                </h3>
+                <div class="space-y-3">
+                    {% if module_limits.hotels %}
+                    <div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <p class="text-xs text-blue-600 mb-2 font-semibold">HOTELS MODÜLÜ</p>
+                        <div class="grid grid-cols-3 gap-2">
+                            {% if module_limits.hotels.max_hotels %}
+                            <div>
+                                <p class="text-xs text-gray-600 mb-1">Maks. Otel</p>
+                                <p class="text-xl font-bold text-vb-navy">{{ module_limits.hotels.max_hotels }}</p>
+                            </div>
+                            {% endif %}
+                            {% if module_limits.hotels.max_room_numbers %}
+                            <div>
+                                <p class="text-xs text-gray-600 mb-1">Maks. Oda</p>
+                                <p class="text-xl font-bold text-vb-navy">{{ module_limits.hotels.max_room_numbers }}</p>
+                            </div>
+                            {% endif %}
+                            {% if module_limits.hotels.max_reservations %}
+                            <div>
+                                <p class="text-xs text-gray-600 mb-1">Maks. Rez.</p>
+                                <p class="text-xl font-bold text-vb-navy">{{ module_limits.hotels.max_reservations }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if module_limits.tours %}
+                    <div class="bg-green-50 rounded-lg p-3 border border-green-200">
+                        <p class="text-xs text-green-600 mb-2 font-semibold">TOURS MODÜLÜ</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            {% if module_limits.tours.max_tours %}
+                            <div>
+                                <p class="text-xs text-gray-600 mb-1">Maks. Tur</p>
+                                <p class="text-xl font-bold text-vb-navy">{{ module_limits.tours.max_tours }}</p>
+                            </div>
+                            {% endif %}
+                            {% if module_limits.tours.max_tour_reservations %}
+                            <div>
+                                <p class="text-xs text-gray-600 mb-1">Maks. Tur Rez.</p>
+                                <p class="text-xl font-bold text-vb-navy">{{ module_limits.tours.max_tour_reservations }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     
@@ -134,59 +190,6 @@
     </div>
     {% endif %}
     
-    <!-- Paket Limitleri - Modül Bazlı -->
-    {% if module_limits %}
-    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">
-        <h2 class="text-2xl font-bold text-vb-navy mb-4">
-            <i class="fas fa-tachometer-alt mr-2 text-vb-primary"></i>
-            Paket Limitleri (Modül Bazlı)
-        </h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {% if module_limits.hotels %}
-            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <p class="text-xs text-blue-600 mb-1 font-semibold">HOTELS MODÜLÜ</p>
-                {% if module_limits.hotels.max_hotels %}
-                <div class="mb-2">
-                    <p class="text-sm text-gray-600 mb-1">Maksimum Otel</p>
-                    <p class="text-2xl font-bold text-vb-navy">{{ module_limits.hotels.max_hotels }}</p>
-                </div>
-                {% endif %}
-                {% if module_limits.hotels.max_room_numbers %}
-                <div class="mb-2">
-                    <p class="text-sm text-gray-600 mb-1">Maksimum Oda Numarası</p>
-                    <p class="text-2xl font-bold text-vb-navy">{{ module_limits.hotels.max_room_numbers }}</p>
-                </div>
-                {% endif %}
-                {% if module_limits.hotels.max_reservations %}
-                <div class="mb-2">
-                    <p class="text-sm text-gray-600 mb-1">Maksimum Rezervasyon</p>
-                    <p class="text-2xl font-bold text-vb-navy">{{ module_limits.hotels.max_reservations }}</p>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-            
-            {% if module_limits.tours %}
-            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-                <p class="text-xs text-green-600 mb-1 font-semibold">TOURS MODÜLÜ</p>
-                {% if module_limits.tours.max_tours %}
-                <div class="mb-2">
-                    <p class="text-sm text-gray-600 mb-1">Maksimum Tur</p>
-                    <p class="text-2xl font-bold text-vb-navy">{{ module_limits.tours.max_tours }}</p>
-                </div>
-                {% endif %}
-                {% if module_limits.tours.max_tour_reservations %}
-                <div class="mb-2">
-                    <p class="text-sm text-gray-600 mb-1">Maksimum Tur Rezervasyonu</p>
-                    <p class="text-2xl font-bold text-vb-navy">{{ module_limits.tours.max_tour_reservations }}</p>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
     
     <!-- Paket Modülleri -->
     <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm mb-6">

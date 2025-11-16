@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarpetOS Halı Yıkama Otomasyonu - Raporlar</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <div class="menu-strip">
+        <span class="menu-item">Dosya</span>
+        <span class="menu-item">Müşteri İşlemler</span>
+        <span class="menu-item">Raporlar</span>
+        <span class="menu-item">Ayarlar</span>
+        <span class="menu-item">Yardım</span>
+        <span class="menu-right">SMS Bakiyesi: 1.250</span>
+    </div>
+
+    <div class="header-panel">
+        <div class="header-top">
+            <div class="header-title">CARPETOS HALI YIKAMA OTOMASYONU</div>
+            <div class="header-license">LİSANS SAHİBİ: ADA HALI YIKAMA</div>
+        </div>
+        <div class="header-banner">Raporlar ve Analizler</div>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="panel-title">RAPOR MENÜSÜ</div>
+            <div style="padding: 10px;">
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 5px;" onclick="generateReport()">📊 Rapor Oluştur</button>
+                <button class="btn btn-success" style="width: 100%; margin-bottom: 5px;" onclick="exportExcel()">📈 Excel'e Aktar</button>
+                <button class="btn btn-danger" style="width: 100%; margin-bottom: 5px;" onclick="exportPdf()">📄 PDF'e Aktar</button>
+            </div>
+            <input type="text" class="search-box" placeholder="Ara..." id="searchInput">
+            <div class="recent-calls">
+                <div class="recent-calls-title">SON RAPORLAR</div>
+                <div id="recentReports">-</div>
+            </div>
+        </div>
+
+        <div class="center-panel">
+            <div class="tabs">
+                <div class="tab active" onclick="switchReportTab('sales')">SATIŞ RAPORLARI</div>
+                <div class="tab" onclick="switchReportTab('customers')">MÜŞTERİ RAPORLARI</div>
+                <div class="tab" onclick="switchReportTab('products')">ÜRÜN RAPORLARI</div>
+                <div class="tab" onclick="switchReportTab('daily')">GÜNLÜK RAPOR</div>
+                <div class="tab" onclick="switchReportTab('monthly')">AYLIK RAPOR</div>
+            </div>
+
+            <div class="date-navigation" style="margin-bottom: 10px;">
+                <input type="date" class="date-picker" id="startDate" value="">
+                <input type="date" class="date-picker" id="endDate" value="">
+                <button class="btn btn-primary" onclick="generateReport()">Rapor Oluştur</button>
+                <button class="btn btn-success" onclick="exportExcel()">Excel'e Aktar</button>
+                <button class="btn btn-danger" onclick="exportPdf()">PDF'e Aktar</button>
+            </div>
+
+            <div class="summary-panel" style="margin-bottom: 20px;">
+                <div class="summary-item">
+                    <div class="summary-label">TOPLAM SATIŞ</div>
+                    <div class="summary-value" id="totalSales">0.00 ₺</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">TOPLAM SİPARİŞ</div>
+                    <div class="summary-value" id="totalOrders">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">ORTALAMA SİPARİŞ</div>
+                    <div class="summary-value" id="avgOrder">0.00 ₺</div>
+                </div>
+            </div>
+
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Sipariş Sayısı</th>
+                        <th>Toplam Tutar</th>
+                        <th>Müşteri Sayısı</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsTableBody">
+                    <tr>
+                        <td colspan="4" class="text-center">Rapor oluşturmak için tarih aralığı seçin</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="right-panel">
+            <div class="shortcut-btn" title="Bilgisayar" onclick="window.location.href='dashboard.html'">🖥️</div>
+            <div class="shortcut-btn" title="Online Sipariş" onclick="alert('Online Sipariş')">📱</div>
+            <div class="shortcut-btn" title="Telefon" onclick="alert('Telefon')">📞</div>
+            <div class="shortcut-btn" title="Müşteri Yönetimi" onclick="window.location.href='customers.html'">👥</div>
+            <div class="shortcut-btn" title="Yeni Ekle" onclick="showAddModal()">➕</div>
+            <div class="shortcut-btn" title="Raporlar" onclick="window.location.href='reports.html'">📊</div>
+        </div>
+    </div>
+
+    <div class="footer-panel">
+        <div class="footer-icon" title="Yenile" onclick="refreshPage()">🔄</div>
+        <div class="footer-icon" title="Ara" onclick="showSearch()">🔍</div>
+        <div class="footer-icon" title="Sil" onclick="deleteSelected()">🗑️</div>
+        <div class="footer-icon" title="Bilgi" onclick="showInfo()">ℹ️</div>
+        <div class="footer-icon" title="Yardım" onclick="showHelp()">❓</div>
+        <div class="footer-icon" title="Ayarlar" onclick="window.location.href='settings.html'">⚙️</div>
+        <div class="footer-icon" title="Mesajlar" onclick="showMessages()">💬</div>
+        <div class="footer-icon" title="Hesaplayıcı" onclick="showCalculator()">🔢</div>
+        <div class="footer-icon" title="Kullanıcı" onclick="showUserMenu()">👤</div>
+        <div class="footer-icon" title="Tema" onclick="toggleTheme()">🎨</div>
+        <div class="footer-icon" title="Bağlantı" onclick="checkConnection()">📡</div>
+        <div class="footer-icon" title="Finans" onclick="showFinance()">💰</div>
+        <div class="status-label" id="statusLabel">API Bağlı</div>
+    </div>
+
+    <script>
+        let currentReportTab = 'sales';
+        
+        function switchReportTab(tabName) {
+            currentReportTab = tabName;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            generateReport();
+        }
+        
+        function generateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!startDate || !endDate) {
+                alert('Lütfen başlangıç ve bitiş tarihlerini seçin');
+                return;
+            }
+            
+            // Report generation implementation
+            document.getElementById('reportsTableBody').innerHTML = '<tr><td colspan="4" class="text-center">Rapor oluşturuluyor...</td></tr>';
+            
+            // Simulated data
+            setTimeout(() => {
+                document.getElementById('reportsTableBody').innerHTML = `
+                    <tr>
+                        <td>${new Date(startDate).toLocaleDateString('tr-TR')}</td>
+                        <td>15</td>
+                        <td>3.450.00 ₺</td>
+                        <td>12</td>
+                    </tr>
+                    <tr>
+                        <td>${new Date(endDate).toLocaleDateString('tr-TR')}</td>
+                        <td>20</td>
+                        <td>4.200.00 ₺</td>
+                        <td>18</td>
+                    </tr>
+                `;
+                
+                document.getElementById('totalSales').textContent = '7.650.00 ₺';
+                document.getElementById('totalOrders').textContent = '35';
+                document.getElementById('avgOrder').textContent = '218.57 ₺';
+            }, 500);
+        }
+        
+        function exportExcel() {
+            alert('Excel\'e aktarılacak');
+        }
+        
+        function exportPdf() {
+            alert('PDF\'e aktarılacak');
+        }
+        
+        function refreshPage() {
+            location.reload();
+        }
+        
+        function showSearch() {
+            document.getElementById('searchInput').focus();
+        }
+        
+        function deleteSelected() {
+            alert('Seçili öğeler silinecek');
+        }
+        
+        function showInfo() {
+            alert('CarpetOS v2.0\nHalı Yıkama İşletme Yönetim Sistemi');
+        }
+        
+        function showHelp() {
+            alert('Yardım sayfası açılacak');
+        }
+        
+        function showMessages() {
+            alert('Mesajlar');
+        }
+        
+        function showCalculator() {
+            alert('Hesaplayıcı');
+        }
+        
+        function showUserMenu() {
+            alert('Kullanıcı menüsü');
+        }
+        
+        function toggleTheme() {
+            alert('Tema değiştirilecek');
+        }
+        
+        function checkConnection() {
+            document.getElementById('statusLabel').textContent = 'Bağlantı kontrol ediliyor...';
+            setTimeout(() => {
+                document.getElementById('statusLabel').textContent = 'API Bağlı';
+            }, 1000);
+        }
+        
+        function showFinance() {
+            alert('Finans modülü');
+        }
+        
+        function showAddModal() {
+            alert('Yeni rapor oluşturma formu açılacak');
+        }
+        
+        // Set default dates
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        document.getElementById('startDate').valueAsDate = firstDay;
+        document.getElementById('endDate').valueAsDate = today;
+    </script>
+</body>
+</html>
+

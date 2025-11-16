@@ -1,0 +1,429 @@
+{% extends "tenant/base.html" %}
+{% load static %}
+
+{% block title %}Fiyat Hesaplama{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-calculator"></i> Fiyat Hesaplama
+        </div>
+        <div class="groupbox-body">
+            <!-- Hidden Hotel Input -->
+            <input type="hidden" id="hotel_id" value="{{ hotel.id }}">
+            
+            <!-- Form Alanları - 4 Grid -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                <!-- Giriş Tarihi -->
+                <div class="form-group">
+                    <label for="check_in_date" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 12px;">Giriş Tarihi</label>
+                    <input type="date" id="check_in_date" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #d4d4d4; border-radius: 3px; font-size: 12px;">
+                </div>
+                
+                <!-- Çıkış Tarihi -->
+                <div class="form-group">
+                    <label for="check_out_date" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 12px;">Çıkış Tarihi</label>
+                    <input type="date" id="check_out_date" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #d4d4d4; border-radius: 3px; font-size: 12px;">
+                </div>
+                
+                <!-- Yetişkin Sayısı -->
+                <div class="form-group">
+                    <label for="adult_count" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 12px;">Yetişkin Sayısı</label>
+                    <input type="number" id="adult_count" class="form-control" value="1" min="1" style="width: 100%; padding: 8px; border: 1px solid #d4d4d4; border-radius: 3px; font-size: 12px;">
+                </div>
+                
+                <!-- Çocuk Sayısı -->
+                <div class="form-group">
+                    <label for="child_count" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 12px;">Çocuk Sayısı</label>
+                    <input type="number" id="child_count" class="form-control" value="0" min="0" style="width: 100%; padding: 8px; border: 1px solid #d4d4d4; border-radius: 3px; font-size: 12px;">
+                </div>
+                
+                <!-- Oda -->
+                <div class="form-group">
+                    <label for="room_id" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 12px;">Oda</label>
+                    <select id="room_id" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #d4d4d4; border-radius: 3px; font-size: 12px;">
+                        <option value="">Oda Seçin</option>
+                        {% for room in rooms %}
+                        <option value="{{ room.id }}" data-room-type-id="{{ room.room_type.id|default:'' }}" data-max-child-age="12">{{ room.name }}{% if room.room_type %} ({{ room.room_type.name }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Boş alan (4. sütun için) -->
+                <div class="form-group"></div>
+                <div class="form-group"></div>
+            </div>
+            
+            <!-- Çocuk Yaşları (Dinamik) -->
+            <div id="child_ages_container" style="margin-bottom: 20px; display: none;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333; font-size: 12px;">Çocuk Yaşları</label>
+                <div id="child_ages_inputs" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <!-- Dinamik olarak eklenecek -->
+                </div>
+            </div>
+            
+            <!-- Sonuç Bölümü - Sabit Alt Kısım -->
+            <div style="position: sticky; bottom: 0; background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px; padding: 20px; margin-top: 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);">
+                <!-- Geceleme Sayısı ve Toplam Fiyat -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center; margin-bottom: 15px;">
+                    <div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 5px;">Geceleme Sayısı</div>
+                        <div id="nights_count" style="font-size: 22px; font-weight: bold; color: #2c5f8d;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 5px;">Gecelik Ortalama</div>
+                        <div id="avg_price" style="font-size: 22px; font-weight: bold; color: #2c5f8d;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #666; margin-bottom: 5px;">Toplam Fiyat</div>
+                        <div id="total_price" style="font-size: 22px; font-weight: bold; color: #0078d4;">-</div>
+                    </div>
+                </div>
+                
+                <!-- Rezervasyona Dönüştür Butonu -->
+                <div style="text-align: center;">
+                    <button type="button" id="convert_to_reservation" class="vb-button primary" style="padding: 10px 25px; font-size: 13px;" disabled>
+                        <i class="fas fa-calendar-check"></i> Rezervasyona Dönüştür
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Gün Gün Görünüm -->
+            <div id="daily_breakdown" style="margin-top: 20px; margin-bottom: 20px; display: none;">
+                <div class="groupbox-header" style="margin-bottom: 10px; font-size: 13px;">Günlük Fiyat Detayı</div>
+                <div id="daily_breakdown_content" style="background: #fff; border: 1px solid #d4d4d4; border-radius: 3px; padding: 15px;">
+                    <!-- Dinamik olarak eklenecek -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+        <script>
+        // Sayfa yüklendiğinde otel ve odaları hazırla
+        const hotelId = {{ hotel.id }};
+        const roomsData = {{ rooms_json|safe }};
+        let currentMaxChildAge = 12; // Varsayılan maksimum çocuk yaşı
+        
+        console.log('Otel ID:', hotelId);
+        console.log('Odalar yüklendi:', roomsData);
+        console.log('Oda sayısı:', roomsData.length);
+
+        // Oda seçildiğinde maksimum çocuk yaşını güncelle
+        document.getElementById('room_id').addEventListener('change', function() {
+            const roomId = parseInt(this.value);
+            if (roomId) {
+                // Oda bilgilerini bul
+                const roomData = roomsData.find(r => r.id === roomId);
+                if (roomData && roomData.max_child_age) {
+                    currentMaxChildAge = roomData.max_child_age;
+                    console.log('Maksimum çocuk yaşı güncellendi:', currentMaxChildAge);
+                    
+                    // Mevcut çocuk yaş inputlarını güncelle
+                    document.querySelectorAll('.child_age_input').forEach(input => {
+                        input.setAttribute('max', currentMaxChildAge);
+                        // Eğer mevcut değer maksimumdan büyükse, maksimuma ayarla
+                        if (parseInt(input.value) > currentMaxChildAge) {
+                            input.value = currentMaxChildAge;
+                        }
+                    });
+                } else {
+                    currentMaxChildAge = 12; // Varsayılan
+                }
+            }
+        });
+
+        // Çocuk sayısı değiştiğinde yaş inputlarını oluştur
+        document.getElementById('child_count').addEventListener('change', function() {
+            const childCount = parseInt(this.value) || 0;
+            const container = document.getElementById('child_ages_container');
+            const inputsDiv = document.getElementById('child_ages_inputs');
+            
+            if (childCount > 0) {
+                container.style.display = 'block';
+                inputsDiv.innerHTML = '';
+                
+                for (let i = 1; i <= childCount; i++) {
+                    const div = document.createElement('div');
+                    div.innerHTML = `
+                        <label style="display: block; margin-bottom: 5px; font-size: 11px; color: #666;">Çocuk ${i} Yaşı</label>
+                        <input type="number" class="child_age_input" min="0" max="${currentMaxChildAge}" value="0" style="width: 100%; padding: 6px; border: 1px solid #d4d4d4; border-radius: 3px; font-size: 12px;">
+                    `;
+                    inputsDiv.appendChild(div);
+                }
+                
+                // Yaş değişikliklerinde fiyat hesapla
+                inputsDiv.querySelectorAll('.child_age_input').forEach(input => {
+                    input.addEventListener('change', calculatePrice);
+                });
+            } else {
+                container.style.display = 'none';
+            }
+            
+            calculatePrice();
+        });
+
+// Tarih değişikliklerinde fiyat hesapla
+document.getElementById('check_in_date').addEventListener('change', calculatePrice);
+document.getElementById('check_out_date').addEventListener('change', calculatePrice);
+document.getElementById('adult_count').addEventListener('change', calculatePrice);
+document.getElementById('room_id').addEventListener('change', calculatePrice);
+
+// Fiyat hesaplama fonksiyonu
+function calculatePrice() {
+    const checkInDate = document.getElementById('check_in_date').value;
+    const checkOutDate = document.getElementById('check_out_date').value;
+    const adultCount = parseInt(document.getElementById('adult_count').value) || 1;
+    const childCount = parseInt(document.getElementById('child_count').value) || 0;
+    const roomId = document.getElementById('room_id').value;
+    
+    // Geceleme sayısını hesapla
+    if (checkInDate && checkOutDate) {
+        const checkIn = new Date(checkInDate);
+        const checkOut = new Date(checkOutDate);
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+        
+        if (nights > 0) {
+            document.getElementById('nights_count').textContent = nights + ' gece';
+        } else {
+            document.getElementById('nights_count').textContent = '-';
+        }
+    } else {
+        document.getElementById('nights_count').textContent = '-';
+    }
+    
+    // Gerekli alanlar kontrolü
+    if (!checkInDate || !checkOutDate || !roomId) {
+        document.getElementById('avg_price').textContent = '-';
+        document.getElementById('total_price').textContent = '-';
+        document.getElementById('daily_breakdown').style.display = 'none';
+        document.getElementById('convert_to_reservation').disabled = true;
+        return;
+    }
+    
+    // Çocuk yaşlarını topla
+    const childAges = [];
+    document.querySelectorAll('.child_age_input').forEach(input => {
+        if (input.value) {
+            childAges.push(parseInt(input.value));
+        }
+    });
+    
+    // Hotel ID'yi al
+    const hotelId = document.getElementById('hotel_id')?.value;
+    if (!hotelId) {
+        console.error('Hotel ID bulunamadı!');
+        alert('Otel bilgisi bulunamadı. Lütfen sayfayı yenileyin.');
+        return;
+    }
+    
+    // API'ye istek gönder
+    const params = new URLSearchParams({
+        hotel_id: hotelId,
+        room_id: roomId,
+        check_in_date: checkInDate,
+        check_out_date: checkOutDate,
+        adult_count: adultCount,
+        child_count: childCount,
+    });
+    
+    if (childAges.length > 0) {
+        params.append('child_ages', childAges.join(','));
+    }
+    
+    console.log('Fiyat hesaplama isteği gönderiliyor:', params.toString());
+    
+    fetch(`/reception/api/calculate-price/?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('API Response status:', response.status);
+        if (!response.ok) {
+            return response.json().then(data => {
+                console.error('API Error:', data);
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }).catch(err => {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('API Response data:', data);
+        if (data.success) {
+            // Fiyatları göster
+            document.getElementById('avg_price').textContent = parseFloat(data.avg_nightly_price).toFixed(2) + ' ₺';
+            document.getElementById('total_price').textContent = parseFloat(data.total_price).toFixed(2) + ' ₺';
+            
+            // Günlük detayı göster (eğer breakdown varsa)
+            if (data.breakdown && Object.keys(data.breakdown).length > 0) {
+                showDailyBreakdown(data.breakdown, checkInDate);
+            } else {
+                document.getElementById('daily_breakdown').style.display = 'none';
+            }
+            
+            // Rezervasyona dönüştür butonunu aktif et
+            document.getElementById('convert_to_reservation').disabled = false;
+        } else {
+            throw new Error(data.error || 'Fiyat hesaplanamadı');
+        }
+    })
+    .catch(error => {
+        document.getElementById('avg_price').textContent = '-';
+        document.getElementById('total_price').textContent = '-';
+        document.getElementById('daily_breakdown').style.display = 'none';
+        document.getElementById('convert_to_reservation').disabled = true;
+        console.error('Fiyat hesaplama hatası:', error);
+        console.error('Hata detayı:', error.message);
+        // Hata mesajını kullanıcıya göster
+        alert('Fiyat hesaplanırken bir hata oluştu: ' + error.message);
+    });
+}
+
+// Günlük detay gösterimi
+function showDailyBreakdown(breakdown, startDate) {
+    const container = document.getElementById('daily_breakdown_content');
+    container.innerHTML = '';
+    
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.innerHTML = `
+        <thead>
+            <tr style="background: #e8f4f8; border-bottom: 2px solid #c0d4e0;">
+                <th style="padding: 10px; text-align: left; border-bottom: 1px solid #d4d4d4;">Tarih</th>
+                <th style="padding: 10px; text-align: right; border-bottom: 1px solid #d4d4d4;">Gecelik Fiyat</th>
+            </tr>
+        </thead>
+        <tbody id="breakdown_tbody">
+        </tbody>
+    `;
+    
+    const tbody = table.querySelector('#breakdown_tbody');
+    let currentDate = new Date(startDate);
+    
+    Object.keys(breakdown).sort().forEach(dateKey => {
+        const price = breakdown[dateKey];
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid #f0f0f0';
+        row.innerHTML = `
+            <td style="padding: 8px;">${formatDate(dateKey)}</td>
+            <td style="padding: 8px; text-align: right; font-weight: bold;">${parseFloat(price).toFixed(2)} ₺</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    container.appendChild(table);
+    document.getElementById('daily_breakdown').style.display = 'block';
+}
+
+// Tarih formatla
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()} (${days[date.getDay()]})`;
+}
+
+// Rezervasyona dönüştür butonu
+document.getElementById('convert_to_reservation').addEventListener('click', function() {
+    const checkInDate = document.getElementById('check_in_date').value;
+    const checkOutDate = document.getElementById('check_out_date').value;
+    const adultCount = parseInt(document.getElementById('adult_count').value) || 1;
+    const childCount = parseInt(document.getElementById('child_count').value) || 0;
+    const roomId = document.getElementById('room_id').value;
+    
+    if (!checkInDate || !checkOutDate || !roomId) {
+        alert('Lütfen tüm gerekli alanları doldurun.');
+        return;
+    }
+    
+    // Çocuk yaşlarını topla
+    const childAges = [];
+    document.querySelectorAll('.child_age_input').forEach(input => {
+        if (input.value) {
+            childAges.push(parseInt(input.value));
+        }
+    });
+    
+    // Rezervasyon form modal'ını aç
+    if (typeof openFormModal === 'function') {
+        const formUrl = '/reception/reservations/create/';
+        
+        // Form modal'ını aç
+        openFormModal(formUrl, 'Yeni Rezervasyon');
+        
+        // Form yüklendikten sonra alanları doldur
+        setTimeout(() => {
+            const modalBody = document.getElementById('modalBody');
+            if (modalBody) {
+                const form = modalBody.querySelector('form');
+                if (form) {
+                    // Tarihleri doldur
+                    const checkInInput = form.querySelector('#id_check_in_date');
+                    const checkOutInput = form.querySelector('#id_check_out_date');
+                    const adultInput = form.querySelector('#id_adult_count');
+                    const childInput = form.querySelector('#id_child_count');
+                    const roomInput = form.querySelector('#id_room');
+                    
+                    if (checkInInput) {
+                        checkInInput.value = checkInDate;
+                        checkInInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    if (checkOutInput) {
+                        checkOutInput.value = checkOutDate;
+                        checkOutInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    if (adultInput) {
+                        adultInput.value = adultCount;
+                        adultInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    if (childInput) {
+                        childInput.value = childCount;
+                        childInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    if (roomInput) {
+                        roomInput.value = roomId;
+                        roomInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    
+                    // Çocuk yaşlarını doldur
+                    if (childAges.length > 0) {
+                        setTimeout(() => {
+                            const childAgeInputs = form.querySelectorAll('input[name*="child_age"], input[name*="age"]');
+                            childAges.forEach((age, index) => {
+                                if (childAgeInputs[index]) {
+                                    childAgeInputs[index].value = age;
+                                    childAgeInputs[index].dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            });
+                        }, 500);
+                    }
+                    
+                    // Oda değiştiğinde fiyat hesapla (eğer calculatePrice fonksiyonu varsa)
+                    if (roomInput) {
+                        setTimeout(() => {
+                            if (typeof calculatePrice === 'function') {
+                                calculatePrice();
+                            } else if (typeof window.calculatePrice === 'function') {
+                                window.calculatePrice();
+                            }
+                        }, 1000);
+                    }
+                }
+            }
+        }, 1500);
+    } else {
+        // Fallback: Normal sayfa yükleme
+        window.location.href = `/reception/reservations/create/?check_in_date=${checkInDate}&check_out_date=${checkOutDate}&adult_count=${adultCount}&child_count=${childCount}&room_id=${roomId}`;
+    }
+});
+</script>
+{% endblock %}
+

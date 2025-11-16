@@ -4,55 +4,97 @@
 {% block title %}Feribot Bileti Dashboard{% endblock %}
 
 {% block content %}
-<div class="p-6">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">
-            <i class="fas fa-ship mr-2"></i>Feribot Bileti Dashboard
-        </h1>
-    </div>
-    
-    <!-- İstatistikler -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">Toplam Bilet</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.total_tickets }}</p>
-                </div>
-                <i class="fas fa-ticket-alt text-3xl text-blue-500"></i>
+<div class="content-body">
+    <div class="groupbox">
+        <div class="groupbox-header">
+            <i class="fas fa-ship"></i> Feribot Bileti Dashboard
+            <div style="display: flex; gap: 8px; margin-left: auto;">
+                <a href="{% url 'ferry_tickets:ticket_list' %}" class="vb-button primary">
+                    <i class="fas fa-list"></i> Feribot Bileti Listeleme
+                </a>
+                <a href="{% url 'ferry_tickets:ticket_create' %}" class="vb-button success">
+                    <i class="fas fa-plus"></i> Yeni Feribot Bileti
+                </a>
             </div>
         </div>
-        
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">Onaylanmış Biletler</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.confirmed_tickets }}</p>
+        <div class="groupbox-body">
+            <!-- İstatistikler - 4 Grid Yapısı -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; width: 100%; max-width: 100%; overflow-x: hidden;">
+                <!-- Kutucuk 1: Toplam Bilet -->
+                <div style="background: #FFFFFF; border: 1px solid #D4D4D4; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#F8F9FA'; this.style.borderColor='#0078D4';" onmouseout="this.style.background='#FFFFFF'; this.style.borderColor='#D4D4D4';">
+                    <div style="flex: 1;">
+                        <div style="font-size: 10px; color: #666; margin-bottom: 4px; font-weight: 600;">Toplam Bilet</div>
+                        <div style="font-size: 22px; font-weight: bold; color: #2C5F8D; line-height: 1.2;">{{ stats.total_tickets }}</div>
+                    </div>
+                    <div style="width: 36px; height: 36px; background: #E8F4F8; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-ticket-alt" style="font-size: 16px; color: #2C5F8D;"></i>
+                    </div>
                 </div>
-                <i class="fas fa-check-circle text-3xl text-green-500"></i>
-            </div>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">Bugünkü Gelir</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.today_revenue|floatformat:2 }} ₺</p>
+                
+                <!-- Kutucuk 2: Onaylanmış Biletler -->
+                <div style="background: #FFFFFF; border: 1px solid #D4D4D4; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#F8F9FA'; this.style.borderColor='#0078D4';" onmouseout="this.style.background='#FFFFFF'; this.style.borderColor='#D4D4D4';">
+                    <div style="flex: 1;">
+                        <div style="font-size: 10px; color: #666; margin-bottom: 4px; font-weight: 600;">Onaylanmış Biletler</div>
+                        <div style="font-size: 22px; font-weight: bold; color: #2C5F8D; line-height: 1.2;">{{ stats.confirmed_tickets }}</div>
+                    </div>
+                    <div style="width: 36px; height: 36px; background: #E6F7E6; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-check-circle" style="font-size: 16px; color: #107C10;"></i>
+                    </div>
                 </div>
-                <i class="fas fa-lira-sign text-3xl text-yellow-500"></i>
-            </div>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600">Ödeme Bekleyen</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ stats.pending_payments_count }}</p>
+                
+                <!-- Kutucuk 3: Bugünkü Gelir -->
+                <div style="background: #FFFFFF; border: 1px solid #D4D4D4; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#F8F9FA'; this.style.borderColor='#0078D4';" onmouseout="this.style.background='#FFFFFF'; this.style.borderColor='#D4D4D4';">
+                    <div style="flex: 1;">
+                        <div style="font-size: 10px; color: #666; margin-bottom: 4px; font-weight: 600;">Bugünkü Gelir</div>
+                        <div style="font-size: 20px; font-weight: bold; color: #107C10; line-height: 1.2;">{{ stats.today_revenue|floatformat:2 }} ₺</div>
+                    </div>
+                    <div style="width: 36px; height: 36px; background: #E6F7E6; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-lira-sign" style="font-size: 16px; color: #107C10;"></i>
+                    </div>
                 </div>
-                <i class="fas fa-clock text-3xl text-orange-500"></i>
+                
+                <!-- Kutucuk 4: Ödeme Bekleyen -->
+                <div style="background: #FFFFFF; border: 1px solid #D4D4D4; border-radius: 3px; padding: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#F8F9FA'; this.style.borderColor='#0078D4';" onmouseout="this.style.background='#FFFFFF'; this.style.borderColor='#D4D4D4';">
+                    <div style="flex: 1;">
+                        <div style="font-size: 10px; color: #666; margin-bottom: 4px; font-weight: 600;">Ödeme Bekleyen</div>
+                        <div style="font-size: 22px; font-weight: bold; color: #FF9800; line-height: 1.2;">{{ stats.pending_payments_count }}</div>
+                    </div>
+                    <div style="width: 36px; height: 36px; background: #FFF4E5; border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fas fa-clock" style="font-size: 16px; color: #FF9800;"></i>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+            
+            <!-- Hızlı İşlemler / Alt Modüller -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 13px; font-weight: bold; color: #2C5F8D; margin-bottom: 10px;">Hızlı İşlemler</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <a href="{% url 'ferry_tickets:ticket_list' %}" class="vb-button primary" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-ticket-alt mr-2"></i>Biletler
+                    </a>
+                    <a href="{% url 'ferry_tickets:ticket_archived_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-archive mr-2"></i>Arşivlenmiş Biletler
+                    </a>
+                    <a href="{% url 'ferry_tickets:voucher_template_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-file-invoice mr-2"></i>Voucher Şablonları
+                    </a>
+                    <a href="{% url 'ferry_tickets:ferry_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-ship mr-2"></i>Feribotlar
+                    </a>
+                    <a href="{% url 'ferry_tickets:route_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-route mr-2"></i>Rotalar
+                    </a>
+                    <a href="{% url 'ferry_tickets:schedule_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-calendar-alt mr-2"></i>Seferler
+                    </a>
+                    <a href="{% url 'ferry_tickets:api_configuration_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-cog mr-2"></i>API Konfigürasyonları
+                    </a>
+                    <a href="{% url 'ferry_tickets:api_sync_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-sync mr-2"></i>API Senkronizasyon Kayıtları
+                    </a>
+                </div>
+            </div>
     
     <!-- Bugünkü Biletler -->
     <div class="bg-white rounded-lg shadow mb-6">

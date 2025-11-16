@@ -74,6 +74,9 @@ class PackageAdmin(admin.ModelAdmin):
         """Inline formset'i kaydet"""
         instances = formset.save(commit=False)
         for instance in instances:
+            # Module seçilmemişse atla
+            if not instance.module_id:
+                continue
             # Package otomatik olarak atanır (inline formset)
             if not instance.package_id:
                 instance.package = form.instance
@@ -85,6 +88,10 @@ class PackageAdmin(admin.ModelAdmin):
         
         # Yeni kayıtları kaydet
         for instance in formset.new_objects:
+            # Module seçilmemişse atla
+            if not instance.module_id:
+                continue
+            # Package otomatik olarak atanır (inline formset)
             if not instance.package_id:
                 instance.package = form.instance
             instance.save()

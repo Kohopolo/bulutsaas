@@ -210,10 +210,9 @@ def configuration_list(request):
     configurations = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
-    else:
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
+    if not accessible_hotels:
         # Fallback: Tüm otelleri göster
         from apps.tenant_apps.hotels.models import Hotel
         accessible_hotels = Hotel.objects.filter(is_deleted=False).order_by('name')

@@ -84,9 +84,8 @@ def account_list(request):
     accounts = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'accounts': accounts,
@@ -260,9 +259,8 @@ def journal_entry_list(request):
     entries = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'entries': entries,
@@ -439,9 +437,8 @@ def invoice_list(request):
     invoices = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     # Eğer accessible_hotels boşsa ama active_hotel varsa, onu ekle
     if not accessible_hotels and hasattr(request, 'active_hotel') and request.active_hotel:
         accessible_hotels = [request.active_hotel]
@@ -607,9 +604,8 @@ def payment_list(request):
     payments = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'payments': payments,

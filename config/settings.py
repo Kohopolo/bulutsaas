@@ -101,6 +101,7 @@ TENANT_APPS = [
     'apps.tenant_apps.ferry_tickets',  # Feribot Bileti
     'apps.tenant_apps.bungalovs',  # Bungalov Yönetimi
     'apps.tenant_apps.backup',  # Yedekleme Yönetimi
+    'apps.tenant_apps.reports',  # Raporlar Modülü
     'apps.tenant_apps.settings',  # Ayarlar Modülü (SMS entegrasyonları)
 ]
 

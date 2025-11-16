@@ -1281,6 +1281,26 @@ def reports_dashboard(request):
         payment_date__lte=date_to
     )
     
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            reservations = reservations.filter(hotel=request.active_hotel)
+            payments = payments.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                reservations = reservations.filter(hotel_id=int(hotel_id))
+                payments = payments.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            reservations = reservations.filter(hotel__isnull=True)
+            payments = payments.filter(hotel__isnull=True)
+    
     # Genel istatistikler
     stats = get_period_stats(reservations, payments)
     

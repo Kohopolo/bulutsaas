@@ -1299,3 +1299,7 @@
 </div>
 {% endif %}
 
+{% if rooms_json %}
+<script id="rooms_data_json" type="application/json">{{ rooms_json|safe }}</script>
+{% endif %}
+

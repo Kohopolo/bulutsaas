@@ -96,9 +96,9 @@ def staff_list(request):
     page_obj = paginator.get_page(page_number)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
@@ -184,9 +184,9 @@ def shift_list(request):
     page_obj = paginator.get_page(page_number)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,
@@ -331,9 +331,9 @@ def salary_list(request):
     page_obj = paginator.get_page(page_number)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'hotel': request.active_hotel if hasattr(request, 'active_hotel') and request.active_hotel else None,

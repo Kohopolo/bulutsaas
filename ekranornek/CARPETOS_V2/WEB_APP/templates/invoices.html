@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}CarpetOS - Faturalar{% endblock %}
+
+{% block banner_text %}Fatura Yönetimi{% endblock %}
+
+{% block center_panel %}
+<div class="tabs">
+    <div class="tab active">FATURALAR</div>
+</div>
+
+<div class="date-navigation" style="margin-bottom: 10px;">
+    <input type="date" class="date-picker" id="dateFilter" value="">
+    <button class="btn btn-primary" onclick="loadInvoices()">Getir</button>
+</div>
+
+<table class="orders-table">
+    <thead>
+        <tr>
+            <th>Fatura No</th>
+            <th>Sipariş No</th>
+            <th>Müşteri</th>
+            <th>Tutar</th>
+            <th>Tarih</th>
+            <th>Durum</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody id="invoicesTableBody">
+        <tr>
+            <td colspan="7" class="text-center">Yükleniyor...</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadInvoices() {
+        // Invoice loading implementation
+        document.getElementById('invoicesTableBody').innerHTML = '<tr><td colspan="7" class="text-center">Fatura verisi yüklenecek</td></tr>';
+    }
+    
+    document.getElementById('dateFilter').valueAsDate = new Date();
+</script>
+{% endblock %}
+

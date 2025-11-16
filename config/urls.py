@@ -85,6 +85,9 @@ urlpatterns = [
     # Yedekleme Yönetimi (Backup)
     path('backup/', include('apps.tenant_apps.backup.urls')),
     
+    # Raporlar Modülü (Reports)
+    path('reports/', include('apps.tenant_apps.reports.urls')),
+    
     # Ayarlar Modülü (Settings - SMS entegrasyonları)
     path('settings/', include('apps.tenant_apps.settings.urls')),
     

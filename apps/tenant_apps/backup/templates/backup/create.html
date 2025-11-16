@@ -15,7 +15,7 @@
             </div>
         </div>
         <div class="groupbox-body">
-            <form method="post" id="backupForm">
+            <form method="post" id="backupForm" action="{% url 'backup:backup_create' %}">
                 {% csrf_token %}
                 
                 <div class="form-groupbox">

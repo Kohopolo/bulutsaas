@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}CarpetOS - Ödemeler{% endblock %}
+
+{% block banner_text %}Ödeme Yönetimi{% endblock %}
+
+{% block center_panel %}
+<div class="tabs">
+    <div class="tab active">ÖDEMELER</div>
+</div>
+
+<div class="date-navigation" style="margin-bottom: 10px;">
+    <input type="date" class="date-picker" id="dateFilter" value="">
+    <select class="date-picker" id="paymentMethodFilter">
+        <option value="">Tüm Ödeme Yöntemleri</option>
+        <option value="Nakit">Nakit</option>
+        <option value="Kredi Kartı">Kredi Kartı</option>
+        <option value="Banka Transferi">Banka Transferi</option>
+    </select>
+    <button class="btn btn-primary" onclick="loadPayments()">Getir</button>
+</div>
+
+<table class="orders-table">
+    <thead>
+        <tr>
+            <th>Sipariş No</th>
+            <th>Müşteri</th>
+            <th>Ödeme Yöntemi</th>
+            <th>Tutar</th>
+            <th>Tarih</th>
+            <th>Durum</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody id="paymentsTableBody">
+        <tr>
+            <td colspan="7" class="text-center">Yükleniyor...</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="summary-panel">
+    <div class="summary-item">
+        <div class="summary-label">TOPLAM ÖDEME</div>
+        <div class="summary-value" id="totalPayment">0.00 ₺</div>
+    </div>
+    <div class="summary-item">
+        <div class="summary-label">BUGÜNKÜ ÖDEME</div>
+        <div class="summary-value" id="todayPayment">0.00 ₺</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadPayments() {
+        // Payment loading implementation
+        document.getElementById('paymentsTableBody').innerHTML = '<tr><td colspan="7" class="text-center">Ödeme verisi yüklenecek</td></tr>';
+    }
+    
+    document.getElementById('dateFilter').valueAsDate = new Date();
+</script>
+{% endblock %}
+

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}CarpetOS - Dashboard{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block center_panel %}
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('orders')">SİPARİŞLER</div>
+                <div class="tab" onclick="switchTab('washing')">YIKAMADA OLANLAR</div>
+                <div class="tab" onclick="switchTab('due')">TESLİM ZAMANI GELENLER</div>
+                <div class="tab" onclick="switchTab('delivery')">TESLİMAT LİSTESİ</div>
+                <div class="tab" onclick="switchTab('delivered')">TESLİM EDİLENLER</div>
+                <div class="tab" onclick="switchTab('pending')">BEKLEYEN TESLİMAT</div>
+                <div class="tab" onclick="switchTab('cancelled')">İPTAL</div>
+                <div class="tab" onclick="switchTab('agenda')">AJANDA</div>
+            </div>
+
+            <div class="date-navigation">
+                <button class="date-nav-btn" onclick="changeDate(-1)">◀</button>
+                <input type="date" class="date-picker" id="datePicker" value="2025-01-27">
+                <button class="date-nav-btn" onclick="changeDate(1)">▶</button>
+                <select class="date-picker" id="vehicleFilter">
+                    <option>Tüm Araçlar</option>
+                    <option>Araç 1</option>
+                    <option>Araç 2</option>
+                </select>
+                <button class="btn btn-primary" onclick="fetchOrders()">Getir</button>
+            </div>
+
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>☑</th>
+                        <th>MU.NO</th>
+                        <th>FİŞ</th>
+                        <th>CARİ ADI</th>
+                        <th>BÖLGE</th>
+                        <th>AÇIKLAMA</th>
+                        <th>ARAÇ</th>
+                        <th>SAAT</th>
+                        <th>ALIŞ SAAT</th>
+                        <th>ADET</th>
+                        <th>M²</th>
+                        <th>TUTAR</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr>
+                        <td colspan="12" class="text-center">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="summary-panel">
+                <div class="summary-item">
+                    <div class="summary-label">TOPLAM TESLİM ALINACAK</div>
+                    <div class="summary-value" id="totalToDeliver">6 ADET</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">TESLİM ALINAN HALI ADEDİ</div>
+                    <div class="summary-value" id="pickedUpCount">4 ADET</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">TESLİM ALINAN TOPLAM M²</div>
+                    <div class="summary-value" id="pickedUpM2">64.0 M²</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">TESLİM ALINANLAR TUTARI</div>
+                    <div class="summary-value" id="pickedUpAmount">1.870.00 ₺</div>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            // Load tab data
+            loadOrders(tabName);
+        }
+
+        // Date navigation
+        function changeDate(days) {
+            const dateInput = document.getElementById('datePicker');
+            const currentDate = new Date(dateInput.value);
+            currentDate.setDate(currentDate.getDate() + days);
+            dateInput.value = currentDate.toISOString().split('T')[0];
+            fetchOrders();
+        }
+
+        // Load customers
+        async function loadCustomers() {
+            try {
+                const response = await fetch('/api/customers');
+                const data = await response.json();
+                if (data.success) {
+                    const tbody = document.getElementById('customersTableBody');
+                    tbody.innerHTML = data.data.map(customer => `
+                        <tr onclick="selectCustomer(${customer.id})">
+                            <td>${customer.customer_number || ''}</td>
+                            <td>${customer.first_name} ${customer.last_name}</td>
+                        </tr>
+                    `).join('');
+                    document.getElementById('totalCustomers').textContent = data.data.length;
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+            }
+        }
+
+        // Load orders
+        async function loadOrders(status = 'orders') {
+            try {
+                const response = await fetch('/api/orders');
+                const data = await response.json();
+                if (data.success) {
+                    const tbody = document.getElementById('ordersTableBody');
+                    tbody.innerHTML = data.data.map(order => `
+                        <tr onclick="selectOrder(${order.id})">
+                            <td><input type="checkbox"></td>
+                            <td>${order.customer_id || ''}</td>
+                            <td>${order.order_number || ''}</td>
+                            <td>${order.customer_name || ''}</td>
+                            <td>${order.region || ''}</td>
+                            <td>${order.description || ''}</td>
+                            <td>${order.vehicle || ''}</td>
+                            <td>${order.time ? new Date(order.time).toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'}) : ''}</td>
+                            <td>${order.pickup_time ? new Date(order.pickup_time).toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'}) : ''}</td>
+                            <td>${order.quantity || 0}</td>
+                            <td>${order.square_meters || 0}</td>
+                            <td>${order.amount ? order.amount.toFixed(2) + ' ₺' : '0.00 ₺'}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+            }
+        }
+
+        function fetchOrders() {
+            loadOrders();
+        }
+
+        function refreshCustomers() {
+            loadCustomers();
+        }
+
+        function searchCustomers() {
+            const searchTerm = document.getElementById('searchInput').value;
+            // Implement search
+        }
+
+        function deleteCustomer() {
+            // Implement delete
+        }
+
+        function selectCustomer(id) {
+            document.querySelectorAll('.customer-table tbody tr').forEach(tr => tr.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function selectOrder(id) {
+            document.querySelectorAll('.orders-table tbody tr').forEach(tr => tr.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        // Initialize
+        loadCustomers();
+        loadOrders();
+    </script>
+{% endblock %}
+

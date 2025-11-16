@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}BULUT ACENTE{% endblock %} - Yönetim Sistemi</title>
+    
+    <!-- Standalone Layout CSS -->
+    <link rel="stylesheet" href="{% static 'css/standalone-layout.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS (Opsiyonel) -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Standalone Tarzı Tam Ekran Uygulama -->
+    <div class="standalone-app">
+        
+        <!-- Menu Strip (VB MenuStrip) -->
+        {% include 'includes/menu_strip_tenant.html' %}
+        
+        <!-- Header Panel (VB Form Header) -->
+        {% include 'includes/header_panel_tenant.html' %}
+        
+        <!-- Main Layout (3 Sütunlu) -->
+        <div class="main-layout">
+            
+            <!-- Left Panel (Modül Menüsü) -->
+            {% include 'includes/module_sidebar_tenant.html' %}
+            
+            <!-- Center Panel (Modül İçeriği) -->
+            <div class="center-panel" id="centerPanel">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" style="padding: 10px; margin-bottom: 10px; border-radius: 3px; background-color: {% if message.tags == 'error' %}#F44336{% elif message.tags == 'warning' %}#FF9800{% else %}#4CAF50{% endif %}; color: white;">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% block content %}
+                <!-- Modül içeriği buraya yüklenecek -->
+                <div class="welcome-message">
+                    <h2>Hoş Geldiniz!</h2>
+                    <p>Sol menüden bir modül seçin veya kısayol butonlarını kullanın.</p>
+                </div>
+                {% endblock %}
+            </div>
+            
+            <!-- Right Panel (Kısayollar) -->
+            {% include 'includes/shortcuts_panel_tenant.html' %}
+            
+        </div>
+        
+        <!-- Footer Panel (Kısayollar + Status) -->
+        {% include 'includes/footer_panel_tenant.html' %}
+        
+    </div>
+    
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+    
+    <!-- Module Loader JS -->
+    <script src="{% static 'js/module-loader-tenant.js' %}"></script>
+    
+    <!-- Modal System JS -->
+    <script src="{% static 'js/modal-system.js' %}"></script>
+    
+    <!-- Footer Functions JS -->
+    <script src="{% static 'js/footer-functions.js' %}"></script>
+    
+    <!-- Custom JS (Opsiyonel) -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

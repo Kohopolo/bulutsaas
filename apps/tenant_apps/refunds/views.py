@@ -84,12 +84,8 @@ def policy_list(request):
     policies = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = list(request.accessible_hotels) if request.accessible_hotels else []
-    # Eğer accessible_hotels boşsa ama active_hotel varsa, onu ekle
-    if not accessible_hotels and hasattr(request, 'active_hotel') and request.active_hotel:
-        accessible_hotels = [request.active_hotel]
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'policies': policies,
@@ -251,12 +247,8 @@ def request_list(request):
     requests = paginator.get_page(page)
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = list(request.accessible_hotels) if request.accessible_hotels else []
-    # Eğer accessible_hotels boşsa ama active_hotel varsa, onu ekle
-    if not accessible_hotels and hasattr(request, 'active_hotel') and request.active_hotel:
-        accessible_hotels = [request.active_hotel]
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'requests': requests,
@@ -477,6 +469,23 @@ def report_summary(request):
         is_deleted=False
     )
     
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            requests = requests.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                requests = requests.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            requests = requests.filter(hotel__isnull=True)
+    
     total_requests = requests.count()
     total_original_amount = requests.aggregate(total=Sum('original_amount'))['total'] or Decimal('0')
     total_refund_amount = requests.aggregate(total=Sum('refund_amount'))['total'] or Decimal('0')
@@ -514,6 +523,23 @@ def report_by_module(request):
         request_date__date__lte=date_to,
         is_deleted=False
     )
+    
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            requests = requests.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                requests = requests.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            requests = requests.filter(hotel__isnull=True)
     
     by_module = requests.values('source_module').annotate(
         count=Count('id'),

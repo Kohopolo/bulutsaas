@@ -1,0 +1,17 @@
+<!-- Header Panel (VB Form Header) -->
+<div class="header-panel">
+    <div class="header-top">
+        <div class="header-title">{% block header_title %}BULUT ACENTE YÖNETİM SİSTEMİ{% endblock %}</div>
+        <div class="header-license">
+            {% if user.is_authenticated %}
+                Kullanıcı: {{ user.get_full_name|default:user.username }}
+            {% else %}
+                Lütfen giriş yapın
+            {% endif %}
+        </div>
+    </div>
+    <div class="header-banner" id="headerBanner">
+        {% block header_banner %}Sistem Hazır{% endblock %}
+    </div>
+</div>
+

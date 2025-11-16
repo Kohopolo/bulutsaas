@@ -24,7 +24,7 @@
     </div>
 
     <!-- Filtreler -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-4">
         <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Kullanıcı Tipi</label>
@@ -62,83 +62,75 @@
     <!-- Tablo -->
     <div class="datagrid">
         <div class="vb-datagrid-container">
-            <table id="users-table">
+            <table id="users-table" class="vb-datagrid" style="width: 100%; table-layout: fixed;">
                 <thead>
                     <tr>
-                        <th>Kullanıcı</th>
-                        <th>Kullanıcı Tipi</th>
-                        <th>Departman</th>
-                        <th>Pozisyon</th>
-                        <th>Telefon</th>
+                        <th style="width: 20%;">Kullanıcı</th>
+                        <th style="width: 12%;">Kullanıcı Tipi</th>
+                        <th style="width: 10%;">Departman</th>
+                        <th style="width: 10%;">Pozisyon</th>
+                        <th style="width: 12%;">Telefon</th>
                         {% if has_hotel_module %}
-                        <th>Otel Yetkileri</th>
+                        <th style="width: 18%;">Otel Yetkileri</th>
                         {% endif %}
-                        <th>Durum</th>
-                        <th style="text-align: center;">İşlemler</th>
-                    </tr>
-                    <tr class="filter-row">
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="0"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="1"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="2"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="3"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="4"></th>
-                        {% if has_hotel_module %}
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="5"></th>
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="6"></th>
-                        <th></th>
-                        {% else %}
-                        <th><input type="text" class="filter-input" placeholder="Filtrele..." data-column="5"></th>
-                        <th></th>
-                        {% endif %}
+                        <th style="width: 8%;">Durum</th>
+                        <th style="width: {% if has_hotel_module %}10%{% else %}18%{% endif %}; text-align: center;">İşlemler</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for tenant_user in users %}
                     <tr>
                         <td>
-                            <div style="font-weight: 600; color: #333;">{{ tenant_user.user.get_full_name|default:tenant_user.user.username }}</div>
-                            <div style="font-size: 12px; color: #666;">{{ tenant_user.user.email }}</div>
+                            <div style="font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tenant_user.user.get_full_name|default:tenant_user.user.username }}</div>
+                            <div style="font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tenant_user.user.email }}</div>
                         </td>
                         <td>
                             {% if tenant_user.user_type %}
-                            <span style="display: inline-block; padding: 3px 8px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 11px; font-weight: 600;">
+                            <span style="display: inline-block; padding: 2px 6px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
                                 {{ tenant_user.user_type.icon }} {{ tenant_user.user_type.name }}
                             </span>
                             {% else %}
                             <span style="color: #999;">-</span>
                             {% endif %}
                         </td>
-                        <td>{{ tenant_user.department|default:"-" }}</td>
-                        <td>{{ tenant_user.position|default:"-" }}</td>
-                        <td>{{ tenant_user.phone|default:"-" }}</td>
+                        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tenant_user.department|default:"-" }}</td>
+                        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tenant_user.position|default:"-" }}</td>
+                        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ tenant_user.phone|default:"-" }}</td>
                         {% if has_hotel_module %}
                         <td>
                             {% with user_hotels=user_hotel_permissions|get_item:tenant_user.id %}
                                 {% if user_hotels %}
-                                    {% for hotel_name in user_hotels %}
-                                    <span style="display: inline-block; padding: 3px 8px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 11px; margin-right: 4px;">
-                                        <i class="fas fa-hotel" style="margin-right: 4px;"></i>{{ hotel_name }}
+                                    <div style="display: flex; flex-wrap: wrap; gap: 3px;">
+                                    {% for hotel_name in user_hotels|slice:":2" %}
+                                    <span style="display: inline-block; padding: 2px 5px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 10px; white-space: nowrap;">
+                                        <i class="fas fa-hotel" style="margin-right: 2px;"></i>{{ hotel_name|truncatechars:12 }}
                                     </span>
                                     {% endfor %}
+                                    {% if user_hotels|length > 2 %}
+                                    <span style="display: inline-block; padding: 2px 5px; background: #e5e7eb; color: #374151; border-radius: 3px; font-size: 10px;">
+                                        +{{ user_hotels|length|add:"-2" }}
+                                    </span>
+                                    {% endif %}
+                                    </div>
                                 {% else %}
-                                <span style="color: #999; font-size: 12px;">Yetki yok</span>
+                                <span style="color: #999; font-size: 11px;">Yetki yok</span>
                                 {% endif %}
                             {% endwith %}
                         </td>
                         {% endif %}
                         <td>
                             {% if tenant_user.is_active %}
-                            <span style="display: inline-block; padding: 3px 8px; background: #d1fae5; color: #065f46; border-radius: 3px; font-size: 11px; font-weight: 600;">Aktif</span>
+                            <span style="display: inline-block; padding: 2px 6px; background: #d1fae5; color: #065f46; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap;">Aktif</span>
                             {% else %}
-                            <span style="display: inline-block; padding: 3px 8px; background: #f3f4f6; color: #374151; border-radius: 3px; font-size: 11px; font-weight: 600;">Pasif</span>
+                            <span style="display: inline-block; padding: 2px 6px; background: #f3f4f6; color: #374151; border-radius: 3px; font-size: 11px; font-weight: 600; white-space: nowrap;">Pasif</span>
                             {% endif %}
                         </td>
-                        <td style="text-align: center;">
-                            <a href="{% url 'tenant:user_detail' tenant_user.pk %}" style="display: inline-block; padding: 4px 10px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 12px; margin-right: 4px; text-decoration: none;">
-                                <i class="fas fa-eye" style="margin-right: 4px;"></i>Detay
+                        <td style="text-align: center; white-space: nowrap;">
+                            <a href="{% url 'tenant:user_detail' tenant_user.pk %}" style="display: inline-block; padding: 2px 6px; background: #dbeafe; color: #1e40af; border-radius: 3px; font-size: 11px; margin-right: 3px; text-decoration: none;">
+                                <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{% url 'tenant:user_update' tenant_user.pk %}" style="display: inline-block; padding: 4px 10px; background: #fef3c7; color: #92400e; border-radius: 3px; font-size: 12px; text-decoration: none;">
-                                <i class="fas fa-edit" style="margin-right: 4px;"></i>Düzenle
+                            <a href="{% url 'tenant:user_update' tenant_user.pk %}" style="display: inline-block; padding: 2px 6px; background: #fef3c7; color: #92400e; border-radius: 3px; font-size: 11px; text-decoration: none;">
+                                <i class="fas fa-edit"></i>
                             </a>
                         </td>
                     </tr>
@@ -155,32 +147,6 @@
         </div>
     </div>
     
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const filterInputs = document.querySelectorAll('#users-table .filter-input');
-        const table = document.querySelector('#users-table');
-        
-        filterInputs.forEach(input => {
-            input.addEventListener('input', function() {
-                const filterValue = this.value.toLowerCase();
-                const columnIndex = Array.from(this.closest('tr').children).indexOf(this.closest('th'));
-                const rows = table.querySelectorAll('tbody tr');
-                
-                rows.forEach(row => {
-                    const cell = row.children[columnIndex];
-                    if (cell) {
-                        const cellText = cell.textContent.toLowerCase();
-                        if (cellText.includes(filterValue)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    }
-                });
-            });
-        });
-    });
-    </script>
 
     <!-- Sayfalama -->
     {% if users.has_other_pages %}

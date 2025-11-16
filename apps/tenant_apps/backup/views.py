@@ -121,21 +121,34 @@ def backup_create(request):
         try:
             # TenantUser objesini bul (started_by için)
             from apps.tenant_apps.core.models import TenantUser
+            from django_tenants.utils import tenant_context, get_tenant_model
+            
             tenant_user = None
             try:
                 tenant_user = TenantUser.objects.get(user=request.user, is_active=True)
             except TenantUser.DoesNotExist:
                 pass
             
-            # Management command'ı çağır - sadece mevcut tenant'ın schema'sını yedekle
-            call_command(
-                'backup_database',
-                schema=current_schema,  # Güvenlik: Her zaman mevcut tenant'ın schema'sı
-                type='manual',
-                user_id=tenant_user.id if tenant_user else None
-            )
+            # Tenant objesini al
+            Tenant = get_tenant_model()
+            tenant = request.tenant
+            
+            if not tenant:
+                messages.error(request, 'Tenant bilgisi bulunamadı.')
+                return redirect('backup:backup_list')
+            
+            # Management command'ı tenant context'inde çağır
+            # Bu sayede backup kaydı doğru schema'da oluşturulur
+            with tenant_context(tenant):
+                call_command(
+                    'backup_database',
+                    schema=current_schema,  # Güvenlik: Her zaman mevcut tenant'ın schema'sı
+                    type='manual',
+                    user_id=tenant_user.id if tenant_user else None
+                )
             
             messages.success(request, 'Yedekleme başarıyla oluşturuldu.')
+            
             return redirect('backup:backup_list')
         except Exception as e:
             messages.error(request, f'Yedekleme oluşturulurken hata: {str(e)}')

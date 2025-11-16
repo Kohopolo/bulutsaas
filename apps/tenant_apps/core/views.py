@@ -51,6 +51,9 @@ def tenant_login(request):
                 tenant_user.last_login_at = timezone.now()
                 tenant_user.save()
                 
+                # Otel seçimi kontrolü middleware'de yapılıyor, burada sadece login işlemini tamamla
+                # Middleware her request'te çalışacak ve gerekirse otel seçim sayfasına yönlendirecek
+                
                 # Kullanıcı tipine göre yönlendir
                 if tenant_user.user_type and tenant_user.user_type.dashboard_url:
                     return redirect(tenant_user.user_type.dashboard_url)
@@ -292,11 +295,39 @@ def tenant_dashboard(request):
     # Modül bazlı istatistikleri hesapla
     module_statistics = get_module_statistics(request.tenant, enabled_modules)
     
+    # Public schema'dan aktif haberler ve reklamları çek
+    from django_tenants.utils import schema_context
+    from apps.core.models import Announcement, Advertisement
+    from django.utils import timezone
+    
+    announcements = []
+    advertisements = []
+    
+    with schema_context('public'):
+        # Aktif duyurular
+        anns = Announcement.objects.filter(is_deleted=False, is_active=True)
+        now = timezone.now()
+        for ann in anns:
+            if (not ann.start_date or now >= ann.start_date) and \
+               (not ann.end_date or now <= ann.end_date):
+                announcements.append(ann)
+        announcements = sorted(announcements, key=lambda x: (-x.priority, -x.created_at.timestamp()))[:5]
+        
+        # Aktif reklamlar
+        ads = Advertisement.objects.filter(is_deleted=False, is_active=True)
+        for ad in ads:
+            if (not ad.start_date or now >= ad.start_date) and \
+               (not ad.end_date or now <= ad.end_date):
+                advertisements.append(ad)
+        advertisements = sorted(advertisements, key=lambda x: (-x.priority, -x.created_at.timestamp()))[:5]
+    
     context = {
         'tenant_user': tenant_user,
         'user_roles': user_roles,
         'module_statistics': module_statistics,
         'enabled_modules': enabled_modules,
+        'announcements': announcements,
+        'advertisements': advertisements,
     }
     
     # Kullanıcı tipine göre özel template kullan

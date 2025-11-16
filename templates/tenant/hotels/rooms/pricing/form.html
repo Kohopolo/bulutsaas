@@ -117,21 +117,72 @@
 
 {% block extrajs %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const pricingType = document.getElementById('id_pricing_type');
-    const perPersonSection = document.getElementById('per-person-section');
-    
-    function togglePerPersonSection() {
-        if (pricingType.value === 'per_person') {
-            perPersonSection.style.display = 'block';
-        } else {
-            perPersonSection.style.display = 'none';
+(function() {
+    // Kişi Çarpanı seçilince altta form fieldler açılmalı
+    function initPricingTypeToggle() {
+        const pricingType = document.getElementById('id_pricing_type');
+        const perPersonSection = document.getElementById('per-person-section');
+        
+        if (!pricingType || !perPersonSection) {
+            // Elementler henüz yüklenmemiş, biraz bekle
+            setTimeout(initPricingTypeToggle, 100);
+            return;
         }
+        
+        function togglePerPersonSection() {
+            // Kişi Çarpanı seçilince altta form fieldler açılmalı
+            if (pricingType.value === 'per_person') {
+                perPersonSection.style.display = 'block';
+                // Smooth transition için
+                setTimeout(function() {
+                    perPersonSection.style.opacity = '1';
+                }, 10);
+            } else {
+                // Sabit Oda Fiyatı seçilince gizle
+                perPersonSection.style.opacity = '0';
+                setTimeout(function() {
+                    perPersonSection.style.display = 'none';
+                }, 300);
+            }
+        }
+        
+        // Sayfa yüklendiğinde kontrol et
+        togglePerPersonSection();
+        
+        // Değişiklik olduğunda kontrol et
+        pricingType.addEventListener('change', togglePerPersonSection);
     }
     
-    pricingType.addEventListener('change', togglePerPersonSection);
-    togglePerPersonSection();
-});
+    // DOMContentLoaded ve modal içinde çalışması için
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPricingTypeToggle);
+    } else {
+        initPricingTypeToggle();
+    }
+    
+    // Modal içinde yüklendiğinde de çalışması için
+    if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    const addedPricingType = document.getElementById('id_pricing_type');
+                    if (addedPricingType) {
+                        initPricingTypeToggle();
+                    }
+                }
+            });
+        });
+        
+        // Modal body'yi gözle
+        const modalBody = document.getElementById('modalBody');
+        if (modalBody) {
+            observer.observe(modalBody, { childList: true, subtree: true });
+        }
+        
+        // Document body'yi de gözle (modal açıldığında)
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+})();
 </script>
 {% endblock %}
 

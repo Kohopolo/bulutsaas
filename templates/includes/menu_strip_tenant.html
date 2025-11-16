@@ -1,0 +1,445 @@
+<!-- Menu Strip (VB MenuStrip) - Tenant -->
+<div class="menu-strip">
+    <!-- Accordion Menü Öğeleri -->
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-general" onclick="toggleAccordion('menu-general')">
+        <span>Genel</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-general" data-menu-id="menu-general">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('dashboard');">
+            <span>Ana Sayfa</span>
+        </div>
+    </div>
+
+    <!-- Müşteri Yönetimi -->
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-customers" onclick="toggleAccordion('menu-customers')">
+        <span>Müşteri Yönetimi</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-customers" data-menu-id="menu-customers">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('customers');">
+            <span>•</span>
+            <span>Müşteriler</span>
+        </div>
+    </div>
+
+    <!-- Resepsiyon -->
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-reception" onclick="toggleAccordion('menu-reception')">
+        <span>Resepsiyon</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-reception" data-menu-id="menu-reception">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception');">
+            <span>•</span>
+            <span>Dashboard</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/reservations');">
+            <span>•</span>
+            <span>Rezervasyonlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/reservations/archived');">
+            <span>•</span>
+            <span>Arşivlenmiş Rezervasyonlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/voucher-templates');">
+            <span>•</span>
+            <span>Voucher Şablonları</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/room-plan');">
+            <span>•</span>
+            <span>Oda Planı</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/room-status');">
+            <span>•</span>
+            <span>Oda Durumu</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/room-status-dashboard');">
+            <span>•</span>
+            <span>Oda Durumu Dashboard</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/room-calendar');">
+            <span>•</span>
+            <span>Oda Takvimi</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reception/end-of-day');">
+            <span>•</span>
+            <span>Gün Sonu İşlemleri</span>
+        </div>
+    </div>
+
+    <!-- Otel Yönetimi -->
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-hotels" onclick="toggleAccordion('menu-hotels')">
+        <span>Otel Yönetimi</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-hotels" data-menu-id="menu-hotels">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels');">
+            <span>•</span>
+            <span>Oteller</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/rooms');">
+            <span>•</span>
+            <span>Odalar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings');">
+            <span>•</span>
+            <span>Otel Ayarları</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/regions');">
+            <span>•</span>
+            <span>Bölgeler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/cities');">
+            <span>•</span>
+            <span>Şehirler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/hotel-types');">
+            <span>•</span>
+            <span>Otel Türleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/room-types');">
+            <span>•</span>
+            <span>Oda Tipleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/board-types');">
+            <span>•</span>
+            <span>Pansiyon Tipleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/bed-types');">
+            <span>•</span>
+            <span>Yatak Tipleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/room-features');">
+            <span>•</span>
+            <span>Oda Özellikleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/hotel-features');">
+            <span>•</span>
+            <span>Otel Özellikleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/extra-services');">
+            <span>•</span>
+            <span>Ekstra Hizmetler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/room-numbers');">
+            <span>•</span>
+            <span>Oda Numaraları</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/floors');">
+            <span>•</span>
+            <span>Kat Yönetimi</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/settings/blocks');">
+            <span>•</span>
+            <span>Blok Yönetimi</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('hotels/reports/usage');">
+            <span>•</span>
+            <span>Raporlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('housekeeping');">
+            <span>•</span>
+            <span>Kat Hizmetleri</span>
+        </div>
+    </div>
+
+    <!-- Finans -->
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-finance" onclick="toggleAccordion('menu-finance')">
+        <span>Finans</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-finance" data-menu-id="menu-finance">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('finance');">
+            <span>•</span>
+            <span>Kasa Yönetimi</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('accounting');">
+            <span>•</span>
+            <span>Muhasebe</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('refunds');">
+            <span>•</span>
+            <span>İadeler</span>
+        </div>
+    </div>
+
+    <!-- Tur Yönetimi -->
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-tours" onclick="toggleAccordion('menu-tours')">
+        <span>Tur Yönetimi</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-tours" data-menu-id="menu-tours">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours');">
+            <span>•</span>
+            <span>Turlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/reservations');">
+            <span>•</span>
+            <span>Rezervasyonlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/waiting-list');">
+            <span>•</span>
+            <span>Bekleme Listesi</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/regions');">
+            <span>•</span>
+            <span>Bölgeler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/locations');">
+            <span>•</span>
+            <span>Lokasyonlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/cities');">
+            <span>•</span>
+            <span>Şehirler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/types');">
+            <span>•</span>
+            <span>Tur Tipleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/voucher-templates');">
+            <span>•</span>
+            <span>Voucher Şablonları</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/customers');">
+            <span>•</span>
+            <span>Müşteriler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/agencies');">
+            <span>•</span>
+            <span>Aceler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/campaigns');">
+            <span>•</span>
+            <span>Kampanyalar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/promo-codes');">
+            <span>•</span>
+            <span>Promo Kodları</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/operations');">
+            <span>•</span>
+            <span>Operasyonlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/operations/guides');">
+            <span>•</span>
+            <span>Rehberler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/operations/vehicles');">
+            <span>•</span>
+            <span>Araçlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/operations/hotels');">
+            <span>•</span>
+            <span>Otel İşletmeleri</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/operations/transfers');">
+            <span>•</span>
+            <span>Transferler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/notification-templates');">
+            <span>•</span>
+            <span>Bildirim Şablonları</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('tours/reports');">
+            <span>•</span>
+            <span>Raporlar</span>
+        </div>
+    </div>
+
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-reports" onclick="toggleAccordion('menu-reports')">
+        <span>Raporlar</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-reports" data-menu-id="menu-reports">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('reports');">
+            <span>•</span>
+            <span>Raporlar</span>
+        </div>
+    </div>
+
+    <div class="menu-item menu-accordion-item" data-menu-id="menu-system" onclick="toggleAccordion('menu-system')">
+        <span>Sistem</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content menu-accordion-content" id="menu-system" data-menu-id="menu-system">
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('users');">
+            <span>•</span>
+            <span>Kullanıcılar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('roles');">
+            <span>•</span>
+            <span>Roller</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('permissions');">
+            <span>•</span>
+            <span>Yetkiler</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('settings');">
+            <span>•</span>
+            <span>Ayarlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="closeAllAccordions(); loadModule('subscriptions');">
+            <span>•</span>
+            <span>Paket Yönetimi</span>
+        </div>
+    </div>
+
+    <span class="menu-item" onclick="showHelp()">Yardım</span>
+    
+    <span class="menu-right">
+        <span id="liveClock" style="font-weight: bold;"></span>
+    </span>
+</div>
+
+<script>
+function toggleAccordion(menuId) {
+    console.log('toggleAccordion çağrıldı:', menuId);
+    const menu = document.getElementById(menuId);
+    if (!menu) {
+        console.error('Menu bulunamadı:', menuId);
+        return;
+    }
+    
+    // Menu item'ı data attribute ile bul
+    const menuItem = document.querySelector(`[data-menu-id="${menuId}"].menu-accordion-item`);
+    if (!menuItem) {
+        console.error('Menu item bulunamadı:', menuId);
+        return;
+    }
+    
+    console.log('Menu bulundu:', menu);
+    console.log('Menu item bulundu:', menuItem);
+    
+    const arrow = menuItem.querySelector('.accordion-arrow');
+    const isOpen = menu.style.display === 'block' || window.getComputedStyle(menu).display === 'block';
+    
+    console.log('Menü açık mı?', isOpen);
+    
+    if (isOpen) {
+        // Menüyü kapat
+        menu.style.display = 'none';
+        if (arrow) {
+            arrow.textContent = '▼';
+            arrow.style.transform = 'rotate(0deg)';
+        }
+        menuItem.classList.remove('active');
+        console.log('Menü kapatıldı');
+    } else {
+        // Diğer tüm menüleri kapat
+        document.querySelectorAll('.menu-accordion-content').forEach(item => {
+            if (item.id !== menuId) {
+                item.style.display = 'none';
+                const otherMenuId = item.getAttribute('data-menu-id');
+                if (otherMenuId) {
+                    const otherMenuItem = document.querySelector(`[data-menu-id="${otherMenuId}"].menu-accordion-item`);
+                    if (otherMenuItem) {
+                        const otherArrow = otherMenuItem.querySelector('.accordion-arrow');
+                        if (otherArrow) {
+                            otherArrow.textContent = '▼';
+                            otherArrow.style.transform = 'rotate(0deg)';
+                        }
+                        otherMenuItem.classList.remove('active');
+                    }
+                }
+            }
+        });
+        
+        // Menüyü aç
+        menu.style.setProperty('display', 'block', 'important');
+        
+        // Pozisyonu ayarla
+        const menuItemRect = menuItem.getBoundingClientRect();
+        const menuStrip = menuItem.closest('.menu-strip');
+        if (menuStrip) {
+            const menuStripRect = menuStrip.getBoundingClientRect();
+            menu.style.left = (menuItemRect.left - menuStripRect.left) + 'px';
+            menu.style.top = (menuItemRect.bottom - menuStripRect.top + 1) + 'px';
+            console.log('Pozisyon ayarlandı:', {
+                left: menu.style.left,
+                top: menu.style.top,
+                menuItemRect: menuItemRect,
+                menuStripRect: menuStripRect
+            });
+        }
+        
+        if (arrow) {
+            arrow.textContent = '▲';
+            arrow.style.transform = 'rotate(180deg)';
+        }
+        menuItem.classList.add('active');
+        console.log('Menü açıldı');
+    }
+}
+
+// Sayfa yüklendiğinde tüm menüleri kapat
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.menu-accordion-content').forEach(menu => {
+        menu.style.display = 'none';
+    });
+    document.querySelectorAll('.menu-accordion-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Ekranda herhangi bir yere tıklandığında accordion menüleri kapat
+    document.addEventListener('click', function(event) {
+        // Tıklanan elementin menu-strip veya accordion-content içinde olup olmadığını kontrol et
+        const menuStrip = document.querySelector('.menu-strip');
+        if (!menuStrip) return;
+        
+        // Eğer tıklama menu-strip içindeyse veya accordion-content içindeyse, accordion menüyü kapatma
+        const clickedElement = event.target;
+        const isInMenuStrip = menuStrip.contains(clickedElement);
+        const isInAccordionContent = clickedElement.closest('.menu-accordion-content') !== null;
+        
+        if (isInMenuStrip || isInAccordionContent) {
+            return;
+        }
+        
+        // Menu-strip ve accordion-content dışına tıklandıysa, tüm accordion menülerini kapat
+        closeAllAccordions();
+    });
+});
+
+// Tüm accordion menülerini kapat
+function closeAllAccordions() {
+    document.querySelectorAll('.menu-accordion-content').forEach(menu => {
+        menu.style.display = 'none';
+    });
+    document.querySelectorAll('.menu-accordion-item').forEach(item => {
+        item.classList.remove('active');
+        const arrow = item.querySelector('.accordion-arrow');
+        if (arrow) {
+            arrow.textContent = '▼';
+            arrow.style.transform = 'rotate(0deg)';
+        }
+    });
+}
+
+// Global olarak erişilebilir yap
+window.toggleAccordion = toggleAccordion;
+window.closeAllAccordions = closeAllAccordions;
+
+// Canlı Saat Fonksiyonu
+function updateClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    
+    const clockElement = document.getElementById('liveClock');
+    if (clockElement) {
+        clockElement.textContent = `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+    }
+}
+
+// Sayfa yüklendiğinde saati başlat ve her saniye güncelle
+document.addEventListener('DOMContentLoaded', function() {
+    updateClock();
+    setInterval(updateClock, 1000);
+});
+</script>
+

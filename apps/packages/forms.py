@@ -120,6 +120,8 @@ class PackageModuleInlineForm(forms.ModelForm):
         # Tüm aktif modülleri göster
         from apps.modules.models import Module
         self.fields['module'].queryset = Module.objects.filter(is_active=True).order_by('sort_order', 'name')
+        # Module field'ı zorunlu değil (inline formset için boş bırakılabilir)
+        self.fields['module'].required = False
         
         # JSONField'lar için varsayılan değerleri string'e çevir (eğer instance varsa)
         if self.instance and self.instance.pk:
@@ -128,6 +130,19 @@ class PackageModuleInlineForm(forms.ModelForm):
                 self.initial['permissions'] = json.dumps(self.instance.permissions, ensure_ascii=False, indent=2)
             if self.instance.limits:
                 self.initial['limits'] = json.dumps(self.instance.limits, ensure_ascii=False, indent=2)
+    
+    def clean(self):
+        """Form validation"""
+        cleaned_data = super().clean()
+        module = cleaned_data.get('module')
+        
+        # Eğer module seçilmemişse ve yeni bir kayıt oluşturuluyorsa, formu geçersiz yapma
+        # (Inline formset'te boş formlar için)
+        if not module and not self.instance.pk:
+            # Boş form, validation hatası verme
+            return cleaned_data
+        
+        return cleaned_data
     
     def clean_permissions(self):
         """JSON permissions field'ını validate et"""

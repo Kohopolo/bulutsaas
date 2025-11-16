@@ -1,0 +1,566 @@
+<!-- Module Sidebar (Sol Panel - Modül Menüsü) - Tenant -->
+<div class="left-panel">
+    <div class="panel-title">MODÜLLER</div>
+    
+    <!-- Genel Modüller -->
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-general')">
+            <span>Genel</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-general">
+            <div class="module-item" onclick="loadModule('dashboard')">
+                <span>Ana Sayfa</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Müşteri Yönetimi -->
+    {% if has_customers_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-customers')">
+            <span>Müşteri Yönetimi</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-customers">
+            <div class="module-item" onclick="loadModule('customers')">
+                <div class="module-icon">•</div>
+                <span>Müşteriler</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resepsiyon -->
+    {% if has_reception_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-reception')">
+            <span>Resepsiyon</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-reception">
+            <div class="module-item" onclick="loadModule('reception')">
+                <div class="module-icon">•</div>
+                <span>Dashboard</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/reservations')">
+                <div class="module-icon">•</div>
+                <span>Rezervasyonlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/reservations/archived')">
+                <div class="module-icon">•</div>
+                <span>Arşivlenmiş Rezervasyonlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/voucher-templates')">
+                <div class="module-icon">•</div>
+                <span>Voucher Şablonları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/room-plan')">
+                <div class="module-icon">•</div>
+                <span>Oda Planı</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/room-status')">
+                <div class="module-icon">•</div>
+                <span>Oda Durumu</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/room-status-dashboard')">
+                <div class="module-icon">•</div>
+                <span>Oda Durumu Dashboard</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/room-calendar')">
+                <div class="module-icon">•</div>
+                <span>Oda Takvimi</span>
+            </div>
+            <div class="module-item" onclick="loadModule('reception/end-of-day')">
+                <div class="module-icon">•</div>
+                <span>Gün Sonu İşlemleri</span>
+            </div>
+            {% if has_price_calculator_module %}
+            <div class="module-item" onclick="loadModule('reception/price-calculator')">
+                <div class="module-icon">•</div>
+                <span>Fiyat Hesaplama</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Otel Yönetimi -->
+    {% if has_hotel_module or has_housekeeping_module or has_technical_service_module or has_quality_control_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-hotels')">
+            <span>Otel Yönetimi</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-hotels">
+            {% if has_hotel_module %}
+            <div class="module-item" onclick="loadModule('hotels')">
+                <div class="module-icon">•</div>
+                <span>Oteller</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/rooms')">
+                <div class="module-icon">•</div>
+                <span>Odalar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/room-types')">
+                <div class="module-icon">•</div>
+                <span>Oda Tipleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings')">
+                <div class="module-icon">•</div>
+                <span>Otel Ayarları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/regions')">
+                <div class="module-icon">•</div>
+                <span>Bölgeler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/cities')">
+                <div class="module-icon">•</div>
+                <span>Şehirler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/hotel-types')">
+                <div class="module-icon">•</div>
+                <span>Otel Türleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/board-types')">
+                <div class="module-icon">•</div>
+                <span>Pansiyon Tipleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/bed-types')">
+                <div class="module-icon">•</div>
+                <span>Yatak Tipleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/room-features')">
+                <div class="module-icon">•</div>
+                <span>Oda Özellikleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/hotel-features')">
+                <div class="module-icon">•</div>
+                <span>Otel Özellikleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/extra-services')">
+                <div class="module-icon">•</div>
+                <span>Ekstra Hizmetler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/room-numbers')">
+                <div class="module-icon">•</div>
+                <span>Oda Numaraları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/floors')">
+                <div class="module-icon">•</div>
+                <span>Kat Yönetimi</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/settings/blocks')">
+                <div class="module-icon">•</div>
+                <span>Blok Yönetimi</span>
+            </div>
+            <div class="module-item" onclick="loadModule('hotels/reports/usage')">
+                <div class="module-icon">•</div>
+                <span>Raporlar</span>
+            </div>
+            {% endif %}
+            {% if has_housekeeping_module %}
+            <div class="module-item" onclick="loadModule('housekeeping')">
+                <div class="module-icon">•</div>
+                <span>Kat Hizmetleri</span>
+            </div>
+            {% endif %}
+            {% if has_technical_service_module %}
+            <div class="module-item" onclick="loadModule('technical_service')">
+                <div class="module-icon">•</div>
+                <span>Teknik Servis</span>
+            </div>
+            {% endif %}
+            {% if has_quality_control_module %}
+            <div class="module-item" onclick="loadModule('quality_control')">
+                <div class="module-icon">•</div>
+                <span>Kalite Kontrol</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Operasyon -->
+    {% if has_sales_module or has_staff_module or has_channel_management_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-operations')">
+            <span>Operasyon</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-operations">
+            {% if has_sales_module %}
+            <div class="module-item" onclick="loadModule('sales')">
+                <div class="module-icon">•</div>
+                <span>Satış Yönetimi</span>
+            </div>
+            {% endif %}
+            {% if has_staff_module %}
+            <div class="module-item" onclick="loadModule('staff')">
+                <div class="module-icon">•</div>
+                <span>Personel Yönetimi</span>
+            </div>
+            {% endif %}
+            {% if has_channel_management_module %}
+            <div class="module-item" onclick="loadModule('channel_management')">
+                <div class="module-icon">•</div>
+                <span>Kanal Yönetimi</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Finans -->
+    {% if has_finance_module or has_accounting_module or has_refunds_module or has_payment_management_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-finance')">
+            <span>Finans</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-finance">
+            {% if has_finance_module %}
+            <div class="module-item" onclick="loadModule('finance')">
+                <div class="module-icon">•</div>
+                <span>Kasa Yönetimi</span>
+            </div>
+            {% endif %}
+            {% if has_accounting_module %}
+            <div class="module-item" onclick="loadModule('accounting')">
+                <div class="module-icon">•</div>
+                <span>Muhasebe</span>
+            </div>
+            {% endif %}
+            {% if has_refunds_module %}
+            <div class="module-item" onclick="loadModule('refunds')">
+                <div class="module-icon">•</div>
+                <span>İadeler</span>
+            </div>
+            {% endif %}
+            {% if has_payment_management_module %}
+            <div class="module-item" onclick="loadModule('payment_management')">
+                <div class="module-icon">•</div>
+                <span>Ödeme Yönetimi</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tur Yönetimi -->
+    {% if has_tour_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-tours')">
+            <span>Tur Yönetimi</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-tours">
+            <div class="module-item" onclick="loadModule('tours')">
+                <div class="module-icon">•</div>
+                <span>Turlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/reservations')">
+                <div class="module-icon">•</div>
+                <span>Rezervasyonlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/waiting-list')">
+                <div class="module-icon">•</div>
+                <span>Bekleme Listesi</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/regions')">
+                <div class="module-icon">•</div>
+                <span>Bölgeler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/locations')">
+                <div class="module-icon">•</div>
+                <span>Lokasyonlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/cities')">
+                <div class="module-icon">•</div>
+                <span>Şehirler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/types')">
+                <div class="module-icon">•</div>
+                <span>Tur Tipleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/voucher-templates')">
+                <div class="module-icon">•</div>
+                <span>Voucher Şablonları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/customers')">
+                <div class="module-icon">•</div>
+                <span>Müşteriler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/agencies')">
+                <div class="module-icon">•</div>
+                <span>Aceler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/campaigns')">
+                <div class="module-icon">•</div>
+                <span>Kampanyalar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/promo-codes')">
+                <div class="module-icon">•</div>
+                <span>Promo Kodları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/operations')">
+                <div class="module-icon">•</div>
+                <span>Operasyonlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/operations/guides')">
+                <div class="module-icon">•</div>
+                <span>Rehberler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/operations/vehicles')">
+                <div class="module-icon">•</div>
+                <span>Araçlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/operations/hotels')">
+                <div class="module-icon">•</div>
+                <span>Otel İşletmeleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/operations/transfers')">
+                <div class="module-icon">•</div>
+                <span>Transferler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/notification-templates')">
+                <div class="module-icon">•</div>
+                <span>Bildirim Şablonları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('tours/reports')">
+                <div class="module-icon">•</div>
+                <span>Raporlar</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Feribot Bileti -->
+    {% if has_ferry_tickets_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-ferry-tickets')">
+            <span>Feribot Bileti</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-ferry-tickets">
+            <div class="module-item" onclick="loadModule('ferry_tickets')">
+                <div class="module-icon">•</div>
+                <span>Dashboard</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/tickets')">
+                <div class="module-icon">•</div>
+                <span>Biletler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/tickets/archived')">
+                <div class="module-icon">•</div>
+                <span>Arşivlenmiş Biletler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/voucher-templates')">
+                <div class="module-icon">•</div>
+                <span>Voucher Şablonları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/ferries')">
+                <div class="module-icon">•</div>
+                <span>Feribotlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/routes')">
+                <div class="module-icon">•</div>
+                <span>Rotalar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/schedules')">
+                <div class="module-icon">•</div>
+                <span>Seferler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/api-configurations')">
+                <div class="module-icon">•</div>
+                <span>API Konfigürasyonları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('ferry_tickets/api-syncs')">
+                <div class="module-icon">•</div>
+                <span>API Senkronizasyon Kayıtları</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bungalov Yönetimi -->
+    {% if has_bungalovs_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-bungalovs')">
+            <span>Bungalov Yönetimi</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-bungalovs">
+            <div class="module-item" onclick="loadModule('bungalovs')">
+                <div class="module-icon">•</div>
+                <span>Dashboard</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/bungalovs')">
+                <div class="module-icon">•</div>
+                <span>Bungalovlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/types')">
+                <div class="module-icon">•</div>
+                <span>Bungalov Tipleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/features')">
+                <div class="module-icon">•</div>
+                <span>Bungalov Özellikleri</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/reservations')">
+                <div class="module-icon">•</div>
+                <span>Rezervasyonlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/voucher-templates')">
+                <div class="module-icon">•</div>
+                <span>Voucher Şablonları</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/cleanings')">
+                <div class="module-icon">•</div>
+                <span>Temizlik Yönetimi</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/maintenances')">
+                <div class="module-icon">•</div>
+                <span>Bakım Yönetimi</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/equipments')">
+                <div class="module-icon">•</div>
+                <span>Ekipman Yönetimi</span>
+            </div>
+            <div class="module-item" onclick="loadModule('bungalovs/prices')">
+                <div class="module-icon">•</div>
+                <span>Fiyatlandırma</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Raporlar -->
+    {% if has_reports_module %}
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-reports')">
+            <span>Raporlar</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-reports">
+            <div class="module-item" onclick="loadModule('reports')">
+                <div class="module-icon">•</div>
+                <span>Raporlar</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sistem -->
+    <div class="module-group">
+        <div class="module-group-title" onclick="toggleModuleGroup('module-system')">
+            <span>Sistem</span>
+            <span class="module-group-arrow">▼</span>
+        </div>
+        <div class="module-group-content" id="module-system">
+            <div class="module-item" onclick="loadModule('users')">
+                <div class="module-icon">•</div>
+                <span>Kullanıcılar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('roles')">
+                <div class="module-icon">•</div>
+                <span>Roller</span>
+            </div>
+            <div class="module-item" onclick="loadModule('permissions')">
+                <div class="module-icon">•</div>
+                <span>Yetkiler</span>
+            </div>
+            <div class="module-item" onclick="loadModule('settings')">
+                <div class="module-icon">•</div>
+                <span>Ayarlar</span>
+            </div>
+            <div class="module-item" onclick="loadModule('subscriptions')">
+                <div class="module-icon">•</div>
+                <span>Paket Yönetimi</span>
+            </div>
+            {% if has_backup_module %}
+            <div class="module-item" onclick="loadModule('backup')">
+                <div class="module-icon">•</div>
+                <span>Yedekleme Yönetimi</span>
+            </div>
+            {% endif %}
+            {% if has_ai_module %}
+            <div class="module-item" onclick="loadModule('ai')">
+                <div class="module-icon">•</div>
+                <span>AI Yönetimi</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleModuleGroup(groupId) {
+    const content = document.getElementById(groupId);
+    if (!content) return;
+    
+    const title = content.previousElementSibling;
+    const arrow = title.querySelector('.module-group-arrow');
+    
+    const isOpen = content.style.display !== 'none' && window.getComputedStyle(content).display !== 'none';
+    
+    // Eğer açıksa kapat
+    if (isOpen) {
+        content.style.display = 'none';
+        if (arrow) {
+            arrow.textContent = '▼';
+            arrow.style.transform = 'rotate(0deg)';
+        }
+        title.classList.remove('active');
+    } else {
+        // Önce diğer tüm açık menüleri kapat
+        document.querySelectorAll('.module-group-content').forEach(otherContent => {
+            if (otherContent.id !== groupId) {
+                otherContent.style.display = 'none';
+                const otherTitle = otherContent.previousElementSibling;
+                const otherArrow = otherTitle.querySelector('.module-group-arrow');
+                if (otherArrow) {
+                    otherArrow.textContent = '▼';
+                    otherArrow.style.transform = 'rotate(0deg)';
+                }
+                otherTitle.classList.remove('active');
+            }
+        });
+        
+        // Şimdi tıklanan menüyü aç
+        content.style.display = 'block';
+        if (arrow) {
+            arrow.textContent = '▲';
+            arrow.style.transform = 'rotate(180deg)';
+        }
+        title.classList.add('active');
+    }
+}
+
+// Sayfa yüklendiğinde tüm grupları açık başlat (veya kapalı - tercihe göre)
+document.addEventListener('DOMContentLoaded', function() {
+    // İlk grup (Genel) açık başlasın
+    const firstGroup = document.getElementById('module-general');
+    if (firstGroup) {
+        firstGroup.style.display = 'block';
+        const firstTitle = firstGroup.previousElementSibling;
+        const firstArrow = firstTitle.querySelector('.module-group-arrow');
+        if (firstArrow) {
+            firstArrow.textContent = '▲';
+            firstArrow.style.transform = 'rotate(180deg)';
+        }
+        firstTitle.classList.add('active');
+    }
+    
+    // Diğer grupları kapalı başlat
+    document.querySelectorAll('.module-group-content').forEach(content => {
+        if (content.id !== 'module-general') {
+            content.style.display = 'none';
+        }
+    });
+});
+
+// Global olarak erişilebilir yap
+window.toggleModuleGroup = toggleModuleGroup;
+</script>
+

@@ -445,15 +445,22 @@ def calculate_room_price_with_utility(
                 pass
         
         # Fiyat hesapla (RoomPrice.calculate_price metodunu kullan)
-        price_result = room_price.calculate_price(
-            check_date=check_in_date,
-            adults=adult_count,
-            children=child_count,
-            child_ages=child_ages or [],
-            agency_id=agency_id,
-            channel_name=channel_name,
-            nights=nights
-        )
+        try:
+            price_result = room_price.calculate_price(
+                check_date=check_in_date,
+                adults=adult_count,
+                children=child_count,
+                child_ages=child_ages or [],
+                agency_id=agency_id,
+                channel_name=channel_name,
+                nights=nights
+            )
+        except ValueError as e:
+            # calculate_dynamic_price'den gelen hata
+            return {
+                'success': False,
+                'error': str(e)
+            }
         
         # Gecelik ortalama fiyat
         total_price = price_result.get('total_price', Decimal('0'))

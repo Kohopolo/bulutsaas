@@ -751,11 +751,17 @@ class RoomPrice(TimeStampedModel, SoftDeleteModel):
                     day_price = sp.weekday_prices[day_name]
                     price = day_price.get('per_person' if self.pricing_type == RoomPricingType.PER_PERSON else 'fixed')
                     if price:
-                        special_prices.append({
-                            'date': check_date,
-                            'day_of_week': check_date.weekday(),
-                            'price': Decimal(str(price)),
-                        })
+                        try:
+                            # Eğer price 'per_person' string'i ise atla
+                            if isinstance(price, str) and price.lower().strip() == 'per_person':
+                                continue
+                            special_prices.append({
+                                'date': check_date,
+                                'day_of_week': check_date.weekday(),
+                                'price': Decimal(str(price)),
+                            })
+                        except (ValueError, TypeError):
+                            continue
                 else:
                     # Hafta içi/hafta sonu kontrolü
                     is_weekend = check_date.weekday() >= 5
@@ -825,6 +831,20 @@ class RoomPrice(TimeStampedModel, SoftDeleteModel):
         check_out_date = check_date + timedelta(days=nights) if check_date else None
         
         # Global utility fonksiyonunu çağır
+        # basic_nightly_price kontrolü
+        if not self.basic_nightly_price or self.basic_nightly_price == 0:
+            return {
+                'total_price': Decimal('0'),
+                'adult_price': Decimal('0'),
+                'child_price': Decimal('0'),
+                'breakdown': {
+                    'base_price': Decimal('0'),
+                    'pricing_type': 'fixed' if self.pricing_type == RoomPricingType.FIXED_ROOM else 'per_person',
+                    'adults': adults,
+                    'children': children,
+                }
+            }
+        
         result = calculate_dynamic_price(
             base_price=self.basic_nightly_price,
             check_in_date=check_date,

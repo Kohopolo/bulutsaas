@@ -157,14 +157,24 @@
                                         {{ reservation.get_status_display }}
                                     </span>
                                 </td>
-                                <td>
-                                    <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="vb-button small">Detay</a>
-                                    <button onclick="openReservationEditModal({{ reservation.pk }})" class="vb-button small">Düzenle</button>
-                                    <button onclick="changeReservationStatus({{ reservation.pk }})" class="vb-button small">Durum</button>
-                                    <a href="{% url 'reception:reservation_voucher_create' reservation.pk %}" class="vb-button small">Voucher</a>
-                                    <button onclick="refundReservation({{ reservation.pk }})" class="vb-button small">İade</button>
-                                    <button onclick="openDeleteReservationModal({{ reservation.pk }}, '{{ reservation.reservation_code }}', '{{ reservation.customer.first_name }} {{ reservation.customer.last_name }}', '{{ reservation.room.name }}{% if reservation.room_number %} - {{ reservation.room_number.number }}{% endif %}', '{{ reservation.check_in_date|date:"d.m.Y" }}', '{{ reservation.check_out_date|date:"d.m.Y" }}')" class="vb-button small danger" style="background: #dc3545; color: white; border-color: #dc3545;">
-                                        <i class="fas fa-trash"></i> Sil
+                                <td style="white-space: nowrap; text-align: center;">
+                                    <a href="{% url 'reception:reservation_detail' reservation.pk %}" class="vb-button small" style="padding: 2px 6px; font-size: 10px; margin: 1px;" title="Detay">
+                                        👁️
+                                    </a>
+                                    <button onclick="openReservationEditModal({{ reservation.pk }})" class="vb-button small" style="padding: 2px 6px; font-size: 10px; margin: 1px;" title="Düzenle">
+                                        ✏️
+                                    </button>
+                                    <button onclick="changeReservationStatus({{ reservation.pk }})" class="vb-button small" style="padding: 2px 6px; font-size: 10px; margin: 1px;" title="Durum">
+                                        🔄
+                                    </button>
+                                    <a href="{% url 'reception:reservation_voucher_create' reservation.pk %}" class="vb-button small" style="padding: 2px 6px; font-size: 10px; margin: 1px;" title="Voucher">
+                                        🎫
+                                    </a>
+                                    <button onclick="refundReservation({{ reservation.pk }})" class="vb-button small" style="padding: 2px 6px; font-size: 10px; margin: 1px;" title="İade">
+                                        💰
+                                    </button>
+                                    <button onclick="openDeleteReservationModal({{ reservation.pk }}, '{{ reservation.reservation_code }}', '{{ reservation.customer.first_name }} {{ reservation.customer.last_name }}', '{{ reservation.room.name }}{% if reservation.room_number %} - {{ reservation.room_number.number }}{% endif %}', '{{ reservation.check_in_date|date:"d.m.Y" }}', '{{ reservation.check_out_date|date:"d.m.Y" }}')" class="vb-button small danger" style="padding: 2px 6px; font-size: 10px; margin: 1px; background: #dc3545; color: white; border-color: #dc3545;" title="Sil">
+                                        🗑️
                                     </button>
                                 </td>
                             </tr>

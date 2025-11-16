@@ -85,4 +85,7 @@ cryptography==42.0.5
 requests==2.31.0
 urllib3==2.1.0
 
+# Digital Ocean API (DNS Management)
+python-digitalocean==1.17.0
+
 

@@ -1,0 +1,184 @@
+<!-- Header Menu Bar (Accordion Menü) - Tenant -->
+<div class="header-menu-bar">
+    <div class="header-menu-item" onclick="toggleAccordion('menu-general')">
+        <span>Genel</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content" id="menu-general">
+        <div class="accordion-submenu-item" onclick="loadModule('dashboard')">
+            <span>🏠</span>
+            <span>Ana Sayfa</span>
+        </div>
+    </div>
+
+    {% if has_customers_module %}
+    <div class="header-menu-item" onclick="toggleAccordion('menu-customers')">
+        <span>Müşteri Yönetimi</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content" id="menu-customers">
+        <div class="accordion-submenu-item" onclick="loadModule('customers')">
+            <span>👥</span>
+            <span>Müşteriler</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if has_hotel_module %}
+    <div class="header-menu-item" onclick="toggleAccordion('menu-hotels')">
+        <span>Otel Yönetimi</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content" id="menu-hotels">
+        <div class="accordion-submenu-item" onclick="loadModule('hotels')">
+            <span>🏨</span>
+            <span>Oteller</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="loadModule('hotels/rooms')">
+            <span>🛏️</span>
+            <span>Odalar</span>
+        </div>
+        {% if has_reception_module %}
+        <div class="accordion-submenu-item" onclick="loadModule('reception')">
+            <span>📋</span>
+            <span>Resepsiyon</span>
+        </div>
+        {% endif %}
+        {% if has_housekeeping_module %}
+        <div class="accordion-submenu-item" onclick="loadModule('housekeeping')">
+            <span>🧹</span>
+            <span>Kat Hizmetleri</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if has_tour_module %}
+    <div class="header-menu-item" onclick="toggleAccordion('menu-tours')">
+        <span>Tur Yönetimi</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content" id="menu-tours">
+        <div class="accordion-submenu-item" onclick="loadModule('tours')">
+            <span>✈️</span>
+            <span>Turlar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="loadModule('tours/reservations')">
+            <span>📅</span>
+            <span>Rezervasyonlar</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if has_finance_module %}
+    <div class="header-menu-item" onclick="toggleAccordion('menu-finance')">
+        <span>Finans</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content" id="menu-finance">
+        <div class="accordion-submenu-item" onclick="loadModule('finance')">
+            <span>💰</span>
+            <span>Kasa Yönetimi</span>
+        </div>
+        {% if has_accounting_module %}
+        <div class="accordion-submenu-item" onclick="loadModule('accounting')">
+            <span>📊</span>
+            <span>Muhasebe</span>
+        </div>
+        {% endif %}
+        {% if has_refunds_module %}
+        <div class="accordion-submenu-item" onclick="loadModule('refunds')">
+            <span>↩️</span>
+            <span>İadeler</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="header-menu-item" onclick="toggleAccordion('menu-reports')">
+        <span>Raporlar</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content" id="menu-reports">
+        <div class="accordion-submenu-item" onclick="loadModule('reports')">
+            <span>📈</span>
+            <span>Raporlar</span>
+        </div>
+    </div>
+
+    <div class="header-menu-item" onclick="toggleAccordion('menu-system')">
+        <span>Sistem</span>
+        <span class="accordion-arrow">▼</span>
+    </div>
+    <div class="accordion-content" id="menu-system">
+        <div class="accordion-submenu-item" onclick="loadModule('users')">
+            <span>👤</span>
+            <span>Kullanıcılar</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="loadModule('roles')">
+            <span>🔐</span>
+            <span>Roller</span>
+        </div>
+        <div class="accordion-submenu-item" onclick="loadModule('permissions')">
+            <span>🔑</span>
+            <span>Yetkiler</span>
+        </div>
+        {% if has_settings_module %}
+        <div class="accordion-submenu-item" onclick="loadModule('settings')">
+            <span>⚙️</span>
+            <span>Ayarlar</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleAccordion(menuId) {
+    const menu = document.getElementById(menuId);
+    const menuItem = menu.previousElementSibling;
+    const arrow = menuItem.querySelector('.accordion-arrow');
+    
+    if (menu.style.display === 'block' || menu.style.display === '') {
+        menu.style.display = 'none';
+        if (arrow) {
+            arrow.textContent = '▼';
+            arrow.style.transform = 'rotate(0deg)';
+        }
+        menuItem.classList.remove('active');
+    } else {
+        // Diğer tüm menüleri kapat
+        document.querySelectorAll('.accordion-content').forEach(item => {
+            if (item.id !== menuId) {
+                item.style.display = 'none';
+                const otherMenuItem = item.previousElementSibling;
+                if (otherMenuItem) {
+                    const otherArrow = otherMenuItem.querySelector('.accordion-arrow');
+                    if (otherArrow) {
+                        otherArrow.textContent = '▼';
+                        otherArrow.style.transform = 'rotate(0deg)';
+                    }
+                    otherMenuItem.classList.remove('active');
+                }
+            }
+        });
+        
+        menu.style.display = 'block';
+        if (arrow) {
+            arrow.textContent = '▲';
+            arrow.style.transform = 'rotate(180deg)';
+        }
+        menuItem.classList.add('active');
+    }
+}
+
+// Sayfa yüklendiğinde tüm menüleri kapat
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.accordion-content').forEach(menu => {
+        menu.style.display = 'none';
+    });
+    document.querySelectorAll('.header-menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
+});
+</script>
+

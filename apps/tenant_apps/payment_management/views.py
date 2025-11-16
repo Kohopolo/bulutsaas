@@ -13,8 +13,68 @@ from django_tenants.utils import get_tenant_model
 
 from .decorators import require_payment_management_permission
 from .forms import TenantPaymentGatewayForm
-from apps.payments.models import PaymentGateway, TenantPaymentGateway
+from apps.payments.models import PaymentGateway, TenantPaymentGateway, PaymentTransaction
 from apps.tenants.models import Tenant
+from datetime import date, timedelta
+from django.db.models import Count, Sum, Q
+
+
+@login_required
+@require_payment_management_permission('view')
+def dashboard(request):
+    """Ödeme Yönetimi Dashboard"""
+    if not hasattr(request, 'tenant') or not request.tenant:
+        messages.error(request, 'Tenant bulunamadı.')
+        return redirect('tenant:dashboard')
+    
+    tenant = request.tenant
+    today = date.today()
+    month_start = today.replace(day=1)
+    
+    # Gateway istatistikleri
+    total_gateways = TenantPaymentGateway.objects.filter(tenant=tenant).count()
+    active_gateways = TenantPaymentGateway.objects.filter(tenant=tenant, is_active=True).count()
+    
+    # İşlem istatistikleri
+    all_transactions = PaymentTransaction.objects.filter(tenant=tenant)
+    
+    # Bu ay işlemler
+    month_transactions = all_transactions.filter(created_at__date__gte=month_start)
+    
+    # Bugünkü işlemler
+    today_transactions = all_transactions.filter(created_at__date=today)
+    
+    # İstatistikler
+    stats = {
+        'total_gateways': total_gateways,
+        'active_gateways': active_gateways,
+        'total_transactions': all_transactions.count(),
+        'month_transactions': month_transactions.count(),
+        'today_transactions': today_transactions.count(),
+        'successful_transactions': all_transactions.filter(status='completed').count(),
+        'pending_transactions': all_transactions.filter(status='pending').count(),
+        'failed_transactions': all_transactions.filter(status='failed').count(),
+        'total_amount': all_transactions.filter(status='completed').aggregate(Sum('amount'))['amount__sum'] or 0,
+        'month_amount': month_transactions.filter(status='completed').aggregate(Sum('amount'))['amount__sum'] or 0,
+    }
+    
+    # Son işlemler
+    recent_transactions = all_transactions.select_related('gateway').order_by('-created_at')[:10]
+    
+    # Aktif gateway'ler
+    active_gateway_list = TenantPaymentGateway.objects.filter(
+        tenant=tenant,
+        is_active=True
+    ).select_related('gateway').order_by('gateway__sort_order', 'gateway__name')[:5]
+    
+    context = {
+        'tenant': tenant,
+        'stats': stats,
+        'recent_transactions': recent_transactions,
+        'active_gateways': active_gateway_list,
+    }
+    
+    return render(request, 'payment_management/dashboard.html', context)
 
 
 @login_required
@@ -78,9 +138,9 @@ def gateway_list(request):
     unconfigured_gateways = [gw for gw in all_gateways if gw.id not in configured_gateway_ids]
     
     # Otel listesi (filtreleme için)
-    accessible_hotels = []
-    if hasattr(request, 'accessible_hotels'):
-        accessible_hotels = request.accessible_hotels
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'tenant': tenant,

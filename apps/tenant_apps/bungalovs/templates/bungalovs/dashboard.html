@@ -8,10 +8,13 @@
     <div class="groupbox">
         <div class="groupbox-header">
             <i class="fas fa-home"></i> Bungalov Dashboard - {{ today|date:"d.m.Y" }}
-            <div style="float: right;">
-                <button onclick="openReservationModal()" class="vb-button primary">
+            <div style="display: flex; gap: 8px; margin-left: auto;">
+                <a href="{% url 'bungalovs:reservation_list' %}" class="vb-button primary">
+                    <i class="fas fa-list"></i> Rezervasyonlar
+                </a>
+                <a href="{% url 'bungalovs:reservation_create' %}" class="vb-button success">
                     <i class="fas fa-plus"></i> Yeni Rezervasyon
-                </button>
+                </a>
             </div>
         </div>
         <div class="groupbox-body">
@@ -52,6 +55,40 @@
                             {% endfor %}
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Hızlı İşlemler / Alt Modüller -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 13px; font-weight: bold; color: #2C5F8D; margin-bottom: 10px;">Hızlı İşlemler</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <a href="{% url 'bungalovs:bungalov_list' %}" class="vb-button primary" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-home mr-2"></i>Bungalovlar
+                    </a>
+                    <a href="{% url 'bungalovs:bungalov_type_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-tags mr-2"></i>Bungalov Tipleri
+                    </a>
+                    <a href="{% url 'bungalovs:bungalov_feature_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-star mr-2"></i>Bungalov Özellikleri
+                    </a>
+                    <a href="{% url 'bungalovs:reservation_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-calendar-check mr-2"></i>Rezervasyonlar
+                    </a>
+                    <a href="{% url 'bungalovs:voucher_template_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-file-invoice mr-2"></i>Voucher Şablonları
+                    </a>
+                    <a href="{% url 'bungalovs:cleaning_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-broom mr-2"></i>Temizlik Yönetimi
+                    </a>
+                    <a href="{% url 'bungalovs:maintenance_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-tools mr-2"></i>Bakım Yönetimi
+                    </a>
+                    <a href="{% url 'bungalovs:equipment_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-couch mr-2"></i>Ekipman Yönetimi
+                    </a>
+                    <a href="{% url 'bungalovs:price_list' %}" class="vb-button" style="padding: 6px 12px; font-size: 11px;">
+                        <i class="fas fa-lira-sign mr-2"></i>Fiyatlandırma
+                    </a>
                 </div>
             </div>
             

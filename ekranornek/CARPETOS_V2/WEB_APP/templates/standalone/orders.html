@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarpetOS Halı Yıkama Otomasyonu - Siparişler</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <div class="menu-strip">
+        <span class="menu-item">Dosya</span>
+        <span class="menu-item">Müşteri İşlemler</span>
+        <span class="menu-item">Raporlar</span>
+        <span class="menu-item">Ayarlar</span>
+        <span class="menu-item">Yardım</span>
+        <span class="menu-right">SMS Bakiyesi: 1.250</span>
+    </div>
+
+    <div class="header-panel">
+        <div class="header-top">
+            <div class="header-title">CARPETOS HALI YIKAMA OTOMASYONU</div>
+            <div class="header-license">LİSANS SAHİBİ: ADA HALI YIKAMA</div>
+        </div>
+        <div class="header-banner">Sipariş Yönetimi</div>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="panel-title">TOPLAM: <span id="totalOrders">0</span> KAYIT</div>
+            <table class="customer-table">
+                <thead>
+                    <tr>
+                        <th>MŞ. NO</th>
+                        <th>CARİ ADI</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody">
+                    <tr>
+                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+            <input type="text" class="search-box" placeholder="Ara..." id="searchInput">
+            <div class="recent-calls">
+                <div class="recent-calls-title">SON ÇAĞRILAR</div>
+                <div id="recentCalls">-</div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="refreshOrders()">🔄 Yenile</button>
+                <button class="btn btn-primary" onclick="searchOrders()">🔍 Ara</button>
+                <button class="btn btn-danger" onclick="deleteOrder()">🗑️ Sil</button>
+            </div>
+        </div>
+
+        <div class="center-panel">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('orders')">SİPARİŞLER</div>
+                <div class="tab" onclick="switchTab('washing')">YIKAMADA OLANLAR</div>
+                <div class="tab" onclick="switchTab('due')">TESLİM ZAMANI GELENLER</div>
+                <div class="tab" onclick="switchTab('delivery')">TESLİMAT LİSTESİ</div>
+                <div class="tab" onclick="switchTab('delivered')">TESLİM EDİLENLER</div>
+                <div class="tab" onclick="switchTab('pending')">BEKLEYEN TESLİMAT</div>
+                <div class="tab" onclick="switchTab('cancelled')">İPTAL</div>
+                <div class="tab" onclick="switchTab('agenda')">AJANDA</div>
+            </div>
+
+            <div class="date-navigation">
+                <button class="date-nav-btn" onclick="changeDate(-1)">◀</button>
+                <input type="date" class="date-picker" id="datePicker" value="">
+                <button class="date-nav-btn" onclick="changeDate(1)">▶</button>
+                <select class="date-picker" id="vehicleFilter">
+                    <option value="">Tüm Araçlar</option>
+                    <option value="Araç 1">Araç 1</option>
+                    <option value="Araç 2">Araç 2</option>
+                </select>
+                <button class="btn btn-primary" onclick="fetchOrders()">Getir</button>
+            </div>
+
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>☑</th>
+                        <th>MU.NO</th>
+                        <th>FİŞ</th>
+                        <th>CARİ ADI</th>
+                        <th>BÖLGE</th>
+                        <th>AÇIKLAMA</th>
+                        <th>ARAÇ</th>
+                        <th>SAAT</th>
+                        <th>ALIŞ SAAT</th>
+                        <th>ADET</th>
+                        <th>M²</th>
+                        <th>TUTAR</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr>
+                        <td colspan="12" class="text-center">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="summary-panel">
+                <div class="summary-item">
+                    <div class="summary-label">TOPLAM TESLİM ALINACAK</div>
+                    <div class="summary-value" id="totalToDeliver">0 ADET</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">TESLİM ALINAN HALI ADEDİ</div>
+                    <div class="summary-value" id="pickedUpCount">0 ADET</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">TESLİM ALINAN TOPLAM M²</div>
+                    <div class="summary-value" id="pickedUpM2">0 M²</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">TESLİM ALINANLAR TUTARI</div>
+                    <div class="summary-value" id="pickedUpAmount">0.00 ₺</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="shortcut-btn" title="Bilgisayar" onclick="window.location.href='dashboard.html'">🖥️</div>
+            <div class="shortcut-btn" title="Online Sipariş" onclick="alert('Online Sipariş')">📱</div>
+            <div class="shortcut-btn" title="Telefon" onclick="alert('Telefon')">📞</div>
+            <div class="shortcut-btn" title="Müşteri Yönetimi" onclick="window.location.href='customers.html'">👥</div>
+            <div class="shortcut-btn" title="Yeni Ekle" onclick="showAddModal()">➕</div>
+            <div class="shortcut-btn" title="Raporlar" onclick="window.location.href='reports.html'">📊</div>
+        </div>
+    </div>
+
+    <div class="footer-panel">
+        <div class="footer-icon" title="Yenile" onclick="refreshPage()">🔄</div>
+        <div class="footer-icon" title="Ara" onclick="showSearch()">🔍</div>
+        <div class="footer-icon" title="Sil" onclick="deleteSelected()">🗑️</div>
+        <div class="footer-icon" title="Bilgi" onclick="showInfo()">ℹ️</div>
+        <div class="footer-icon" title="Yardım" onclick="showHelp()">❓</div>
+        <div class="footer-icon" title="Ayarlar" onclick="window.location.href='settings.html'">⚙️</div>
+        <div class="footer-icon" title="Mesajlar" onclick="showMessages()">💬</div>
+        <div class="footer-icon" title="Hesaplayıcı" onclick="showCalculator()">🔢</div>
+        <div class="footer-icon" title="Kullanıcı" onclick="showUserMenu()">👤</div>
+        <div class="footer-icon" title="Tema" onclick="toggleTheme()">🎨</div>
+        <div class="footer-icon" title="Bağlantı" onclick="checkConnection()">📡</div>
+        <div class="footer-icon" title="Finans" onclick="showFinance()">💰</div>
+        <div class="status-label" id="statusLabel">API Bağlı</div>
+    </div>
+
+    <script>
+        let orders = [];
+        let currentTab = 'orders';
+        
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            loadOrders();
+        }
+        
+        function changeDate(days) {
+            const dateInput = document.getElementById('datePicker');
+            const currentDate = new Date(dateInput.value || new Date());
+            currentDate.setDate(currentDate.getDate() + days);
+            dateInput.value = currentDate.toISOString().split('T')[0];
+            fetchOrders();
+        }
+        
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/orders');
+                const data = await response.json();
+                if (data.success) {
+                    orders = data.data;
+                    renderOrders(orders);
+                    updateSummary();
+                    document.getElementById('totalOrders').textContent = orders.length;
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+            }
+        }
+        
+        function renderOrders(orderList) {
+            const tbody = document.getElementById('ordersTableBody');
+            if (orderList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="text-center">Sipariş bulunamadı</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = orderList.map(order => `
+                <tr onclick="selectOrder(${order.id})">
+                    <td><input type="checkbox" onclick="event.stopPropagation()"></td>
+                    <td>${order.customer_id || ''}</td>
+                    <td>${order.order_number || ''}</td>
+                    <td>${order.customer_name || ''}</td>
+                    <td>${order.region || ''}</td>
+                    <td>${order.description || ''}</td>
+                    <td>${order.vehicle || ''}</td>
+                    <td>${order.time ? new Date(order.time).toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'}) : ''}</td>
+                    <td>${order.pickup_time ? new Date(order.pickup_time).toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'}) : ''}</td>
+                    <td>${order.quantity || 0}</td>
+                    <td>${order.square_meters || 0}</td>
+                    <td>${order.amount ? order.amount.toFixed(2) + ' ₺' : '0.00 ₺'}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function updateSummary() {
+            const totalToDeliver = orders.filter(o => o.status === 'pending').length;
+            const pickedUp = orders.filter(o => o.status === 'picked_up');
+            const pickedUpCount = pickedUp.length;
+            const pickedUpM2 = pickedUp.reduce((sum, o) => sum + (o.square_meters || 0), 0);
+            const pickedUpAmount = pickedUp.reduce((sum, o) => sum + (o.amount || 0), 0);
+            
+            document.getElementById('totalToDeliver').textContent = totalToDeliver + ' ADET';
+            document.getElementById('pickedUpCount').textContent = pickedUpCount + ' ADET';
+            document.getElementById('pickedUpM2').textContent = pickedUpM2.toFixed(1) + ' M²';
+            document.getElementById('pickedUpAmount').textContent = pickedUpAmount.toFixed(2) + ' ₺';
+        }
+        
+        function selectOrder(id) {
+            document.querySelectorAll('.orders-table tbody tr').forEach(tr => tr.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+        
+        function fetchOrders() {
+            loadOrders();
+        }
+        
+        function refreshOrders() {
+            loadOrders();
+        }
+        
+        function searchOrders() {
+            document.getElementById('searchInput').focus();
+        }
+        
+        function deleteOrder() {
+            const selected = document.querySelector('.orders-table tbody tr.selected');
+            if (selected) {
+                if (confirm('Seçili siparişi silmek istediğinize emin misiniz?')) {
+                    // Delete implementation
+                }
+            } else {
+                alert('Lütfen silmek için bir sipariş seçin');
+            }
+        }
+        
+        function refreshPage() {
+            location.reload();
+        }
+        
+        function showSearch() {
+            document.getElementById('searchInput').focus();
+        }
+        
+        function deleteSelected() {
+            alert('Seçili öğeler silinecek');
+        }
+        
+        function showInfo() {
+            alert('CarpetOS v2.0\nHalı Yıkama İşletme Yönetim Sistemi');
+        }
+        
+        function showHelp() {
+            alert('Yardım sayfası açılacak');
+        }
+        
+        function showMessages() {
+            alert('Mesajlar');
+        }
+        
+        function showCalculator() {
+            alert('Hesaplayıcı');
+        }
+        
+        function showUserMenu() {
+            alert('Kullanıcı menüsü');
+        }
+        
+        function toggleTheme() {
+            alert('Tema değiştirilecek');
+        }
+        
+        function checkConnection() {
+            document.getElementById('statusLabel').textContent = 'Bağlantı kontrol ediliyor...';
+            setTimeout(() => {
+                document.getElementById('statusLabel').textContent = 'API Bağlı';
+            }, 1000);
+        }
+        
+        function showFinance() {
+            alert('Finans modülü');
+        }
+        
+        function showAddModal() {
+            alert('Yeni sipariş ekleme formu açılacak');
+        }
+        
+        // Set today's date as default
+        document.getElementById('datePicker').valueAsDate = new Date();
+        loadOrders();
+    </script>
+</body>
+</html>
+

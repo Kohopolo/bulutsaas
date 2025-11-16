@@ -1,0 +1,2307 @@
+/**
+ * Standalone Layout CSS
+ * CarpetOS V2 standalone örneğine göre hazırlanmıştır
+ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    background-color: #F5F5F5;
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100vh;
+}
+
+.standalone-app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: visible;
+}
+
+/* ================================
+   MENU STRIP
+   ================================ */
+.menu-strip {
+    min-height: 24px;
+    background-color: #F0F0F0;
+    border-bottom: 1px solid #E0E0E0;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 2px 10px;
+    font-size: 9pt;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: visible;
+    overflow: visible;
+    width: 100%;
+    gap: 0;
+    z-index: 100;
+}
+
+.menu-strip::-webkit-scrollbar {
+    height: 4px;
+}
+
+.menu-strip::-webkit-scrollbar-track {
+    background: #F0F0F0;
+}
+
+.menu-strip::-webkit-scrollbar-thumb {
+    background: #C0C0C0;
+    border-radius: 2px;
+}
+
+.menu-strip::-webkit-scrollbar-thumb:hover {
+    background: #A0A0A0;
+}
+
+.menu-item {
+    padding: 2px 10px;
+    cursor: pointer;
+    color: #212121;
+    user-select: none;
+    white-space: nowrap;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.menu-item:hover {
+    background-color: #E0E0E0;
+}
+
+.menu-accordion-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 2px 10px;
+    flex-shrink: 0;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.menu-accordion-item.active {
+    background-color: #1E3A8A;
+    color: #FFFFFF;
+}
+
+.menu-accordion-item.active:hover {
+    background-color: #1E3A8A;
+}
+
+.menu-accordion-content {
+    display: none !important;
+    position: absolute;
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1001;
+    min-width: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.menu-accordion-content[style*="block"] {
+    display: block !important;
+}
+
+.menu-right {
+    margin-left: auto;
+    color: #757575;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding-left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-right a.menu-item {
+    text-decoration: none;
+    color: #dc3545;
+    transition: color 0.2s;
+}
+
+.menu-right a.menu-item:hover {
+    color: #c82333;
+    background-color: #fee;
+}
+
+/* ================================
+   HEADER PANEL
+   ================================ */
+.header-panel {
+    height: 80px;
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E0E0E0;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-title {
+    font-size: 16pt;
+    font-weight: bold;
+    color: #1E3A8A;
+}
+
+.header-license {
+    font-size: 9pt;
+    color: #757575;
+}
+
+.header-banner {
+    background-color: #F44336;
+    color: #FFFFFF;
+    padding: 5px 10px;
+    font-size: 9pt;
+    font-weight: bold;
+    border-radius: 3px;
+    width: fit-content;
+}
+
+/* ================================
+   MAIN LAYOUT (3 SÜTUNLU)
+   ================================ */
+.main-layout {
+    display: flex;
+    height: calc(100vh - 164px); /* 24px menu + header (dinamik) + 60px footer */
+    overflow: hidden;
+    width: 100%;
+}
+
+/* Accordion arrow için stil */
+.accordion-arrow {
+    margin-left: 4px;
+    font-size: 7pt;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.accordion-submenu-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 9pt;
+    color: #212121;
+    border-bottom: 1px solid #F5F5F5;
+    transition: background-color 0.2s;
+}
+
+.accordion-submenu-item:hover {
+    background-color: #F5F5F5;
+}
+
+.accordion-submenu-item.active {
+    background-color: #FFEB3B;
+    color: #1E3A8A;
+    font-weight: bold;
+}
+
+.accordion-submenu-item span:first-child {
+    margin-right: 8px;
+    font-size: 12pt;
+    width: 20px;
+    text-align: center;
+}
+
+/* ================================
+   LEFT PANEL (MODÜL MENÜSÜ)
+   ================================ */
+.left-panel {
+    width: 250px;
+    background-color: #FFFFFF;
+    border-right: 1px solid #E0E0E0;
+    padding: 10px;
+    overflow-y: auto;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.panel-title {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #1E3A8A;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.module-group {
+    margin-bottom: 15px;
+}
+
+.module-group-title {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #757575;
+    margin-bottom: 5px;
+    padding: 5px 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.module-group-title:hover {
+    background-color: #F5F5F5;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 3px;
+}
+
+.module-group-title.active {
+    color: #1E3A8A;
+    background-color: #E3F2FD;
+}
+
+.module-group-arrow {
+    font-size: 8pt;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.module-group-content {
+    display: none;
+    margin-left: 10px;
+    padding-left: 5px;
+    border-left: 2px solid #E0E0E0;
+}
+
+.module-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    font-size: 9pt;
+    color: #212121;
+}
+
+.module-item:hover {
+    background-color: #F5F5F5;
+}
+
+.module-item.active {
+    background-color: #FFEB3B;
+    color: #1E3A8A;
+    font-weight: bold;
+}
+
+.module-icon {
+    font-size: 16pt;
+    margin-right: 8px;
+    width: 24px;
+    text-align: center;
+}
+
+/* ================================
+   CENTER PANEL (MODÜL İÇERİĞİ)
+   ================================ */
+.center-panel {
+    flex: 1;
+    background-color: #FFFFFF;
+    border-right: 1px solid #E0E0E0;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100%;
+    min-width: 0;
+}
+
+/* Center panel içindeki Tailwind CSS uyumluluğu */
+.center-panel * {
+    box-sizing: border-box;
+}
+
+/* Center panel içinde müşteri detay stillerini kullan */
+.center-panel .content-body {
+    padding: 8px;
+    background-color: #F5F5F5;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.center-panel .groupbox {
+    background: #FFFFFF;
+    border: 1px solid #D4D4D4;
+    border-radius: 3px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.center-panel .groupbox-header {
+    background: #E8F4F8;
+    border-bottom: 1px solid #C0D4E0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2C5F8D;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.center-panel .groupbox-body {
+    padding: 12px;
+    background-color: #FFFFFF;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.center-panel .form-groupbox {
+    background: #F8F9FA;
+    border: 1px solid #D4D4D4;
+    border-radius: 3px;
+    padding: 0;
+    margin-bottom: 15px;
+}
+
+.center-panel .voucher-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.center-panel .voucher-label {
+    font-weight: bold;
+    color: #333333;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.center-panel .voucher-value {
+    color: #666666;
+    text-align: right;
+    flex: 1;
+}
+
+.center-panel .vb-button {
+    padding: 6px 16px;
+    background: #E1E1E1;
+    border: 1px solid #ADADAD;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #333333;
+    font-weight: normal;
+}
+
+.center-panel .vb-datagrid {
+    width: 100%;
+    border-collapse: collapse;
+    background: #FFFFFF;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.center-panel .vb-datagrid thead {
+    background: #E8F4F8;
+}
+
+.center-panel .vb-datagrid th {
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: bold;
+    color: #2C5F8D;
+    border: 1px solid #C0D4E0;
+    font-size: 12px;
+}
+
+.center-panel .vb-datagrid td {
+    padding: 6px 10px;
+    border: 1px solid #E0E0E0;
+    color: #333333;
+    font-size: 12px;
+}
+
+.center-panel .vb-datagrid tbody tr:nth-child(even) {
+    background-color: #F8F9FA;
+}
+
+.center-panel .vb-datagrid tbody tr:hover {
+    background-color: #E8F4F8;
+}
+
+.center-panel .note-item {
+    padding: 10px;
+    border-bottom: 1px solid #DDDDDD;
+    margin-bottom: 10px;
+}
+
+.center-panel .note-text {
+    margin: 0;
+    color: #333333;
+    font-size: 13px;
+}
+
+.center-panel .note-date {
+    color: #999999;
+    font-size: 11px;
+    display: block;
+    margin-top: 4px;
+}
+
+/* Filtre formlarını h1 başlığının yanına yerleştir */
+/* Parent container'ı flex yap */
+.center-panel > div[class*="p-"] {
+    display: flex;
+    flex-direction: column;
+}
+
+/* H1'in bulunduğu div ve filtre div'ini yan yana getir */
+.center-panel > div[class*="p-"] > div:first-child {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.center-panel > div[class*="p-"] > div:first-child h1,
+.center-panel > div[class*="p-"] > div:first-child h2 {
+    flex-shrink: 0;
+    margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 18pt;
+}
+
+/* Filtre formunu h1'in yanına yerleştir - h1 div'ine ekle */
+.center-panel > div[class*="p-"] > div:first-child::after {
+    content: '';
+    flex: 1;
+    min-width: 400px;
+    order: 2;
+}
+
+/* Filtre formu container'ını h1 div'inin içine taşı (CSS ile) */
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    z-index: -1;
+}
+
+/* Alternatif: Filtre formunu h1'in yanına yerleştir */
+.center-panel > div[class*="p-"] > div:first-child {
+    position: relative;
+}
+
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) {
+    position: absolute;
+    right: 0;
+    top: 0;
+    min-width: 400px;
+    max-width: calc(100% - 300px);
+    padding: 4px 8px !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #E0E0E0 !important;
+    border-radius: 4px !important;
+}
+
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 0;
+}
+
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form > div {
+    flex: 1;
+    min-width: 100px;
+    margin-bottom: 0;
+}
+
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form label {
+    font-size: 8pt;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form select,
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form input[type="text"],
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form input[type="search"] {
+    padding: 3px 6px;
+    font-size: 9pt;
+    height: 22px;
+    width: 100%;
+    border: 1px solid #E0E0E0;
+    border-radius: 3px;
+}
+
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form button[type="submit"],
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form button:not([type]),
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form a {
+    padding: 3px 10px;
+    font-size: 9pt;
+    height: 22px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Grid layout varsa override et */
+/* Form grid override - sadece belirli durumlarda */
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form.grid:not([style*="grid-template-columns"]) {
+    display: flex !important;
+    grid-template-columns: none !important;
+}
+
+.center-panel > div[class*="p-"] > div:first-child ~ div:has(form) form [class*="col-span"] {
+    flex: 1;
+    min-width: 100px;
+}
+
+/* Center panel içindeki tüm div'ler arasındaki boşlukları azalt */
+.center-panel > div {
+    margin-bottom: 4px;
+}
+
+.center-panel > div:last-child {
+    margin-bottom: 0;
+}
+
+/* Genel margin ve padding azaltma */
+.center-panel div + div {
+    margin-top: 4px;
+}
+
+.center-panel .mb-6,
+.center-panel .mb-5,
+.center-panel .mb-4 {
+    margin-bottom: 0.5rem !important;
+}
+
+.center-panel .mt-6,
+.center-panel .mt-5,
+.center-panel .mt-4 {
+    margin-top: 0.5rem !important;
+}
+
+.center-panel .p-6,
+.center-panel .p-5,
+.center-panel .p-4 {
+    padding: 0.75rem !important;
+}
+
+.center-panel .py-6,
+.center-panel .py-5,
+.center-panel .py-4 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.center-panel .px-6,
+.center-panel .px-5,
+.center-panel .px-4 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+.center-panel .mb-3,
+.center-panel .mb-2 {
+    margin-bottom: 0.25rem !important;
+}
+
+.center-panel .mt-3,
+.center-panel .mt-2 {
+    margin-top: 0.25rem !important;
+}
+
+.center-panel .text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+}
+
+.center-panel .font-bold {
+    font-weight: 700;
+}
+
+.center-panel .rounded-lg {
+    border-radius: 0.5rem;
+}
+
+.center-panel .bg-white {
+    background-color: #FFFFFF;
+}
+
+.center-panel .border {
+    border-width: 1px;
+}
+
+.center-panel .border-gray-200 {
+    border-color: #E5E7EB;
+}
+
+.center-panel .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.welcome-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #757575;
+}
+
+.welcome-message h2 {
+    font-size: 18pt;
+    color: #1E3A8A;
+    margin-bottom: 10px;
+}
+
+/* ================================
+   RIGHT PANEL (KIŞAYOLLAR)
+   ================================ */
+.right-panel {
+    width: 5%;
+    background-color: #F5F5F5;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    border-left: 1px solid #E0E0E0;
+}
+
+.shortcut-btn {
+    width: 100%;
+    height: 60px;
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24pt;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.shortcut-btn:hover {
+    background-color: #F5F5F5;
+    border-color: #2196F3;
+    transform: scale(1.05);
+}
+
+/* ================================
+   FOOTER PANEL
+   ================================ */
+.footer-panel {
+    height: 60px;
+    background-color: #F5F5F5;
+    border-top: 1px solid #E0E0E0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 5px;
+    position: relative;
+}
+
+.footer-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #FFFFFF;
+    border: 1px solid #E0E0E0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20pt;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.footer-icon:hover {
+    background-color: #E0E0E0;
+    transform: scale(1.1);
+}
+
+.status-label {
+    position: absolute;
+    bottom: 5px;
+    left: 10px;
+    font-size: 9pt;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* ================================
+   TABLO STİLLERİ (CarpetOS V2 Standart)
+   ================================ */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Tüm tablolar için standart stil */
+table,
+.data-table,
+.orders-table,
+.customer-table,
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    background-color: #FFFFFF;
+}
+
+/* Tablo başlıkları */
+table thead,
+.data-table thead,
+.orders-table thead,
+.customer-table thead,
+.table thead {
+    background-color: #1E3A8A;
+    color: #FFFFFF;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+table th,
+.data-table th,
+.orders-table th,
+.customer-table th,
+.table th {
+    padding: 8px 4px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 8pt;
+    border-right: 1px solid rgba(255,255,255,0.2);
+    white-space: nowrap;
+}
+
+table th:last-child,
+.data-table th:last-child,
+.orders-table th:last-child,
+.customer-table th:last-child,
+.table th:last-child {
+    border-right: none;
+}
+
+/* Tablo hücreleri */
+table td,
+.data-table td,
+.orders-table td,
+.customer-table td,
+.table td {
+    padding: 4px;
+    border-bottom: 1px solid #E0E0E0;
+    border-right: 1px solid #E0E0E0;
+    font-size: 9pt;
+    vertical-align: middle;
+}
+
+table td:last-child,
+.data-table td:last-child,
+.orders-table td:last-child,
+.customer-table td:last-child,
+.table td:last-child {
+    border-right: none;
+}
+
+/* Tablo satır hover efekti */
+table tbody tr:hover,
+.data-table tbody tr:hover,
+.orders-table tbody tr:hover,
+.customer-table tbody tr:hover,
+.table tbody tr:hover {
+    background-color: #F5F5F5;
+    cursor: pointer;
+}
+
+/* Seçili satır */
+table tbody tr.selected,
+.data-table tbody tr.selected,
+.orders-table tbody tr.selected,
+.customer-table tbody tr.selected,
+.table tbody tr.selected {
+    background-color: #FFEB3B;
+    font-weight: bold;
+}
+
+/* Center panel içindeki tablolar için özel stiller */
+.center-panel table,
+.center-panel .data-table,
+.center-panel .customer-table,
+.center-panel .table {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+/* Orders table için flex container */
+.center-panel .orders-table {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Tailwind tablo class'ları için override */
+.center-panel table.table-auto {
+    table-layout: auto;
+}
+
+.center-panel table.table-fixed {
+    table-layout: fixed;
+}
+
+.center-panel table.w-full {
+    width: 100%;
+}
+
+.center-panel table.border-collapse {
+    border-collapse: collapse;
+}
+
+.center-panel table thead th {
+    background-color: #1E3A8A !important;
+    color: #FFFFFF !important;
+    padding: 8px 4px !important;
+    font-size: 8pt !important;
+    font-weight: bold !important;
+    border-right: 1px solid rgba(255,255,255,0.2) !important;
+}
+
+.center-panel table tbody td {
+    padding: 4px !important;
+    border-bottom: 1px solid #E0E0E0 !important;
+    border-right: 1px solid #E0E0E0 !important;
+    font-size: 9pt !important;
+}
+
+.center-panel table tbody tr:hover {
+    background-color: #F5F5F5 !important;
+}
+
+/* ================================
+   TABS (CarpetOS V2 Stil)
+   ================================ */
+.center-panel .tabs {
+    display: flex;
+    border-bottom: 1px solid #E0E0E0;
+    margin-bottom: 5px;
+    flex-shrink: 0;
+}
+
+.center-panel .tab {
+    padding: 6px 12px;
+    background-color: #E0E0E0;
+    color: #757575;
+    border: 1px solid #E0E0E0;
+    border-bottom: none;
+    cursor: pointer;
+    font-size: 9pt;
+    margin-right: 1px;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    white-space: nowrap;
+}
+
+.center-panel .tab:hover {
+    background-color: #D0D0D0;
+}
+
+.center-panel .tab.active {
+    background-color: #FFFFFF;
+    color: #1E3A8A;
+    font-weight: bold;
+    border-bottom: 2px solid #1E3A8A;
+}
+
+/* ================================
+   DATE NAVIGATION (CarpetOS V2 Stil)
+   ================================ */
+.center-panel .date-navigation {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+    flex-shrink: 0;
+}
+
+.center-panel .date-nav-btn {
+    width: 30px;
+    height: 28px;
+    border: 1px solid #E0E0E0;
+    background-color: #FFFFFF;
+    cursor: pointer;
+    font-size: 12pt;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.center-panel .date-nav-btn:hover {
+    background-color: #F5F5F5;
+}
+
+.center-panel .date-picker {
+    height: 28px;
+    padding: 4px;
+    border: 1px solid #E0E0E0;
+    font-size: 9pt;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+}
+
+.center-panel .date-picker:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.center-panel .vehicle-filter {
+    height: 28px;
+    padding: 4px;
+    border: 1px solid #E0E0E0;
+    font-size: 9pt;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+}
+
+/* ================================
+   SUMMARY PANEL (CarpetOS V2 Stil)
+   ================================ */
+.center-panel .summary-panel {
+    background-color: #F5F5F5;
+    border: 1px solid #E0E0E0;
+    padding: 6px 10px;
+    margin-top: 5px;
+    display: flex;
+    justify-content: space-around;
+    font-size: 9pt;
+    flex-shrink: 0;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+}
+
+.center-panel .summary-item {
+    text-align: center;
+    flex: 1;
+}
+
+.center-panel .summary-label {
+    font-weight: bold;
+    color: #1E3A8A;
+    margin-bottom: 2px;
+    font-size: 9pt;
+}
+
+.center-panel .summary-value {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #1E3A8A;
+}
+
+/* Orders table için özel stil */
+.center-panel .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    flex: 1;
+    overflow-y: auto;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    min-height: 0;
+}
+
+.center-panel .orders-table thead {
+    background-color: #1E3A8A;
+    color: #FFFFFF;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.center-panel .orders-table th {
+    padding: 8px 4px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 8pt;
+    border-right: 1px solid rgba(255,255,255,0.2);
+}
+
+.center-panel .orders-table th:last-child {
+    border-right: none;
+}
+
+.center-panel .orders-table td {
+    padding: 4px;
+    border-bottom: 1px solid #E0E0E0;
+    border-right: 1px solid #E0E0E0;
+    font-size: 9pt;
+}
+
+.center-panel .orders-table td:last-child {
+    border-right: none;
+}
+
+.center-panel .orders-table tbody tr:hover {
+    background-color: #F5F5F5;
+    cursor: pointer;
+}
+
+.center-panel .orders-table tbody tr.selected {
+    background-color: #FFEB3B;
+    font-weight: bold;
+}
+
+/* Tailwind border ve text class'ları için override */
+.center-panel table thead th.border,
+.center-panel table thead th.border-gray-200,
+.center-panel table thead th.border-gray-300 {
+    border-color: rgba(255,255,255,0.2) !important;
+    border-width: 0 1px 0 0 !important;
+}
+
+.center-panel table tbody td.border,
+.center-panel table tbody td.border-gray-200,
+.center-panel table tbody td.border-gray-300 {
+    border-color: #E0E0E0 !important;
+    border-width: 0 1px 1px 0 !important;
+}
+
+.center-panel table thead th.text-left,
+.center-panel table thead th.text-center,
+.center-panel table thead th.text-right {
+    text-align: inherit !important;
+}
+
+.center-panel table tbody td.text-left,
+.center-panel table tbody td.text-center,
+.center-panel table tbody td.text-right {
+    text-align: inherit !important;
+}
+
+/* Tailwind padding class'ları için override - tablo hücreleri için */
+.center-panel table thead th.px-4,
+.center-panel table thead th.py-2,
+.center-panel table thead th.p-4 {
+    padding: 8px 4px !important;
+}
+
+.center-panel table tbody td.px-4,
+.center-panel table tbody td.py-2,
+.center-panel table tbody td.p-4 {
+    padding: 4px !important;
+}
+
+/* Tailwind font size class'ları için override */
+.center-panel table thead th.text-sm,
+.center-panel table thead th.text-xs {
+    font-size: 8pt !important;
+}
+
+.center-panel table tbody td.text-sm,
+.center-panel table tbody td.text-xs {
+    font-size: 9pt !important;
+}
+
+/* Tailwind background color class'ları için override - thead için */
+.center-panel table thead th.bg-blue-600,
+.center-panel table thead th.bg-blue-500,
+.center-panel table thead th.bg-gray-800,
+.center-panel table thead th.bg-gray-700 {
+    background-color: #1E3A8A !important;
+    color: #FFFFFF !important;
+}
+
+/* Tailwind text color class'ları için override - thead için */
+.center-panel table thead th.text-white,
+.center-panel table thead th.text-gray-100 {
+    color: #FFFFFF !important;
+}
+
+/* Tailwind font weight class'ları için override */
+.center-panel table thead th.font-bold,
+.center-panel table thead th.font-semibold {
+    font-weight: bold !important;
+}
+
+/* ================================
+   BUTON STİLLERİ
+   ================================ */
+.btn {
+    padding: 4px 12px;
+    border: 1px solid #E0E0E0;
+    background-color: #FFFFFF;
+    color: #212121;
+    font-size: 9pt;
+    cursor: pointer;
+    border-radius: 3px;
+    height: 30px;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background-color: #F5F5F5;
+}
+
+.btn-primary {
+    background-color: #2196F3;
+    color: #FFFFFF;
+    border-color: #2196F3;
+}
+
+.btn-primary:hover {
+    background-color: #1976D2;
+}
+
+.btn-success {
+    background-color: #4CAF50;
+    color: #FFFFFF;
+    border-color: #4CAF50;
+}
+
+.btn-success:hover {
+    background-color: #388E3C;
+}
+
+.btn-danger {
+    background-color: #F44336;
+    color: #FFFFFF;
+    border-color: #F44336;
+}
+
+.btn-danger:hover {
+    background-color: #D32F2F;
+}
+
+/* ================================
+   FORM STİLLERİ
+   ================================ */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-label {
+    display: block;
+    font-size: 9pt;
+    font-weight: bold;
+    color: #212121;
+    margin-bottom: 5px;
+}
+
+.form-control {
+    width: 100%;
+    height: 28px;
+    padding: 4px;
+    border: 1px solid #E0E0E0;
+    font-size: 9pt;
+    border-radius: 3px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+/* ================================
+   MODAL STİLLERİ
+   ================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay[style*="display: none"] {
+    display: none !important;
+}
+
+.modal-overlay[style*="display: flex"] {
+    display: flex !important;
+}
+
+.modal-content {
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 15px;
+    border-bottom: 1px solid #E0E0E0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1E3A8A;
+    color: #FFFFFF;
+}
+
+.modal-title {
+    font-size: 12pt;
+    font-weight: bold;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    font-size: 18pt;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.modal-body {
+    padding: 15px;
+    max-height: calc(90vh - 120px);
+    overflow-y: auto;
+}
+
+/* Modal içindeki form stilleri */
+.modal-body form {
+    width: 100%;
+}
+
+.modal-body .p-6 {
+    padding: 0;
+}
+
+.modal-body .max-w-4xl {
+    max-width: 100%;
+}
+
+/* Modal içindeki butonlar */
+.modal-body .flex.justify-end {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #E0E0E0;
+}
+
+/* Modal içinde de standart stilleri uygula */
+.modal-body {
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    font-size: 12px;
+    color: #333333;
+}
+
+.modal-body h1,
+.modal-body h2,
+.modal-body h3 {
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    color: #2C5F8D;
+    font-weight: bold;
+}
+
+.modal-body h1 {
+    font-size: 18pt;
+}
+
+.modal-body h2 {
+    font-size: 14pt;
+}
+
+.modal-body h3 {
+    font-size: 13pt;
+}
+
+.modal-body table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background: #FFFFFF !important;
+    font-size: 12px !important;
+}
+
+.modal-body table thead {
+    background: #E8F4F8 !important;
+}
+
+.modal-body table thead th {
+    padding: 8px 10px !important;
+    color: #2C5F8D !important;
+    border: 1px solid #C0D4E0 !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+}
+
+.modal-body table tbody td {
+    padding: 6px 10px !important;
+    border: 1px solid #E0E0E0 !important;
+    color: #333333 !important;
+    font-size: 12px !important;
+}
+
+.modal-body table tbody tr:nth-child(even) {
+    background-color: #F8F9FA !important;
+}
+
+.modal-body table tbody tr:hover {
+    background-color: #E8F4F8 !important;
+}
+
+.modal-body button,
+.modal-body .btn,
+.modal-body a[class*="bg-"] {
+    padding: 6px 16px !important;
+    background: #E1E1E1 !important;
+    border: 1px solid #ADADAD !important;
+    border-radius: 3px !important;
+    font-size: 12px !important;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif !important;
+    color: #333333 !important;
+}
+
+.modal-body button[class*="bg-vb-primary"],
+.modal-body button[class*="bg-blue"],
+.modal-body a[class*="bg-vb-primary"],
+.modal-body a[class*="bg-blue"] {
+    background: #0078D4 !important;
+    color: #FFFFFF !important;
+    border-color: #005A9E !important;
+}
+
+.modal-body input,
+.modal-body select,
+.modal-body textarea {
+    padding: 6px 10px !important;
+    border: 1px solid #D4D4D4 !important;
+    border-radius: 3px !important;
+    font-size: 12px !important;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif !important;
+}
+
+.modal-body label {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    color: #333333 !important;
+}
+
+.modal-footer {
+    padding: 15px;
+    border-top: 1px solid #E0E0E0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ================================
+   TAB STİLLERİ
+   ================================ */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #E0E0E0;
+    margin-bottom: 10px;
+}
+
+.tab {
+    padding: 8px 15px;
+    background-color: #E0E0E0;
+    color: #757575;
+    border: 1px solid #E0E0E0;
+    border-bottom: none;
+    cursor: pointer;
+    font-size: 9pt;
+    margin-right: 2px;
+    border-radius: 3px 3px 0 0;
+}
+
+.tab.active {
+    background-color: #FFFFFF;
+    color: #1E3A8A;
+    font-weight: bold;
+    border-bottom: 2px solid #1E3A8A;
+}
+
+/* ================================
+   CUSTOMER DETAIL STYLE (Müşteri Detay Stili)
+   Tüm modül ve sayfalarda kullanılacak standart stil
+   ================================ */
+
+/* Content Body Wrapper */
+.content-body {
+    padding: 8px;
+    background-color: #F5F5F5;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* GroupBox - Ana Container */
+.groupbox {
+    background: #FFFFFF;
+    border: 1px solid #D4D4D4;
+    border-radius: 3px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.groupbox-header {
+    background: #E8F4F8;
+    border-bottom: 1px solid #C0D4E0;
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #2C5F8D;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.groupbox-header i {
+    margin-right: 8px;
+}
+
+.groupbox-body {
+    padding: 12px;
+    background-color: #FFFFFF;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Form GroupBox - İç İçe GroupBox */
+.form-groupbox {
+    background: #F8F9FA;
+    border: 1px solid #D4D4D4;
+    border-radius: 3px;
+    padding: 0;
+    margin-bottom: 15px;
+}
+
+.form-groupbox .groupbox-header {
+    background: #E8F4F8;
+    border-bottom: 1px solid #C0D4E0;
+    padding: 6px 10px;
+    font-weight: bold;
+    font-size: 13px;
+    color: #2C5F8D;
+}
+
+.form-groupbox .groupbox-body {
+    padding: 10px;
+    background-color: #F8F9FA;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Voucher Row - Bilgi Satırları */
+.voucher-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.voucher-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.voucher-label {
+    font-weight: bold;
+    color: #333333;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
+.voucher-value {
+    color: #666666;
+    text-align: right;
+    flex: 1;
+}
+
+/* VB Button - Müşteri Detay Stili */
+.vb-button {
+    padding: 6px 16px;
+    background: #E1E1E1;
+    border: 1px solid #ADADAD;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #333333;
+    font-weight: normal;
+}
+
+.vb-button:hover {
+    background: #BEE6FD;
+    border-color: #0078D4;
+    color: #000000;
+}
+
+.vb-button:active {
+    background: #98D8FC;
+}
+
+.vb-button.primary {
+    background: #0078D4;
+    color: #FFFFFF;
+    border-color: #005A9E;
+}
+
+.vb-button.primary:hover {
+    background: #005A9E;
+    color: #FFFFFF;
+}
+
+.vb-button.success {
+    background: #107C10;
+    color: #FFFFFF;
+    border-color: #0E6B0E;
+}
+
+.vb-button.success:hover {
+    background: #0E6B0E;
+    color: #FFFFFF;
+}
+
+.vb-button.danger {
+    background: #D13438;
+    color: #FFFFFF;
+    border-color: #A52A2D;
+}
+
+.vb-button.danger:hover {
+    background: #A52A2D;
+    color: #FFFFFF;
+}
+
+.vb-button.small {
+    padding: 4px 10px;
+    font-size: 11px;
+}
+
+/* VB DataGrid Container - Yatay kaydırmayı kaldır */
+.vb-datagrid-container {
+    width: 100%;
+    overflow-x: visible;
+    overflow-y: visible;
+    max-width: 100%;
+}
+
+.datagrid {
+    width: 100%;
+    overflow-x: visible;
+    overflow-y: visible;
+    max-width: 100%;
+}
+
+/* Tablo için genişlik kontrolü */
+#users-table,
+table[id*="table"],
+table.vb-datagrid {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed;
+}
+
+#users-table th,
+#users-table td,
+table[id*="table"] th,
+table[id*="table"] td,
+table.vb-datagrid th,
+table.vb-datagrid td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* VB DataGrid - Müşteri Detay Tablo Stili */
+.vb-datagrid {
+    width: 100%;
+    border-collapse: collapse;
+    background: #FFFFFF;
+    font-size: 12px;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    margin-top: 10px;
+    table-layout: auto;
+}
+
+.vb-datagrid thead {
+    background: #E8F4F8;
+}
+
+.vb-datagrid th {
+    padding: 4px 6px;
+    text-align: left;
+    font-weight: bold;
+    color: #2C5F8D;
+    border: 1px solid #C0D4E0;
+    font-size: 12px;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+}
+
+.vb-datagrid td {
+    padding: 3px 6px;
+    border: 1px solid #E0E0E0;
+    color: #333333;
+    font-size: 12px;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+}
+
+.vb-datagrid tbody tr {
+    background-color: #FFFFFF;
+}
+
+.vb-datagrid tbody tr:nth-child(even) {
+    background-color: #F8F9FA;
+}
+
+.vb-datagrid tbody tr:hover {
+    background-color: #E8F4F8;
+}
+
+.vb-datagrid tbody tr.selected {
+    background-color: #CCE8FF;
+}
+
+/* Grid Layout - 4 Sütunlu Grid */
+.detail-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1200px) {
+    .detail-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-grid-4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Note Item - Notlar için stil */
+.note-item {
+    padding: 10px;
+    border-bottom: 1px solid #DDDDDD;
+    margin-bottom: 10px;
+}
+
+.note-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.note-text {
+    margin: 0;
+    color: #333333;
+    font-size: 13px;
+}
+
+.note-date {
+    color: #999999;
+    font-size: 11px;
+    display: block;
+    margin-top: 4px;
+}
+
+/* ================================
+   UTİLİTY CLASSES
+   ================================ */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.p-10 {
+    padding: 10px;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.gap-10 {
+    gap: 10px;
+}
+
+/* ================================
+   GLOBAL STANDART STİLLER
+   Tüm sayfalarda kesintisiz aynı renk, başlık, yazı tipi, tablo ve buton yapısı
+   ================================ */
+
+/* ================================
+   STANDART RENKLER (Müşteri Detay Referansı)
+   ================================ */
+:root {
+    --vb-header-bg: #E8F4F8;
+    --vb-header-text: #2C5F8D;
+    --vb-body-bg: #FFFFFF;
+    --vb-groupbox-bg: #F8F9FA;
+    --vb-border: #D4D4D4;
+    --vb-border-light: #C0D4E0;
+    --vb-label-text: #333333;
+    --vb-value-text: #666666;
+    --vb-primary: #0078D4;
+    --vb-success: #107C10;
+    --vb-danger: #D13438;
+    --vb-warning: #FF9800;
+    --vb-bg-light: #F5F5F5;
+}
+
+/* ================================
+   STANDART BAŞLIKLAR (H1, H2, H3)
+   ================================ */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    color: var(--vb-header-text);
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+h1 {
+    font-size: 18pt;
+    color: var(--vb-header-text);
+}
+
+h2 {
+    font-size: 14pt;
+    color: var(--vb-header-text);
+}
+
+h3 {
+    font-size: 13pt;
+    color: var(--vb-header-text);
+}
+
+/* Center panel içindeki başlıklar */
+.center-panel h1,
+.center-panel h2,
+.center-panel h3 {
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    color: var(--vb-header-text);
+    font-weight: bold;
+}
+
+.center-panel h1 {
+    font-size: 18pt;
+}
+
+.center-panel h2 {
+    font-size: 14pt;
+}
+
+.center-panel h3 {
+    font-size: 13pt;
+}
+
+/* Tailwind başlık class'larını override et */
+.center-panel .text-2xl,
+.center-panel h1.text-2xl {
+    font-size: 18pt !important;
+    font-weight: bold !important;
+    color: var(--vb-header-text) !important;
+}
+
+.center-panel .text-xl,
+.center-panel h2.text-xl {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    color: var(--vb-header-text) !important;
+}
+
+.center-panel .text-lg,
+.center-panel h3.text-lg {
+    font-size: 13pt !important;
+    font-weight: bold !important;
+    color: var(--vb-header-text) !important;
+}
+
+/* Tailwind text-vb-navy override */
+.center-panel .text-vb-navy,
+.center-panel .text-vb-navy-500 {
+    color: var(--vb-header-text) !important;
+}
+
+/* ================================
+   STANDART BUTONLAR (Tüm Sayfalarda)
+   ================================ */
+/* Tailwind buton class'larını VB button stiline çevir */
+.center-panel button,
+.center-panel .btn,
+.center-panel a[class*="bg-"][class*="text-white"],
+.center-panel a[class*="px-"][class*="py-"][class*="bg-"] {
+    padding: 6px 16px !important;
+    background: #E1E1E1 !important;
+    border: 1px solid #ADADAD !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    font-size: 12px !important;
+    transition: all 0.2s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    text-decoration: none !important;
+    color: #333333 !important;
+    font-weight: normal !important;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif !important;
+}
+
+.center-panel button:hover,
+.center-panel .btn:hover,
+.center-panel a[class*="bg-"][class*="text-white"]:hover,
+.center-panel a[class*="px-"][class*="py-"][class*="bg-"]:hover {
+    background: #BEE6FD !important;
+    border-color: #0078D4 !important;
+    color: #000000 !important;
+}
+
+/* Primary butonlar (bg-vb-primary, bg-blue-600, vb.) */
+.center-panel button[class*="bg-vb-primary"],
+.center-panel button[class*="bg-blue-600"],
+.center-panel button[class*="bg-blue-500"],
+.center-panel .btn-primary,
+.center-panel a[class*="bg-vb-primary"],
+.center-panel a[class*="bg-blue-600"],
+.center-panel a[class*="bg-blue-500"] {
+    background: #0078D4 !important;
+    color: #FFFFFF !important;
+    border-color: #005A9E !important;
+}
+
+.center-panel button[class*="bg-vb-primary"]:hover,
+.center-panel button[class*="bg-blue-600"]:hover,
+.center-panel button[class*="bg-blue-500"]:hover,
+.center-panel .btn-primary:hover,
+.center-panel a[class*="bg-vb-primary"]:hover,
+.center-panel a[class*="bg-blue-600"]:hover,
+.center-panel a[class*="bg-blue-500"]:hover {
+    background: #005A9E !important;
+    color: #FFFFFF !important;
+}
+
+/* Success butonlar */
+.center-panel button[class*="bg-green"],
+.center-panel .btn-success,
+.center-panel a[class*="bg-green"] {
+    background: #107C10 !important;
+    color: #FFFFFF !important;
+    border-color: #0E6B0E !important;
+}
+
+.center-panel button[class*="bg-green"]:hover,
+.center-panel .btn-success:hover,
+.center-panel a[class*="bg-green"]:hover {
+    background: #0E6B0E !important;
+    color: #FFFFFF !important;
+}
+
+/* Danger butonlar */
+.center-panel button[class*="bg-red"],
+.center-panel .btn-danger,
+.center-panel a[class*="bg-red"] {
+    background: #D13438 !important;
+    color: #FFFFFF !important;
+    border-color: #A52A2D !important;
+}
+
+.center-panel button[class*="bg-red"]:hover,
+.center-panel .btn-danger:hover,
+.center-panel a[class*="bg-red"]:hover {
+    background: #A52A2D !important;
+    color: #FFFFFF !important;
+}
+
+/* Warning butonlar */
+.center-panel button[class*="bg-yellow"],
+.center-panel button[class*="bg-orange"],
+.center-panel .btn-warning,
+.center-panel a[class*="bg-yellow"],
+.center-panel a[class*="bg-orange"] {
+    background: #FF9800 !important;
+    color: #FFFFFF !important;
+    border-color: #F57C00 !important;
+}
+
+.center-panel button[class*="bg-yellow"]:hover,
+.center-panel button[class*="bg-orange"]:hover,
+.center-panel .btn-warning:hover,
+.center-panel a[class*="bg-yellow"]:hover,
+.center-panel a[class*="bg-orange"]:hover {
+    background: #F57C00 !important;
+    color: #FFFFFF !important;
+}
+
+/* ================================
+   STANDART TABLOLAR (Tüm Sayfalarda)
+   ================================ */
+/* Tüm tabloları VB datagrid stiline çevir */
+.center-panel table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background: #FFFFFF !important;
+    font-size: 12px !important;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif !important;
+}
+
+.center-panel table thead {
+    background: #E8F4F8 !important;
+}
+
+.center-panel table thead th {
+    padding: 8px 10px !important;
+    text-align: left !important;
+    font-weight: bold !important;
+    color: #2C5F8D !important;
+    border: 1px solid #C0D4E0 !important;
+    font-size: 12px !important;
+    background: #E8F4F8 !important;
+}
+
+.center-panel table tbody td {
+    padding: 6px 10px !important;
+    border: 1px solid #E0E0E0 !important;
+    color: #333333 !important;
+    font-size: 12px !important;
+}
+
+.center-panel table tbody tr {
+    background-color: #FFFFFF !important;
+}
+
+.center-panel table tbody tr:nth-child(even) {
+    background-color: #F8F9FA !important;
+}
+
+.center-panel table tbody tr:hover {
+    background-color: #E8F4F8 !important;
+}
+
+/* Tailwind table class'larını override et */
+.center-panel .border-collapse {
+    border-collapse: collapse !important;
+}
+
+.center-panel .divide-y > * {
+    border-top: 1px solid #E0E0E0 !important;
+}
+
+/* ================================
+   STANDART YAZI TİPİ BOYUTLARI
+   ================================ */
+.center-panel {
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+    font-size: 12px;
+    color: #333333;
+}
+
+.center-panel p,
+.center-panel span,
+.center-panel div:not([class*="groupbox"]):not([class*="voucher"]) {
+    font-size: 12px;
+    color: #333333;
+}
+
+.center-panel label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #333333;
+}
+
+.center-panel input,
+.center-panel select,
+.center-panel textarea {
+    font-size: 12px;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif;
+}
+
+/* Tailwind text size class'larını override et */
+.center-panel .text-sm {
+    font-size: 12px !important;
+}
+
+.center-panel .text-xs {
+    font-size: 11px !important;
+}
+
+.center-panel .text-base {
+    font-size: 12px !important;
+}
+
+/* ================================
+   STANDART RENK OVERRIDE (Tailwind)
+   ================================ */
+.center-panel .bg-white {
+    background-color: #FFFFFF !important;
+}
+
+.center-panel .bg-gray-50,
+.center-panel .bg-gray-100 {
+    background-color: #F8F9FA !important;
+}
+
+.center-panel .bg-gray-200 {
+    background-color: #E8F4F8 !important;
+}
+
+.center-panel .border-gray-200,
+.center-panel .border-gray-300 {
+    border-color: #D4D4D4 !important;
+}
+
+.center-panel .text-gray-700,
+.center-panel .text-gray-900 {
+    color: #333333 !important;
+}
+
+.center-panel .text-gray-500,
+.center-panel .text-gray-600 {
+    color: #666666 !important;
+}
+
+/* ================================
+   STANDART PADDING VE MARGIN
+   ================================ */
+.center-panel .p-6 {
+    padding: 12px !important;
+}
+
+.center-panel .p-4 {
+    padding: 8px !important;
+}
+
+.center-panel .px-4 {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+}
+
+.center-panel .py-2 {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+.center-panel .mb-6 {
+    margin-bottom: 12px !important;
+}
+
+.center-panel .mb-4 {
+    margin-bottom: 8px !important;
+}
+
+.center-panel .gap-4 {
+    gap: 8px !important;
+}
+
+.center-panel .gap-2 {
+    gap: 4px !important;
+}
+
+/* ================================
+   STANDART BORDER RADIUS
+   ================================ */
+.center-panel .rounded-lg,
+.center-panel .rounded {
+    border-radius: 3px !important;
+}
+
+/* ================================
+   STANDART SHADOW
+   ================================ */
+.center-panel .shadow-sm,
+.center-panel .shadow {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+/* ================================
+   STANDART FORM ELEMENTLERİ
+   ================================ */
+.center-panel input[type="text"],
+.center-panel input[type="email"],
+.center-panel input[type="number"],
+.center-panel input[type="date"],
+.center-panel input[type="search"],
+.center-panel select,
+.center-panel textarea {
+    padding: 6px 10px !important;
+    border: 1px solid #D4D4D4 !important;
+    border-radius: 3px !important;
+    font-size: 12px !important;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif !important;
+    color: #333333 !important;
+    background-color: #FFFFFF !important;
+}
+
+.center-panel input:focus,
+.center-panel select:focus,
+.center-panel textarea:focus {
+    outline: none !important;
+    border-color: #0078D4 !important;
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2) !important;
+}
+
+/* ================================
+   STANDART LABEL STİLLERİ
+   ================================ */
+.center-panel label {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    color: #333333 !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+    font-family: 'Segoe UI', 'Microsoft Sans Serif', Arial, sans-serif !important;
+}
+
+/* ================================
+   STANDART CONTAINER STİLLERİ
+   ================================ */
+.center-panel .bg-white.rounded-lg {
+    background-color: #FFFFFF !important;
+    border: 1px solid #D4D4D4 !important;
+    border-radius: 3px !important;
+    padding: 12px !important;
+}
+
+.center-panel .bg-gray-50.rounded-lg,
+.center-panel .bg-gray-100.rounded-lg {
+    background-color: #F8F9FA !important;
+    border: 1px solid #D4D4D4 !important;
+    border-radius: 3px !important;
+}
+
+/* ================================
+   STANDART BADGE/SPAN STİLLERİ
+   ================================ */
+.center-panel span[class*="px-2"],
+.center-panel span[class*="px-3"],
+.center-panel .badge {
+    padding: 3px 8px !important;
+    border-radius: 3px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    display: inline-block !important;
+}
+
+/* ================================
+   STANDART LINK STİLLERİ
+   ================================ */
+.center-panel a:not([class*="button"]):not([class*="btn"]):not([class*="vb-button"]) {
+    color: #0078D4 !important;
+    text-decoration: none !important;
+    font-size: 12px !important;
+}
+
+.center-panel a:hover:not([class*="button"]):not([class*="btn"]):not([class*="vb-button"]) {
+    color: #005A9E !important;
+    text-decoration: underline !important;
+}
+
+/* ================================
+   STANDART ICON STİLLERİ
+   ================================ */
+.center-panel .fas,
+.center-panel .far,
+.center-panel .fab {
+    font-size: 12px !important;
+}
+
+.center-panel i[class*="fa-"] {
+    margin-right: 4px !important;
+}
+
+/* ================================
+   STANDART GRID OVERRIDE
+   ================================ */
+.center-panel .grid {
+    gap: 8px !important;
+}
+
+.center-panel .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+
+.center-panel .grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.center-panel .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.center-panel .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.center-panel .grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+

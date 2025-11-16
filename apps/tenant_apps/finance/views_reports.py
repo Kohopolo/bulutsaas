@@ -30,6 +30,26 @@ def report_daily_summary(request):
         is_deleted=False
     )
     
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin işlemlerini göster
+            transactions = transactions.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            # Seçilen otel varsa onu kullan
+            try:
+                transactions = transactions.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            # Genel işlemler (otel yok)
+            transactions = transactions.filter(hotel__isnull=True)
+    
     # Gelir-Gider özeti
     total_income = transactions.filter(transaction_type='income').aggregate(
         total=Sum('amount')
@@ -89,6 +109,23 @@ def report_monthly_summary(request):
         status='completed',
         is_deleted=False
     )
+    
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            transactions = transactions.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                transactions = transactions.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            transactions = transactions.filter(hotel__isnull=True)
     
     # Toplamlar
     total_income = transactions.filter(transaction_type='income').aggregate(
@@ -165,6 +202,23 @@ def report_yearly_summary(request):
         is_deleted=False
     )
     
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            transactions = transactions.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                transactions = transactions.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            transactions = transactions.filter(hotel__isnull=True)
+    
     # Toplamlar
     total_income = transactions.filter(transaction_type='income').aggregate(
         total=Sum('amount')
@@ -240,6 +294,23 @@ def report_payment_method_analysis(request):
         is_deleted=False
     )
     
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            transactions = transactions.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                transactions = transactions.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            transactions = transactions.filter(hotel__isnull=True)
+    
     # Ödeme yöntemi bazında detaylı analiz
     analysis = transactions.values('payment_method').annotate(
         total_count=Count('id'),
@@ -283,6 +354,23 @@ def report_module_analysis(request):
         status='completed',
         is_deleted=False
     ).exclude(source_module='')
+    
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            transactions = transactions.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                transactions = transactions.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            transactions = transactions.filter(hotel__isnull=True)
     
     # Modül bazında detaylı analiz
     analysis = transactions.values('source_module').annotate(
@@ -328,6 +416,23 @@ def report_trend_analysis(request):
         status='completed',
         is_deleted=False
     )
+    
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            transactions = transactions.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                transactions = transactions.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            transactions = transactions.filter(hotel__isnull=True)
     
     if period == 'daily':
         trend = transactions.annotate(
@@ -405,6 +510,23 @@ def report_export_csv(request):
         payment_date__date__lte=date_to,
         is_deleted=False
     ).select_related('account').order_by('payment_date')
+    
+    # Otel bazlı filtreleme
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme
+    hotel_id = request.GET.get('hotel')
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            transactions = transactions.filter(hotel=request.active_hotel)
+        elif hotel_id and hotel_id != '0':
+            try:
+                transactions = transactions.filter(hotel_id=int(hotel_id))
+            except (ValueError, TypeError):
+                pass
+        elif hotel_id == '0':
+            transactions = transactions.filter(hotel__isnull=True)
     
     for t in transactions:
         writer.writerow([

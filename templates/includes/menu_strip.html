@@ -1,0 +1,18 @@
+<!-- Menu Strip (VB MenuStrip) -->
+<div class="menu-strip">
+    <span class="menu-item" onclick="loadModule('dashboard')">Ana Sayfa</span>
+    <span class="menu-item" onclick="showSubMenu('customers')">Müşteri İşlemler</span>
+    <span class="menu-item" onclick="showSubMenu('hotels')">Otel Yönetimi</span>
+    <span class="menu-item" onclick="showSubMenu('tours')">Tur Yönetimi</span>
+    <span class="menu-item" onclick="showSubMenu('reports')">Raporlar</span>
+    <span class="menu-item" onclick="loadModule('settings')">Ayarlar</span>
+    <span class="menu-item" onclick="showHelp()">Yardım</span>
+    <span class="menu-right">
+        {% if user.is_authenticated %}
+            <span>{{ user.get_full_name|default:user.username }}</span>
+        {% else %}
+            <span>Misafir</span>
+        {% endif %}
+    </span>
+</div>
+

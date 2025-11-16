@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarpetOS Halı Yıkama Otomasyonu - Faturalar</title>
+    <link rel="stylesheet" href="common.css">
+</head>
+<body>
+    <div class="menu-strip">
+        <span class="menu-item">Dosya</span>
+        <span class="menu-item">Müşteri İşlemler</span>
+        <span class="menu-item">Raporlar</span>
+        <span class="menu-item">Ayarlar</span>
+        <span class="menu-item">Yardım</span>
+        <span class="menu-right">SMS Bakiyesi: 1.250</span>
+    </div>
+
+    <div class="header-panel">
+        <div class="header-top">
+            <div class="header-title">CARPETOS HALI YIKAMA OTOMASYONU</div>
+            <div class="header-license">LİSANS SAHİBİ: ADA HALI YIKAMA</div>
+        </div>
+        <div class="header-banner">Fatura Yönetimi</div>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <div class="panel-title">TOPLAM: <span id="totalInvoices">0</span> KAYIT</div>
+            <table class="customer-table">
+                <thead>
+                    <tr>
+                        <th>MŞ. NO</th>
+                        <th>CARİ ADI</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody">
+                    <tr>
+                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+            <input type="text" class="search-box" placeholder="Ara..." id="searchInput">
+            <div class="recent-calls">
+                <div class="recent-calls-title">SON ÇAĞRILAR</div>
+                <div id="recentCalls">-</div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="refreshInvoices()">🔄 Yenile</button>
+                <button class="btn btn-primary" onclick="searchInvoices()">🔍 Ara</button>
+                <button class="btn btn-danger" onclick="deleteInvoice()">🗑️ Sil</button>
+            </div>
+        </div>
+
+        <div class="center-panel">
+            <div class="tabs">
+                <div class="tab active">FATURALAR</div>
+            </div>
+
+            <div class="date-navigation" style="margin-bottom: 10px;">
+                <input type="date" class="date-picker" id="dateFilter" value="">
+                <button class="btn btn-primary" onclick="loadInvoices()">Getir</button>
+            </div>
+
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Fatura No</th>
+                        <th>Sipariş No</th>
+                        <th>Müşteri</th>
+                        <th>Tutar</th>
+                        <th>Tarih</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="invoicesTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center">Yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="right-panel">
+            <div class="shortcut-btn" title="Bilgisayar" onclick="window.location.href='dashboard.html'">🖥️</div>
+            <div class="shortcut-btn" title="Online Sipariş" onclick="alert('Online Sipariş')">📱</div>
+            <div class="shortcut-btn" title="Telefon" onclick="alert('Telefon')">📞</div>
+            <div class="shortcut-btn" title="Müşteri Yönetimi" onclick="window.location.href='customers.html'">👥</div>
+            <div class="shortcut-btn" title="Yeni Ekle" onclick="showAddModal()">➕</div>
+            <div class="shortcut-btn" title="Raporlar" onclick="window.location.href='reports.html'">📊</div>
+        </div>
+    </div>
+
+    <div class="footer-panel">
+        <div class="footer-icon" title="Yenile" onclick="refreshPage()">🔄</div>
+        <div class="footer-icon" title="Ara" onclick="showSearch()">🔍</div>
+        <div class="footer-icon" title="Sil" onclick="deleteSelected()">🗑️</div>
+        <div class="footer-icon" title="Bilgi" onclick="showInfo()">ℹ️</div>
+        <div class="footer-icon" title="Yardım" onclick="showHelp()">❓</div>
+        <div class="footer-icon" title="Ayarlar" onclick="window.location.href='settings.html'">⚙️</div>
+        <div class="footer-icon" title="Mesajlar" onclick="showMessages()">💬</div>
+        <div class="footer-icon" title="Hesaplayıcı" onclick="showCalculator()">🔢</div>
+        <div class="footer-icon" title="Kullanıcı" onclick="showUserMenu()">👤</div>
+        <div class="footer-icon" title="Tema" onclick="toggleTheme()">🎨</div>
+        <div class="footer-icon" title="Bağlantı" onclick="checkConnection()">📡</div>
+        <div class="footer-icon" title="Finans" onclick="showFinance()">💰</div>
+        <div class="status-label" id="statusLabel">API Bağlı</div>
+    </div>
+
+    <script>
+        async function loadInvoices() {
+            try {
+                const response = await fetch('/api/invoices');
+                const data = await response.json();
+                if (data.success) {
+                    const tbody = document.getElementById('invoicesTableBody');
+                    tbody.innerHTML = data.data.map(invoice => `
+                        <tr onclick="selectInvoice(${invoice.id})">
+                            <td>${invoice.invoice_number || ''}</td>
+                            <td>${invoice.order_number || ''}</td>
+                            <td>${invoice.customer_name || ''}</td>
+                            <td>${invoice.total_amount ? invoice.total_amount.toFixed(2) + ' ₺' : '0.00 ₺'}</td>
+                            <td>${invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('tr-TR') : ''}</td>
+                            <td>${invoice.status || ''}</td>
+                            <td>
+                                <button class="btn btn-primary" onclick="event.stopPropagation(); viewInvoice(${invoice.id})" style="padding: 2px 8px; font-size: 8pt;">Görüntüle</button>
+                                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteInvoiceById(${invoice.id})" style="padding: 2px 8px; font-size: 8pt;">Sil</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    document.getElementById('totalInvoices').textContent = data.data.length;
+                }
+            } catch (error) {
+                console.error('Error loading invoices:', error);
+                document.getElementById('invoicesTableBody').innerHTML = '<tr><td colspan="7" class="text-center">Fatura verisi yüklenecek</td></tr>';
+            }
+        }
+        
+        function selectInvoice(id) {
+            document.querySelectorAll('.orders-table tbody tr').forEach(tr => tr.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+        
+        function viewInvoice(id) {
+            alert('Fatura görüntüleme: ' + id);
+        }
+        
+        function deleteInvoiceById(id) {
+            if (confirm('Bu faturayı silmek istediğinize emin misiniz?')) {
+                // Delete implementation
+            }
+        }
+        
+        function refreshInvoices() {
+            loadInvoices();
+        }
+        
+        function searchInvoices() {
+            document.getElementById('searchInput').focus();
+        }
+        
+        function deleteInvoice() {
+            const selected = document.querySelector('.orders-table tbody tr.selected');
+            if (selected) {
+                if (confirm('Seçili faturayı silmek istediğinize emin misiniz?')) {
+                    // Delete implementation
+                }
+            } else {
+                alert('Lütfen silmek için bir fatura seçin');
+            }
+        }
+        
+        function refreshPage() {
+            location.reload();
+        }
+        
+        function showSearch() {
+            document.getElementById('searchInput').focus();
+        }
+        
+        function deleteSelected() {
+            alert('Seçili öğeler silinecek');
+        }
+        
+        function showInfo() {
+            alert('CarpetOS v2.0\nHalı Yıkama İşletme Yönetim Sistemi');
+        }
+        
+        function showHelp() {
+            alert('Yardım sayfası açılacak');
+        }
+        
+        function showMessages() {
+            alert('Mesajlar');
+        }
+        
+        function showCalculator() {
+            alert('Hesaplayıcı');
+        }
+        
+        function showUserMenu() {
+            alert('Kullanıcı menüsü');
+        }
+        
+        function toggleTheme() {
+            alert('Tema değiştirilecek');
+        }
+        
+        function checkConnection() {
+            document.getElementById('statusLabel').textContent = 'Bağlantı kontrol ediliyor...';
+            setTimeout(() => {
+                document.getElementById('statusLabel').textContent = 'API Bağlı';
+            }, 1000);
+        }
+        
+        function showFinance() {
+            alert('Finans modülü');
+        }
+        
+        function showAddModal() {
+            alert('Yeni fatura ekleme formu açılacak');
+        }
+        
+        document.getElementById('dateFilter').valueAsDate = new Date();
+        loadInvoices();
+    </script>
+</body>
+</html>
+

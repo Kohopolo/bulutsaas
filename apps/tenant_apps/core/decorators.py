@@ -52,6 +52,10 @@ def require_module_permission(module_code, permission_code):
                         
                         if not package_module:
                             messages.error(request, f'{module.name} modülü paketinizde aktif değil.')
+                            # AJAX request ise JSON response döndür
+                            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                                from django.http import JsonResponse
+                                return JsonResponse({'error': f'{module.name} modülü paketinizde aktif değil.'}, status=403)
                             return redirect('tenant:dashboard')
                     except Module.DoesNotExist:
                         # Modül bulunamazsa devam et (eski modüller için uyumluluk)
@@ -83,6 +87,10 @@ def require_module_permission(module_code, permission_code):
                             pass
                     
                     messages.error(request, f'Bu işlem için yetkiniz bulunmamaktadır.')
+                    # AJAX request ise JSON response döndür
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        from django.http import JsonResponse
+                        return JsonResponse({'error': 'Bu işlem için yetkiniz bulunmamaktadır.'}, status=403)
                     return redirect('tenant:dashboard')
                     
             except TenantUser.DoesNotExist:

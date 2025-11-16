@@ -13,34 +13,34 @@
             <!-- Popüler Kanallar -->
             {% if popular_templates %}
             <h3 style="margin-bottom: 15px; color: #333; font-size: 14px; font-weight: bold;">Popüler Kanallar</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 30px; width: 100%; max-width: 100%; overflow-x: hidden;">
                 {% for template in popular_templates %}
-                <div style="background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px; padding: 15px;">
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <i class="{{ template.icon }}" style="font-size: 24px; color: #2c5f8d; margin-right: 10px;"></i>
-                        <h4 style="margin: 0; font-size: 16px; font-weight: bold;">{{ template.name }}</h4>
+                <div style="background: #f8f9fa; border: 1px solid #d4d4d4; border-radius: 3px; padding: 10px; display: flex; flex-direction: column; min-width: 0;">
+                    <div style="display: flex; align-items: center; margin-bottom: 8px; flex-shrink: 0;">
+                        <i class="{{ template.icon }}" style="font-size: 18px; color: #2c5f8d; margin-right: 6px; flex-shrink: 0;"></i>
+                        <h4 style="margin: 0; font-size: 12px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ template.name }}</h4>
                     </div>
-                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">{{ template.description|truncatewords:20 }}</p>
-                    <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;">
+                    <p style="font-size: 10px; color: #666; margin-bottom: 8px; line-height: 1.3; flex: 1; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{ template.description|truncatewords:15 }}</p>
+                    <div style="display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 8px; flex-shrink: 0;">
                         {% if template.supports_pricing %}
-                        <span style="display: inline-block; padding: 2px 6px; background: #28a745; color: white; border-radius: 3px; font-size: 10px;">Fiyat</span>
+                        <span style="display: inline-block; padding: 1px 4px; background: #28a745; color: white; border-radius: 2px; font-size: 9px;">Fiyat</span>
                         {% endif %}
                         {% if template.supports_availability %}
-                        <span style="display: inline-block; padding: 2px 6px; background: #17a2b8; color: white; border-radius: 3px; font-size: 10px;">Müsaitlik</span>
+                        <span style="display: inline-block; padding: 1px 4px; background: #17a2b8; color: white; border-radius: 2px; font-size: 9px;">Müsaitlik</span>
                         {% endif %}
                         {% if template.supports_reservations %}
-                        <span style="display: inline-block; padding: 2px 6px; background: #007bff; color: white; border-radius: 3px; font-size: 10px;">Rezervasyon</span>
+                        <span style="display: inline-block; padding: 1px 4px; background: #007bff; color: white; border-radius: 2px; font-size: 9px;">Rezervasyon</span>
                         {% endif %}
                         {% if template.supports_two_way %}
-                        <span style="display: inline-block; padding: 2px 6px; background: #6c757d; color: white; border-radius: 3px; font-size: 10px;">İki Yönlü</span>
+                        <span style="display: inline-block; padding: 1px 4px; background: #6c757d; color: white; border-radius: 2px; font-size: 9px;">İki Yönlü</span>
                         {% endif %}
                     </div>
-                    <div style="display: flex; gap: 5px; flex-direction: column;">
-                        <a href="{% url 'channel_management:template_detail' template.pk %}" class="vb-button" style="padding: 4px 8px; font-size: 11px; width: 100%; text-align: center;">
+                    <div style="display: flex; gap: 4px; flex-direction: column; flex-shrink: 0;">
+                        <a href="{% url 'channel_management:template_detail' template.pk %}" class="vb-button" style="padding: 3px 6px; font-size: 10px; width: 100%; text-align: center; white-space: nowrap;">
                             <i class="fas fa-info-circle"></i> Detaylar
                         </a>
-                        <button onclick="testConnection({{ template.pk }}, '{{ template.name }}')" class="vb-button" style="padding: 4px 8px; font-size: 11px; width: 100%; background: #17a2b8; color: white; border: none; cursor: pointer;">
-                            <i class="fas fa-plug"></i> Bağlantı Testi
+                        <button onclick="testConnection({{ template.pk }}, '{{ template.name }}')" class="vb-button" style="padding: 3px 6px; font-size: 10px; width: 100%; background: #17a2b8; color: white; border: none; cursor: pointer; white-space: nowrap;">
+                            <i class="fas fa-plug"></i> Test
                         </button>
                     </div>
                 </div>

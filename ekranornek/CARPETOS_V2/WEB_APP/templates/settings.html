@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}CarpetOS - Ayarlar{% endblock %}
+
+{% block banner_text %}Sistem Ayarları{% endblock %}
+
+{% block center_panel %}
+<div class="tabs">
+    <div class="tab active">GENEL AYARLAR</div>
+    <div class="tab">FİYAT AYARLARI</div>
+    <div class="tab">ENTEGRASYONLAR</div>
+    <div class="tab">VERİTABANI</div>
+    <div class="tab">LİSANS</div>
+</div>
+
+<div style="padding: 20px;">
+    <div style="font-size: 12pt; font-weight: bold; color: #1E3A8A; margin-bottom: 15px;">Genel Ayarlar</div>
+    <form id="settingsForm">
+        <div style="margin-bottom: 10px;">
+            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">Firma Adı</label>
+            <input type="text" class="search-box" name="company_name" value="Ada Halı Yıkama" style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">Telefon</label>
+            <input type="tel" class="search-box" name="phone" value="" style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">E-posta</label>
+            <input type="email" class="search-box" name="email" value="" style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label style="display: block; font-size: 9pt; margin-bottom: 4px; color: #212121;">Adres</label>
+            <textarea class="search-box" name="address" rows="3" style="width: 100%; resize: vertical;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('settingsForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert('Ayarlar kaydedilecek');
+    });
+</script>
+{% endblock %}
+

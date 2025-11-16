@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from django.db import models
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db import transaction
@@ -26,16 +27,52 @@ def sms_gateway_list(request):
     """SMS Gateway Listesi"""
     gateways = SMSGateway.objects.filter(is_deleted=False).order_by('-is_default', '-is_active', 'name')
     
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                gateways = gateways.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel gateway'ler (otel yok)
+                gateways = gateways.filter(hotel__isnull=True)
+                hotel_id = 0
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin gateway'lerini göster (genel gateway'leri de dahil et)
+            gateways = gateways.filter(
+                models.Q(hotel=request.active_hotel) | models.Q(hotel__isnull=True)
+            )
+            hotel_id = request.active_hotel.id
+    
     # İstatistikler
     total_gateways = gateways.count()
     active_gateways = gateways.filter(is_active=True).count()
     default_gateway = gateways.filter(is_default=True).first()
+    
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'gateways': gateways,
         'total_gateways': total_gateways,
         'active_gateways': active_gateways,
         'default_gateway': default_gateway,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     
     return render(request, 'settings/sms_gateway_list.html', context)
@@ -398,16 +435,52 @@ def email_gateway_list(request):
     """Email Gateway Listesi"""
     gateways = EmailGateway.objects.filter(is_deleted=False).order_by('-is_default', '-is_active', 'name')
     
+    # Otel bazlı filtreleme
+    hotel_id = None
+    hotel_id_param = request.GET.get('hotel')
+    if hotel_id_param and hotel_id_param.strip():
+        try:
+            hotel_id = int(hotel_id_param)
+            if hotel_id > 0:
+                gateways = gateways.filter(hotel_id=hotel_id)
+            elif hotel_id == 0:
+                # Genel gateway'ler (otel yok)
+                gateways = gateways.filter(hotel__isnull=True)
+                hotel_id = 0
+        except (ValueError, TypeError):
+            hotel_id = None
+    
+    # Otel bazlı filtreleme kontrolü: Sadece tenant'ın paketinde 'hotels' modülü aktifse filtreleme yap
+    from apps.tenant_apps.core.utils import is_hotels_module_enabled
+    hotels_module_enabled = is_hotels_module_enabled(getattr(request, 'tenant', None))
+    
+    # Aktif otel bazlı filtreleme (eğer aktif otel varsa ve hotel_id seçilmemişse VE hotels modülü aktifse)
+    if hotels_module_enabled and hasattr(request, 'active_hotel') and request.active_hotel:
+        if hotel_id is None:
+            # Varsayılan olarak aktif otelin gateway'lerini göster (genel gateway'leri de dahil et)
+            gateways = gateways.filter(
+                models.Q(hotel=request.active_hotel) | models.Q(hotel__isnull=True)
+            )
+            hotel_id = request.active_hotel.id
+    
     # İstatistikler
     total_gateways = gateways.count()
     active_gateways = gateways.filter(is_active=True).count()
     default_gateway = gateways.filter(is_default=True).first()
+    
+    # Otel listesi (filtreleme için)
+    from apps.tenant_apps.core.utils import get_filter_hotels
+    accessible_hotels = get_filter_hotels(request)
     
     context = {
         'gateways': gateways,
         'total_gateways': total_gateways,
         'active_gateways': active_gateways,
         'default_gateway': default_gateway,
+        'accessible_hotels': accessible_hotels,
+        'active_hotel': getattr(request, 'active_hotel', None),
+        'selected_hotel_id': hotel_id if hotel_id is not None else (request.active_hotel.id if hasattr(request, 'active_hotel') and request.active_hotel else None),
+        'hotels_module_enabled': hotels_module_enabled,
     }
     
     return render(request, 'settings/email_gateway_list.html', context)
