@@ -375,6 +375,9 @@ if site_url and site_url.startswith('https://'):
 
 # Security Settings (Production)
 if not DEBUG:
+    # Nginx proxy header'ını tanı (IP için HTTP, domain için HTTPS)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Sadece HTTPS istekleri için SSL yönlendirmesi yap
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
