@@ -43,33 +43,12 @@ COPY . .
 # Supervisord config dosyasını kopyala
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Entrypoint script'ini kopyala
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+
 # Static, media ve logs klasörleri oluştur
 RUN mkdir -p /app/staticfiles /app/media /app/logs && \
-    chmod -R 755 /app/logs
-
-# Entrypoint script oluştur
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "🚀 SaaS 2026 - Container başlatılıyor..."\n\
-\n\
-# Database bağlantısını bekle\n\
-echo "⏳ Database bağlantısı bekleniyor..."\n\
-python manage.py wait_for_db --max-retries=30 --retry-delay=2\n\
-\n\
-# Migration işlemleri\n\
-echo "📦 Database migration işlemleri yapılıyor..."\n\
-python manage.py migrate_schemas --shared --noinput || true\n\
-python manage.py migrate_schemas --noinput || true\n\
-\n\
-# Static dosyaları topla\n\
-echo "📁 Static dosyalar toplanıyor..."\n\
-python manage.py collectstatic --noinput || true\n\
-\n\
-# Supervisord'u başlat (tüm servisler: gunicorn, celery, celery-beat)\n\
-echo "✅ Tüm servisler başlatılıyor (Gunicorn, Celery, Celery-Beat)..."\n\
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf\n\
-' > /app/docker-entrypoint.sh && \
+    chmod -R 755 /app/logs && \
     chmod +x /app/docker-entrypoint.sh
 
 # Port
@@ -79,6 +58,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
-# Entrypoint
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Entrypoint (bash script olduğu için shell form kullanılıyor)
+ENTRYPOINT ["/bin/bash", "/app/docker-entrypoint.sh"]
 
