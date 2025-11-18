@@ -112,9 +112,14 @@ if [ -d ".git" ]; then
 else
     info_msg "Proje GitHub'dan çekiliyor..."
     
-    # Branch adını sor
-    read -p "Branch adını girin (varsayılan: main, alternatif: master): " BRANCH_NAME
+    # Branch adını sor (varsayılan: main)
+    echo ""
+    info_msg "GitHub branch seçimi:"
+    echo "  - Enter'a basın (varsayılan: main) ✅"
+    echo "  - Veya 'master' yazın (eski repository'ler için)"
+    read -p "Branch adı [main]: " BRANCH_NAME
     BRANCH_NAME=${BRANCH_NAME:-main}
+    info_msg "Seçilen branch: $BRANCH_NAME"
     
     if git clone -b $BRANCH_NAME $GITHUB_REPO . 2>/dev/null || \
        git clone -b master $GITHUB_REPO . 2>/dev/null || \

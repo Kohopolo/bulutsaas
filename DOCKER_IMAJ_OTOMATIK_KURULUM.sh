@@ -42,9 +42,10 @@ warning_msg() {
 VPS_IP=$(curl -s ifconfig.me || curl -s ipinfo.io/ip || echo "localhost")
 info_msg "VPS IP adresi algılandı: $VPS_IP"
 
-# Proje dizini
+# Proje dizini (Genel - VPS IP otomatik algılanır)
 PROJECT_DIR="/var/www/bulutsaas"
 GITHUB_REPO="https://github.com/Kohopolo/bulutsaas.git"
+COMPOSE_FILE="docker-compose.simple.yml"
 
 echo ""
 echo "═══════════════════════════════════════════════════════════════"
@@ -108,9 +109,14 @@ if [ -d ".git" ]; then
 else
     info_msg "Proje GitHub'dan çekiliyor..."
     
-    # Branch adını sor
-    read -p "Branch adını girin (varsayılan: main, alternatif: master): " BRANCH_NAME
+    # Branch adını sor (varsayılan: main)
+    echo ""
+    info_msg "GitHub branch seçimi:"
+    echo "  - Enter'a basın (varsayılan: main) ✅"
+    echo "  - Veya 'master' yazın (eski repository'ler için)"
+    read -p "Branch adı [main]: " BRANCH_NAME
     BRANCH_NAME=${BRANCH_NAME:-main}
+    info_msg "Seçilen branch: $BRANCH_NAME"
     
     if git clone -b $BRANCH_NAME $GITHUB_REPO . 2>/dev/null || \
        git clone -b master $GITHUB_REPO . 2>/dev/null || \
@@ -145,23 +151,23 @@ fi
 
 # 10. Docker imajını build et
 info_msg "Docker imajı build ediliyor (bu biraz zaman alabilir)..."
-docker compose -f docker-compose.simple.yml build --no-cache
+docker compose -f $COMPOSE_FILE build --no-cache
 success_msg "Docker imajı build edildi"
 
 # 11. Tüm servisleri başlat
 info_msg "Tüm servisler başlatılıyor..."
-docker compose -f docker-compose.simple.yml up -d
+docker compose -f $COMPOSE_FILE up -d
 success_msg "Tüm servisler başlatıldı"
 
 # 12. Servis durumunu kontrol et
 echo ""
 info_msg "Servis durumu kontrol ediliyor..."
 sleep 5
-docker compose -f docker-compose.simple.yml ps
+docker compose -f $COMPOSE_FILE ps
 
 # 13. Logları göster
 echo ""
 info_msg "Son loglar (Ctrl+C ile çıkabilirsiniz):"
 echo "═══════════════════════════════════════════════════════════════"
-docker compose -f docker-compose.simple.yml logs -f --tail=50
+docker compose -f $COMPOSE_FILE logs -f --tail=50
 
