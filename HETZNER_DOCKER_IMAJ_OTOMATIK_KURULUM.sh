@@ -143,6 +143,7 @@ if [ ! -f ".env" ]; then
         sed -i "s|SITE_URL=.*|SITE_URL=http://$VPS_IP|" .env
         sed -i "s/VPS_IP=.*/VPS_IP=$VPS_IP/" .env
         sed -i "s/HETZNER_VPS_IP=.*/HETZNER_VPS_IP=$VPS_IP/" .env
+        sed -i "s/DEBUG=True/DEBUG=False/" .env  # Production modu
         
         warning_msg "⚠️  .env dosyasını düzenleyip SECRET_KEY ve diğer ayarları yapın!"
     else

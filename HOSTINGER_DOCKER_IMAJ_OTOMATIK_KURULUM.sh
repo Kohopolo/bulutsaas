@@ -135,6 +135,7 @@ if [ ! -f ".env" ]; then
         sed -i "s/VPS_IP=.*/VPS_IP=$VPS_IP/" .env
         sed -i "s/HOSTINGER_VPS_IP=.*/HOSTINGER_VPS_IP=$VPS_IP/" .env
         sed -i "s/HOSTINGER_VPS_DOMAIN=.*/HOSTINGER_VPS_DOMAIN=srv1132080.hstgr.cloud/" .env
+        sed -i "s/DEBUG=True/DEBUG=False/" .env  # Production modu
         
         warning_msg "⚠️  .env dosyasını düzenleyip SECRET_KEY ve diğer ayarları yapın!"
     else

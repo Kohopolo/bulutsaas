@@ -359,6 +359,20 @@ LOGGING = {
     },
 }
 
+# CSRF Trusted Origins (HTTPS için gerekli - her zaman aktif)
+CSRF_TRUSTED_ORIGINS = [
+    'https://bulutacente.com.tr',
+    'https://www.bulutacente.com.tr',
+    'https://72.62.35.155',
+    'https://78.46.142.212',  # Hetzner VPS
+]
+
+# SITE_URL'den de ekle (eğer HTTPS ise)
+site_url = env('SITE_URL', default='')
+if site_url and site_url.startswith('https://'):
+    if site_url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(site_url)
+
 # Security Settings (Production)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -367,19 +381,6 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    
-    # CSRF Trusted Origins (HTTPS için gerekli)
-    CSRF_TRUSTED_ORIGINS = [
-        'https://bulutacente.com.tr',
-        'https://www.bulutacente.com.tr',
-        'https://72.62.35.155',
-    ]
-    
-    # SITE_URL'den de ekle (eğer HTTPS ise)
-    site_url = env('SITE_URL', default='')
-    if site_url and site_url.startswith('https://'):
-        if site_url not in CSRF_TRUSTED_ORIGINS:
-            CSRF_TRUSTED_ORIGINS.append(site_url)
 
 # Custom Settings
 SITE_NAME = env('SITE_NAME', default='SaaS 2026')
