@@ -1,0 +1,85 @@
+services:
+  # PostgreSQL Database (Multi-tenancy için gerekli)
+  db:
+    image: postgres:15-alpine
+    container_name: saas2026_db_hetzner
+    environment:
+      POSTGRES_DB: saas_db
+      POSTGRES_USER: saas_user
+      POSTGRES_PASSWORD: saas_password_2026
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data_hetzner:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - saas_network_hetzner
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas_user -d saas_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Cache & Celery broker)
+  redis:
+    image: redis:7-alpine
+    container_name: saas2026_redis_hetzner
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_hetzner:/data
+    networks:
+      - saas_network_hetzner
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Django Application (Supervisord ile: Web + Celery + Celery-Beat)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.supervisord
+    container_name: saas2026_app_hetzner
+    volumes:
+      - .:/app  # Proje dosyalarını mount et
+      - static_volume_hetzner:/app/staticfiles
+      - media_volume_hetzner:/app/media
+      - ./logs:/app/logs
+    ports:
+      - "127.0.0.1:8000:8000"  # Sadece localhost'tan erişilebilir (Nginx üzerinden)
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - saas_network_hetzner
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data_hetzner:
+    driver: local
+  redis_data_hetzner:
+    driver: local
+  static_volume_hetzner:
+    driver: local
+  media_volume_hetzner:
+    driver: local
+
+networks:
+  saas_network_hetzner:
+    driver: bridge
+

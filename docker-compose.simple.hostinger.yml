@@ -1,0 +1,85 @@
+services:
+  # PostgreSQL Database (Multi-tenancy için gerekli)
+  db:
+    image: postgres:15-alpine
+    container_name: saas2026_db_hostinger
+    environment:
+      POSTGRES_DB: saas_db
+      POSTGRES_USER: saas_user
+      POSTGRES_PASSWORD: saas_password_2026
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data_hostinger:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Farklı port (5432 yerine 5433) - çakışma önleme
+    networks:
+      - saas_network_hostinger
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saas_user -d saas_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Cache & Celery broker)
+  redis:
+    image: redis:7-alpine
+    container_name: saas2026_redis_hostinger
+    ports:
+      - "6380:6379"  # Farklı port (6379 yerine 6380) - çakışma önleme
+    volumes:
+      - redis_data_hostinger:/data
+    networks:
+      - saas_network_hostinger
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Django Application (Supervisord ile: Web + Celery + Celery-Beat)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.supervisord
+    container_name: saas2026_app_hostinger
+    volumes:
+      - .:/app  # Proje dosyalarını mount et
+      - static_volume_hostinger:/app/staticfiles
+      - media_volume_hostinger:/app/media
+      - ./logs:/app/logs
+    ports:
+      - "127.0.0.1:8001:8000"  # Farklı port (8000 yerine 8001) - çakışma önleme
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - saas_network_hostinger
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data_hostinger:
+    driver: local
+  redis_data_hostinger:
+    driver: local
+  static_volume_hostinger:
+    driver: local
+  media_volume_hostinger:
+    driver: local
+
+networks:
+  saas_network_hostinger:
+    driver: bridge
+
