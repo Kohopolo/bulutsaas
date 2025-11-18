@@ -47,8 +47,8 @@ services:
     container_name: saas2026_app_hostinger
     volumes:
       - .:/app  # Proje dosyalarını mount et
-      - static_volume_hostinger:/app/staticfiles
-      - media_volume_hostinger:/app/media
+      - ./staticfiles:/app/staticfiles  # Host path (Nginx erişimi için)
+      - ./media:/app/media  # Host path (Nginx erişimi için)
       - ./logs:/app/logs
     ports:
       - "127.0.0.1:8001:8000"  # Farklı port (8000 yerine 8001) - çakışma önleme
@@ -74,10 +74,8 @@ volumes:
     driver: local
   redis_data_hostinger:
     driver: local
-  static_volume_hostinger:
-    driver: local
-  media_volume_hostinger:
-    driver: local
+  # static_volume_hostinger ve media_volume_hostinger kaldırıldı
+  # Host path kullanılıyor (./staticfiles ve ./media) - Nginx erişimi için
 
 networks:
   saas_network_hostinger:
