@@ -44,6 +44,8 @@ if VPS_IP:
 ALLOWED_HOSTS.extend([
     'srv1132080.hstgr.cloud',
     '88.255.216.16',
+    'bulutacente.com.tr',
+    'www.bulutacente.com.tr',
 ])
 
 # Production'da tüm host'lara izin ver (güvenlik için sadece DEBUG=False ise)

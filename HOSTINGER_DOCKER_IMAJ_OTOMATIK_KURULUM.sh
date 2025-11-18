@@ -129,9 +129,9 @@ if [ ! -f ".env" ]; then
         cp env.example .env
         success_msg ".env dosyası oluşturuldu (env.example'dan)"
         
-        # Hostinger VPS IP'sini otomatik ekle
-        sed -i "s/ALLOWED_HOSTS=.*/ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,$VPS_IP/" .env
-        sed -i "s|SITE_URL=.*|SITE_URL=http://$VPS_IP|" .env
+        # Hostinger VPS IP'sini ve domain'i otomatik ekle
+        sed -i "s/ALLOWED_HOSTS=.*/ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,$VPS_IP,bulutacente.com.tr,www.bulutacente.com.tr/" .env
+        sed -i "s|SITE_URL=.*|SITE_URL=https://bulutacente.com.tr|" .env
         sed -i "s/VPS_IP=.*/VPS_IP=$VPS_IP/" .env
         sed -i "s/HOSTINGER_VPS_IP=.*/HOSTINGER_VPS_IP=$VPS_IP/" .env
         sed -i "s/HOSTINGER_VPS_DOMAIN=.*/HOSTINGER_VPS_DOMAIN=srv1132080.hstgr.cloud/" .env
