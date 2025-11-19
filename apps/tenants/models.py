@@ -2,7 +2,9 @@
 Tenant modelleri - Multi-tenancy için
 Her tenant ayrı PostgreSQL schema'sında çalışır
 """
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.text import slugify
 from django_tenants.models import TenantMixin, DomainMixin
 from apps.core.models import TimeStampedModel
 
@@ -54,6 +56,19 @@ class Tenant(TenantMixin, TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        """Schema adını ve slug'ı otomatik oluştur."""
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        if not self.schema_name:
+            schema_slug = slugify(self.slug or self.name).replace('-', '_')
+            if not schema_slug:
+                raise ValidationError("Schema adı oluşturulamadı.")
+            self.schema_name = schema_slug
+
+        super().save(*args, **kwargs)
 
     def get_total_users(self):
         """Bu tenant'ın toplam kullanıcı sayısı"""
