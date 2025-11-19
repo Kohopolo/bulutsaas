@@ -45,6 +45,7 @@ ALLOWED_HOSTS.extend([
     'srv1132080.hstgr.cloud',
     '88.255.216.16',
     'bulutacente.com.tr',
+    '.bulutacente.com.tr',  # Tüm tenant subdomain'lerine izin ver
     'www.bulutacente.com.tr',
 ])
 
